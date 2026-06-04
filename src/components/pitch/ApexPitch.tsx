@@ -4,6 +4,12 @@ import { ApexPitchMarks } from './ApexPitchMarks';
 import { AvatarDisc } from '@/components/ui/AvatarDisc';
 import { PointPill } from '@/components/ui/PointPill';
 import { CaptBadge } from '@/components/ui/CaptBadge';
+import {
+  SubPill,
+  SubInPill,
+  BallBadge,
+  CardIcons,
+} from '@/components/ui/PitchBadges';
 import { PitchPlayer } from '@/constants/data';
 
 interface ApexPitchProps {
@@ -37,6 +43,10 @@ function ApexPitchPlayerCard({ p, upcoming }: { p: PitchPlayer; upcoming: boolea
       <View style={styles.avatarWrapper}>
         <AvatarDisc size={46} player={p} />
         {p.capt && <CaptBadge />}
+        {!upcoming && p.cards && p.cards.length > 0 && <CardIcons cards={p.cards} />}
+        {!upcoming && p.ball && <BallBadge />}
+        {!upcoming && p.sub != null && <SubPill min={p.sub} />}
+        {!upcoming && p.subIn != null && <SubInPill min={p.subIn} />}
       </View>
       <PointPill pts={upcoming ? undefined : p.pts} name={p.name} upcoming={upcoming} />
     </View>

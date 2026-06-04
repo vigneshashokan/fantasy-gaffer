@@ -35,6 +35,9 @@ import { ThemeToggle } from '@/components/settings/ThemeToggle';
 import { NotificationsCard } from '@/components/settings/NotificationsCard';
 import { SettingsRow } from '@/components/settings/SettingsRow';
 import { FollowUsRow } from '@/components/settings/FollowUsRow';
+import { ApplyCheckbox } from '@/components/ui/ApplyCheckbox';
+import { ApplyAllCard } from '@/components/team/ApplyAllCard';
+import { SubPill, SubInPill, BallBadge, CardIcons } from '@/components/ui/PitchBadges';
 import { apexTokens } from '@/constants/apexTokens';
 import { PitchMarks } from '@/components/pitch/PitchMarks';
 import { ApexPitchMarks } from '@/components/pitch/ApexPitchMarks';
@@ -457,6 +460,51 @@ describe('TransferSuggestionsCard', () => {
     expect(getByText('Walker')).toBeTruthy();
     expect(getByText('Muñoz')).toBeTruthy();
     expect(getByText('+6 xPts')).toBeTruthy();
+  });
+});
+
+// ── ApplyCheckbox ─────────────────────────────────────────────
+describe('ApplyCheckbox', () => {
+  it('renders both states', () => {
+    const a = render(<ApplyCheckbox checked onChange={() => {}} green="#0f0" border="#ccc" />);
+    expect(a.toJSON()).toBeTruthy();
+    const b = render(<ApplyCheckbox checked={false} onChange={() => {}} green="#0f0" border="#ccc" />);
+    expect(b.toJSON()).toBeTruthy();
+  });
+});
+
+// ── ApplyAllCard ──────────────────────────────────────────────
+describe('ApplyAllCard', () => {
+  it('shows pending changes count and CTAs', () => {
+    const tk = apexTokens(false, 'classic');
+    const { getByText } = render(
+      <ApplyAllCard count={2} onUndo={() => {}} onConfirm={() => {}} tk={tk} />
+    );
+    expect(getByText('2 changes pending')).toBeTruthy();
+    expect(getByText('Undo all changes')).toBeTruthy();
+    expect(getByText('Confirm')).toBeTruthy();
+  });
+
+  it('shows singular form when count is 1', () => {
+    const tk = apexTokens(false, 'classic');
+    const { getByText } = render(
+      <ApplyAllCard count={1} onUndo={() => {}} onConfirm={() => {}} tk={tk} />
+    );
+    expect(getByText('1 change pending')).toBeTruthy();
+  });
+});
+
+// ── PitchBadges ───────────────────────────────────────────────
+describe('PitchBadges', () => {
+  it('renders sub badges and ball', () => {
+    const a = render(<SubPill min={75} />);
+    expect(a.getByText("←75'")).toBeTruthy();
+    const b = render(<SubInPill min={75} />);
+    expect(b.getByText("75'→")).toBeTruthy();
+    const c = render(<BallBadge />);
+    expect(c.toJSON()).toBeTruthy();
+    const d = render(<CardIcons cards={['yellow', 'red']} />);
+    expect(d.toJSON()).toBeTruthy();
   });
 });
 

@@ -1,38 +1,35 @@
 {
   "expo": {
-    "name": "fpl-gaffer-react-native-app",
+    "name": "FPL Gaffer",
     "slug": "fpl-gaffer-react-native-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/logos/logo-mark.png",
     "scheme": "fplgafferreactnativeapp",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/logos/logo-mark.png"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#37003C",
+        "foregroundImage": "./assets/logos/logo-mark-light.png",
+        "monochromeImage": "./assets/logos/logo-mark-light.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/logos/logo-mark.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
-          }
+          "backgroundColor": "#37003C",
+          "image": "./assets/logos/logo-mark-light.png",
+          "imageWidth": 120
         }
       ],
       "expo-font"

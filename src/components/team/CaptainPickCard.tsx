@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Kit } from '@/components/ui/Kit';
 import { Icon } from '@/components/ui/Icon';
+import { ApplyCheckbox } from '@/components/ui/ApplyCheckbox';
 import { CaptainPick } from '@/constants/data';
 import { ApexTokens } from '@/constants/apexTokens';
 
@@ -9,25 +10,50 @@ interface CaptainPickCardProps {
   picks: CaptainPick[];
   captainApplied: string;
   tk: ApexTokens;
+  editable?: boolean;
+  pendingCaptain?: string;
+  onPick?: (name: string) => void;
 }
 
-export function CaptainPickCard({ picks, captainApplied, tk }: CaptainPickCardProps) {
+export function CaptainPickCard({
+  picks,
+  captainApplied,
+  tk,
+  editable = false,
+  pendingCaptain,
+  onPick,
+}: CaptainPickCardProps) {
+  const current = editable && pendingCaptain ? pendingCaptain : captainApplied;
   return (
-    <View style={[styles.container, { backgroundColor: tk.card, borderColor: tk.cardBorder, opacity: 0.72 }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: tk.card, borderColor: tk.cardBorder, opacity: editable ? 1 : 0.72 },
+      ]}
+    >
       <View style={styles.header}>
         <Text style={[styles.title, { color: tk.text }]}>Captain Pick</Text>
-        <View style={[styles.lockedBadge, { backgroundColor: tk.headStrip, borderColor: tk.cardBorder }]}>
-          <Icon name="lock" color={tk.faint} size={11} />
-          <Text style={[styles.lockedText, { color: tk.faint }]}>Locked</Text>
-        </View>
+        {!editable && (
+          <View
+            style={[
+              styles.lockedBadge,
+              { backgroundColor: tk.headStrip, borderColor: tk.cardBorder },
+            ]}
+          >
+            <Icon name="lock" color={tk.faint} size={11} />
+            <Text style={[styles.lockedText, { color: tk.faint }]}>Locked</Text>
+          </View>
+        )}
       </View>
 
       {picks.map((p, i) => {
         const isTop = i === 0;
-        const isOn = captainApplied === p.name;
+        const isOn = current === p.name;
+        const RowTag = editable ? Pressable : View;
         return (
-          <View
+          <RowTag
             key={p.name}
+            onPress={editable ? () => onPick?.(p.name) : undefined}
             style={[
               styles.row,
               {
@@ -62,7 +88,15 @@ export function CaptainPickCard({ picks, captainApplied, tk }: CaptainPickCardPr
               {p.xp.toFixed(1)}
               <Text style={[styles.xpLabel, { color: tk.faint }]}> xPts</Text>
             </Text>
-          </View>
+            {editable && (
+              <ApplyCheckbox
+                checked={isOn}
+                onChange={(v) => v && onPick?.(p.name)}
+                green={tk.green}
+                border={tk.cardBorder}
+              />
+            )}
+          </RowTag>
         );
       })}
     </View>

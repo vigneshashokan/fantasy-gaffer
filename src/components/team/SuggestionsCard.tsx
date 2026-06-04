@@ -2,49 +2,70 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Icon } from '@/components/ui/Icon';
+import { ApplyCheckbox } from '@/components/ui/ApplyCheckbox';
 import { Suggestion } from '@/constants/data';
 import { ApexTokens } from '@/constants/apexTokens';
 
 interface SuggestionsCardProps {
   suggestions: Suggestion[];
   tk: ApexTokens;
+  editable?: boolean;
+  applied?: Record<string, boolean>;
+  onToggle?: (id: string) => void;
+  lockedNote?: string;
 }
 
-export function SuggestionsCard({ suggestions, tk }: SuggestionsCardProps) {
+export function SuggestionsCard({
+  suggestions,
+  tk,
+  editable = false,
+  applied = {},
+  onToggle,
+  lockedNote = 'Gameweek is live — suggestions are locked.',
+}: SuggestionsCardProps) {
+  const bulbColor = editable ? tk.yellow : tk.faint;
   return (
-    <View style={[styles.container, { backgroundColor: tk.card, borderColor: tk.cardBorder, opacity: 0.72 }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: tk.card, borderColor: tk.cardBorder, opacity: editable ? 1 : 0.72 },
+      ]}
+    >
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
             <Path
               d="M12 3a6 6 0 00-3.5 10.9c.5.4.8 1 .9 1.6l.2 1h4.8l.2-1c.1-.6.4-1.2.9-1.6A6 6 0 0012 3z"
-              fill={tk.faint}
+              fill={bulbColor}
             />
             <Path
               d="M9.5 19.5h5M10 21.5h4"
-              stroke={tk.faint}
+              stroke={bulbColor}
               strokeWidth={2}
               strokeLinecap="round"
             />
           </Svg>
           <Text style={[styles.title, { color: tk.text }]}>Team Suggestions</Text>
         </View>
-        <View
-          style={[
-            styles.lockedBadge,
-            { backgroundColor: tk.headStrip, borderColor: tk.cardBorder },
-          ]}
-        >
-          <Text style={[styles.lockedText, { color: tk.faint }]}>Locked</Text>
-        </View>
+        {!editable && (
+          <View
+            style={[
+              styles.lockedBadge,
+              { backgroundColor: tk.headStrip, borderColor: tk.cardBorder },
+            ]}
+          >
+            <Text style={[styles.lockedText, { color: tk.faint }]}>Locked</Text>
+          </View>
+        )}
       </View>
 
-      <Text style={[styles.note, { color: tk.faint }]}>
-        Gameweek is live — suggestions are locked.
-      </Text>
+      {!editable && (
+        <Text style={[styles.note, { color: tk.faint }]}>{lockedNote}</Text>
+      )}
 
       {suggestions.map((s, i) => {
-        const done = s.wasApplied;
+        const done = editable ? !!applied[s.id] : s.wasApplied;
+        const rowOpacity = editable ? 1 : done ? 1 : 0.6;
         return (
           <View
             key={s.id}
@@ -54,12 +75,12 @@ export function SuggestionsCard({ suggestions, tk }: SuggestionsCardProps) {
                 backgroundColor: done ? tk.greenSoft : 'transparent',
                 borderColor: done ? tk.green : 'transparent',
                 marginTop: i === 0 ? 12 : 8,
-                opacity: done ? 1 : 0.6,
+                opacity: rowOpacity,
               },
             ]}
           >
             <View style={[styles.iconBox, { backgroundColor: tk.headStrip }]}>
-              <Icon name="swap" color={tk.faint} size={18} />
+              <Icon name="swap" color={editable ? tk.purple : tk.faint} size={18} />
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <View style={styles.suggestRow}>
@@ -70,7 +91,14 @@ export function SuggestionsCard({ suggestions, tk }: SuggestionsCardProps) {
               </View>
               <Text style={[styles.detail, { color: tk.faint }]}>{s.detail}</Text>
             </View>
-            {done ? (
+            {editable ? (
+              <ApplyCheckbox
+                checked={done}
+                onChange={() => onToggle?.(s.id)}
+                green={tk.green}
+                border={tk.cardBorder}
+              />
+            ) : done ? (
               <View style={styles.statusRow}>
                 <Icon name="check" color={tk.green} size={16} />
                 <Text style={[styles.statusText, { color: tk.green }]}>Applied</Text>
