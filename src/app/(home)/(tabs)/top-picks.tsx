@@ -69,11 +69,18 @@ export default function TopPicksTab() {
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={onMomentumEnd}
         scrollEventThrottle={16}
+        style={{ flex: 1 }}
       >
         {ORDER.map((pos) => (
-          <View key={pos} style={{ width, paddingHorizontal: H_PADDING, paddingBottom: 16 }}>
+          <ScrollView
+            key={pos}
+            style={{ width }}
+            contentContainerStyle={styles.panelContent}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+          >
             <PicksCard pos={pos} rows={TOP_PICKS[pos]} tk={tk} dark={dark} />
-          </View>
+          </ScrollView>
         ))}
       </ScrollView>
     </View>
@@ -124,5 +131,9 @@ const styles = StyleSheet.create({
   controlWrap: {
     paddingHorizontal: 16,
     paddingBottom: 16,
+  },
+  panelContent: {
+    paddingHorizontal: H_PADDING,
+    paddingBottom: 24,
   },
 });
