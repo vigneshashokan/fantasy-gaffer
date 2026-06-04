@@ -49,24 +49,22 @@ export function PickRow({ p, zebra, last, tk, dark }: PickRowProps) {
           <Image source={jersey} style={styles.jersey} resizeMode="contain" />
         )}
         <View style={{ flexShrink: 1, minWidth: 0 }}>
+          {owned && (
+            <View
+              style={[
+                styles.badge,
+                { backgroundColor: tk.headStrip, borderColor: tk.line },
+              ]}
+            >
+              <Text style={[styles.badgeText, { color: tk.faint }]}>In team</Text>
+            </View>
+          )}
           <Text style={[styles.name, { color: tk.text }]} numberOfLines={1}>
             {p.name}
           </Text>
-          <View style={styles.fixtureRow}>
-            <Text style={[styles.fixture, { color: tk.faint }]} numberOfLines={1}>
-              {fx.opp} ({fx.h ? 'H' : 'A'})
-            </Text>
-            {owned && (
-              <View
-                style={[
-                  styles.badge,
-                  { backgroundColor: tk.headStrip, borderColor: tk.line },
-                ]}
-              >
-                <Text style={[styles.badgeText, { color: tk.faint }]}>In team</Text>
-              </View>
-            )}
-          </View>
+          <Text style={[styles.fixture, { color: tk.faint }]} numberOfLines={1}>
+            {fx.opp} ({fx.h ? 'H' : 'A'})
+          </Text>
         </View>
       </View>
 
@@ -113,21 +111,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: -0.24,
   },
-  fixtureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
-  },
   fixture: {
     fontFamily: 'Archivo_500Medium',
     fontSize: 11.5,
+    marginTop: 2,
   },
   badge: {
+    alignSelf: 'flex-start',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 999,
     borderWidth: 1,
+    marginBottom: 3,
   },
   badgeText: {
     fontFamily: 'Archivo_700Bold',
