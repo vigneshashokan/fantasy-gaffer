@@ -31,9 +31,12 @@ export default function TopPicksTab() {
     scrollerRef.current?.scrollTo({ x: i * width, animated: true });
   };
 
-  const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+  // Track active segment while the finger is moving, not just at the end —
+  // makes the highlight feel responsive instead of waiting ~300ms for the
+  // snap animation to finish.
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const idx = Math.round(e.nativeEvent.contentOffset.x / width);
-    if (idx !== active) setActive(idx);
+    if (idx !== active && idx >= 0 && idx < ORDER.length) setActive(idx);
   };
 
   return (
@@ -66,14 +69,22 @@ export default function TopPicksTab() {
         ref={scrollerRef}
         horizontal
         pagingEnabled
+        decelerationRate="fast"
         showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={onMomentumEnd}
+        onScroll={onScroll}
         scrollEventThrottle={16}
+        style={{ flex: 1 }}
       >
         {ORDER.map((pos) => (
-          <View key={pos} style={{ width, paddingHorizontal: H_PADDING, paddingBottom: 16 }}>
+          <ScrollView
+            key={pos}
+            style={{ width }}
+            contentContainerStyle={styles.panelContent}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled
+          >
             <PicksCard pos={pos} rows={TOP_PICKS[pos]} tk={tk} dark={dark} />
-          </View>
+          </ScrollView>
         ))}
       </ScrollView>
     </View>
@@ -124,5 +135,9 @@ const styles = StyleSheet.create({
   controlWrap: {
     paddingHorizontal: 16,
     paddingBottom: 16,
+  },
+  panelContent: {
+    paddingHorizontal: H_PADDING,
+    paddingBottom: 24,
   },
 });
