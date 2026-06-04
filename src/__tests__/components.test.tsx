@@ -5,6 +5,7 @@ import { PosTag } from '@/components/ui/PosTag';
 import { PillBtn } from '@/components/ui/PillBtn';
 import { Kit } from '@/components/ui/Kit';
 import { PlayerToken } from '@/components/ui/PlayerToken';
+import { GafferLogo } from '@/components/ui/GafferLogo';
 import { PitchMarks } from '@/components/pitch/PitchMarks';
 import { ApexPitchMarks } from '@/components/pitch/ApexPitchMarks';
 import { Pitch } from '@/components/pitch/Pitch';
@@ -93,8 +94,10 @@ describe('Kit', () => {
 });
 
 // ── PlayerToken ───────────────────────────────────────────────
-const mockPlayer = {
-  id: 'p1', name: 'Haaland', club: 'MCI' as const, pos: 'FWD' as const,
+import type { Player } from '@/constants/data';
+
+const mockPlayer: Player = {
+  id: 'p1', name: 'Haaland', club: 'MCI', pos: 'FWD',
   gw: 12, p: 15.0, f: 9.1, tp: 175, own: 62.3, capt: false, vice: false,
 };
 
@@ -112,6 +115,22 @@ describe('PlayerToken', () => {
   it('shows doubled points for captain', () => {
     const { getByText } = render(<PlayerToken pl={{ ...mockPlayer, capt: true }} showStat="gw" />);
     expect(getByText('24')).toBeTruthy(); // 12 * 2
+  });
+});
+
+// ── GafferLogo ────────────────────────────────────────────────
+describe('GafferLogo', () => {
+  it('renders default wordmark', () => {
+    const { toJSON } = render(<GafferLogo />);
+    expect(toJSON()).toBeTruthy();
+  });
+  it('renders light variant', () => {
+    const { toJSON } = render(<GafferLogo light />);
+    expect(toJSON()).toBeTruthy();
+  });
+  it('renders mark variant', () => {
+    const { toJSON } = render(<GafferLogo variant="mark" />);
+    expect(toJSON()).toBeTruthy();
   });
 });
 
@@ -137,9 +156,7 @@ describe('ApexPitchMarks', () => {
 });
 
 // ── Pitch ─────────────────────────────────────────────────────
-const mockRows = [[
-  { id: 'p1', name: 'Haaland', club: 'MCI', pos: 'FWD' as const, gw: 12, p: 15.0, capt: false, vice: false },
-]];
+const mockRows = [[mockPlayer]];
 
 describe('Pitch', () => {
   it('renders with realistic style', () => {

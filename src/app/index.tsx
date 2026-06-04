@@ -1,6 +1,7 @@
 import { Redirect } from 'expo-router';
+import { useAuthStore } from '@/store/authStore';
 
-// Redirects to onboarding. Later tasks will check auth state here.
 export default function Index() {
-  return <Redirect href="/(onboarding)" />;
+  const signedIn = useAuthStore((s) => s.signedIn);
+  return <Redirect href={signedIn ? '/(home)/(tabs)/team' : '/(onboarding)'} />;
 }
