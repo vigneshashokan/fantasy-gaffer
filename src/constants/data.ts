@@ -330,3 +330,23 @@ export const TEAM_INFO: TeamInfo = {
   totalPoints: 1452,
   rank: 142_831,
 };
+
+// ─── Profile ──────────────────────────────────────────────────────────────────
+
+export interface Profile {
+  firstName: string;
+  lastName: string;
+  dob: string;
+  gender: string;
+  email: string;
+  faceId: boolean;
+}
+
+export const PROFILE: Profile = {
+  firstName: 'Apex',
+  lastName: 'Gaffer',
+  dob: '14 Aug 1990',
+  gender: 'Prefer not to say',
+  email: 'apex.gaffer@example.com',
+  faceId: true,
+};

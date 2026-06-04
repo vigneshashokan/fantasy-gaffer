@@ -22,6 +22,19 @@ import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
 import { ChipsRow } from '@/components/transfer/ChipsRow';
 import { TransferPitch } from '@/components/transfer/TransferPitch';
 import { TransferSuggestionsCard } from '@/components/transfer/TransferSuggestionsCard';
+import { SectionCard } from '@/components/ui/SectionCard';
+import { Toggle } from '@/components/ui/Toggle';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { ReadField } from '@/components/profile/ReadField';
+import { GenderRow } from '@/components/profile/GenderRow';
+import { ToggleRow } from '@/components/profile/ToggleRow';
+import { ChangePassword } from '@/components/profile/ChangePassword';
+import { DeleteAccount } from '@/components/profile/DeleteAccount';
+import { PlusCard } from '@/components/settings/PlusCard';
+import { ThemeToggle } from '@/components/settings/ThemeToggle';
+import { NotificationsCard } from '@/components/settings/NotificationsCard';
+import { SettingsRow } from '@/components/settings/SettingsRow';
+import { FollowUsRow } from '@/components/settings/FollowUsRow';
 import { apexTokens } from '@/constants/apexTokens';
 import { PitchMarks } from '@/components/pitch/PitchMarks';
 import { ApexPitchMarks } from '@/components/pitch/ApexPitchMarks';
@@ -444,6 +457,107 @@ describe('TransferSuggestionsCard', () => {
     expect(getByText('Walker')).toBeTruthy();
     expect(getByText('Muñoz')).toBeTruthy();
     expect(getByText('+6 xPts')).toBeTruthy();
+  });
+});
+
+// ── Shared primitives ─────────────────────────────────────────
+describe('SectionCard', () => {
+  it('renders title and children', () => {
+    const tk = apexTokens(false, 'classic');
+    const { getByText } = render(
+      <SectionCard title="Personal details" tk={tk}>
+        <></>
+      </SectionCard>
+    );
+    expect(getByText('Personal details')).toBeTruthy();
+  });
+});
+
+describe('Toggle', () => {
+  it('renders both states without crash', () => {
+    const { toJSON: a } = render(<Toggle value onChange={() => {}} onColor="#0f0" offColor="#ccc" />);
+    expect(a()).toBeTruthy();
+    const { toJSON: b } = render(<Toggle value={false} onChange={() => {}} onColor="#0f0" offColor="#ccc" />);
+    expect(b()).toBeTruthy();
+  });
+});
+
+describe('ScreenHeader', () => {
+  it('renders title', () => {
+    const { getByText } = render(
+      <ScreenHeader title="Profile" gradFrom="#37003C" gradTo="#5B0F63" onBack={() => {}} />
+    );
+    expect(getByText('Profile')).toBeTruthy();
+  });
+});
+
+// ── Profile components ────────────────────────────────────────
+describe('Profile components', () => {
+  const tk = apexTokens(false, 'classic');
+
+  it('ReadField shows label and value', () => {
+    const { getByText } = render(<ReadField label="First name" value="Apex" tk={tk} />);
+    expect(getByText('First name')).toBeTruthy();
+    expect(getByText('Apex')).toBeTruthy();
+  });
+
+  it('GenderRow shows current value', () => {
+    const { getByText } = render(<GenderRow value="Female" onChange={() => {}} tk={tk} />);
+    expect(getByText('Female')).toBeTruthy();
+  });
+
+  it('ToggleRow shows label and sub', () => {
+    const { getByText } = render(
+      <ToggleRow label="Face ID" sub="Biometric sign-in" value onChange={() => {}} tk={tk} />
+    );
+    expect(getByText('Face ID')).toBeTruthy();
+    expect(getByText('Biometric sign-in')).toBeTruthy();
+  });
+
+  it('ChangePassword renders collapsed', () => {
+    const { getByText } = render(<ChangePassword tk={tk} />);
+    expect(getByText('Change password')).toBeTruthy();
+  });
+
+  it('DeleteAccount renders initial button', () => {
+    const { getByText } = render(<DeleteAccount tk={tk} />);
+    expect(getByText('Delete account')).toBeTruthy();
+  });
+});
+
+// ── Settings components ───────────────────────────────────────
+describe('Settings components', () => {
+  const tk = apexTokens(false, 'classic');
+
+  it('PlusCard renders promo copy', () => {
+    const { getByText } = render(<PlusCard gradFrom="#37003C" gradTo="#5B0F63" />);
+    expect(getByText('FPL Gaffer')).toBeTruthy();
+    expect(getByText('Go Premium')).toBeTruthy();
+  });
+
+  it('ThemeToggle shows all 3 palette labels', () => {
+    const { getByText } = render(<ThemeToggle palette="classic" onSetPalette={() => {}} />);
+    expect(getByText('Classic')).toBeTruthy();
+    expect(getByText('Fantasy')).toBeTruthy();
+    expect(getByText('Pitch')).toBeTruthy();
+  });
+
+  it('NotificationsCard renders header and summary', () => {
+    const { getByText } = render(<NotificationsCard tk={tk} />);
+    expect(getByText('Notifications')).toBeTruthy();
+    expect(getByText('3 of 4 on')).toBeTruthy(); // default state
+  });
+
+  it('SettingsRow renders label', () => {
+    const { getByText } = render(
+      <SettingsRow icon={<></>} label="Send Feedback" onPress={() => {}} tk={tk} />
+    );
+    expect(getByText('Send Feedback')).toBeTruthy();
+  });
+
+  it('FollowUsRow renders head', () => {
+    const { getByText } = render(<FollowUsRow tk={tk} />);
+    expect(getByText('Follow Us')).toBeTruthy();
   });
 });
 
