@@ -31,7 +31,7 @@ export function ApexDugout({ players, card, cardBorder, faint }: ApexDugoutProps
         {players.map((p) => (
           <View key={p.name} style={styles.player}>
             <View style={styles.avatarWrap}>
-              <AvatarDisc size={52} player={p} glyph={p.gk ? '#00E472' : '#A78BFA'} />
+              <AvatarDisc size={42} player={p} glyph={p.gk ? '#00E472' : '#A78BFA'} />
               {p.alert && (
                 <View style={[styles.alert, { borderColor: card }]} />
               )}
@@ -78,12 +78,12 @@ const styles = StyleSheet.create({
   player: {
     alignItems: 'center',
     gap: 7,
-    width: 84,
+    width: 70,
   },
   avatarWrap: {
     position: 'relative',
-    width: 52,
-    height: 52,
+    width: 42,
+    height: 42,
   },
   alert: {
     position: 'absolute',
