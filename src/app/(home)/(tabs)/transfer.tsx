@@ -7,7 +7,6 @@ import { apexTokens } from '@/constants/apexTokens';
 import { APEX_TEAM, TransferPitchPlayer } from '@/constants/data';
 import { TransferInfoCard } from '@/components/transfer/TransferInfoCard';
 import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
-import { ChipsRow } from '@/components/transfer/ChipsRow';
 import { TransferPitch } from '@/components/transfer/TransferPitch';
 import { TransferSuggestionsCard } from '@/components/transfer/TransferSuggestionsCard';
 import { ApplyAllCard } from '@/components/team/ApplyAllCard';
@@ -67,11 +66,6 @@ export default function TransferTab() {
           />
         </View>
 
-        <View style={styles.section}>
-          <Text style={[styles.sectionLabel, { color: tk.faint }]}>Play a Chip</Text>
-        </View>
-        <ChipsRow chips={tr.chips} tk={tk} />
-
         <View style={styles.pitchWrap}>
           <TransferPitch
             rows={tr.pitch}
@@ -113,17 +107,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 14,
     gap: 14,
-  },
-  section: {
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 10,
-  },
-  sectionLabel: {
-    fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 12,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
   },
   pitchWrap: {
     paddingHorizontal: 16,

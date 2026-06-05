@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
@@ -115,6 +115,7 @@ export default function TeamTab() {
 
         {isUpcoming && (
           <View style={styles.section}>
+            <Text style={[styles.sectionLabel, { color: tk.faint }]}>Play a Chip</Text>
             <ChipsRow chips={at.transfer.chips} tk={tk} />
           </View>
         )}
@@ -192,6 +193,13 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: 16,
+  },
+  sectionLabel: {
+    fontFamily: 'Archivo_800ExtraBold',
+    fontSize: 12,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 10,
   },
   chipBanner: {
     height: 4,
