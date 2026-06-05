@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
+import { Icon } from '@/components/ui/Icon';
 
 interface AccountMenuProps {
   visible: boolean;
@@ -83,13 +84,16 @@ export function AccountMenu({
 
         <View style={[styles.divider, { backgroundColor: t.line }]} />
         <Pressable style={styles.row} onPress={onProfile}>
+          <Icon name="person" color={t.text} size={18} />
           <Text style={[styles.rowText, { color: t.text }]}>Profile</Text>
         </Pressable>
         <Pressable style={styles.row} onPress={onSettings}>
+          <Icon name="gear" color={t.text} size={18} />
           <Text style={[styles.rowText, { color: t.text }]}>Settings</Text>
         </Pressable>
         <View style={[styles.divider, { backgroundColor: t.line }]} />
         <Pressable style={styles.row} onPress={onSignOut}>
+          <Icon name="signOut" color="#FF3B5C" size={18} />
           <Text style={[styles.rowText, { color: '#FF3B5C' }]}>Sign out</Text>
         </Pressable>
       </View>
@@ -139,6 +143,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
