@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
@@ -123,7 +124,15 @@ export default function TeamTab() {
         <View style={styles.section}>
           {activeChip && (
             <View style={[styles.chipBanner, { backgroundColor: tk.chipFill }]}>
-              <View style={styles.chipBannerIcon} />
+              <BoltGlyph />
+              <View style={styles.chipBannerText}>
+                <Text style={styles.chipBannerName}>{activeChip.name}</Text>
+                <Text style={styles.chipBannerSub}>
+                  {gwState === 'live'
+                    ? 'Chip active this gameweek'
+                    : 'Chip played this gameweek'}
+                </Text>
+              </View>
             </View>
           )}
           <ApexPitch
@@ -185,6 +194,14 @@ export default function TeamTab() {
   );
 }
 
+function BoltGlyph() {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+      <Path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13l0-8z" fill="#FFC53D" />
+    </Svg>
+  );
+}
+
 const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: 16,
@@ -202,12 +219,28 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   chipBanner: {
-    height: 4,
-    borderRadius: 999,
-    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 14,
+    marginBottom: 12,
   },
-  chipBannerIcon: {
-    width: 0,
+  chipBannerText: {
+    flex: 1,
+  },
+  chipBannerName: {
+    fontFamily: 'Archivo_800ExtraBold',
+    fontSize: 15,
+    color: '#fff',
+    letterSpacing: -0.15,
+  },
+  chipBannerSub: {
+    fontFamily: 'Archivo_500Medium',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.78)',
+    marginTop: 2,
   },
   applyWrap: {
     position: 'absolute',
