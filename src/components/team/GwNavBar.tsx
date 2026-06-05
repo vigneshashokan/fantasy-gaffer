@@ -27,7 +27,8 @@ export function GwNavBar({
       return { bg: tk.greenSoft, fg: tk.green, dotBg: tk.green };
     if (state === 'upcoming')
       return { bg: tk.yellowSoft, fg: tk.yellow, dotBg: tk.yellow };
-    return { bg: tk.headStrip, fg: tk.faint, dotBg: null as string | null };
+    const pastBg = tk.dark ? '#1E2434' : '#E7E9F2';
+    return { bg: pastBg, fg: tk.faint, dotBg: null as string | null };
   })();
 
   return (
@@ -68,7 +69,10 @@ function NavBtn({
       onPress={onPress}
       style={[
         styles.btn,
-        { borderColor: tk.cardBorder, opacity: disabled ? 0.35 : 1 },
+        {
+          borderColor: tk.dark ? 'rgba(255,255,255,0.22)' : '#C4C8D2',
+          opacity: disabled ? 0.35 : 1,
+        },
       ]}
     >
       <Icon name={dir === 'l' ? 'chevL' : 'chevR'} color={tk.variant} size={22} />
@@ -80,7 +84,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 8,
     paddingVertical: 4,
     paddingBottom: 16,
   },
@@ -99,7 +104,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 999,
-    minWidth: 208,
+    minWidth: 168,
     height: 46,
     justifyContent: 'center',
   },
