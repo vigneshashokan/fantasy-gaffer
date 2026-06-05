@@ -80,7 +80,8 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 12,
     paddingVertical: 4,
     paddingBottom: 16,
   },
