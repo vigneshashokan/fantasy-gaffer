@@ -64,7 +64,7 @@ export function CaptainPickCard({
             ]}
           >
             <View style={{ position: 'relative' }}>
-              <Kit club={p.club} size={36} />
+              <Kit club={p.club} size={36} playerName={p.name} />
               {isOn && (
                 <View style={[styles.captBadge, { backgroundColor: tk.activeFill, borderColor: tk.card }]}>
                   <Text style={styles.captBadgeText}>C</Text>

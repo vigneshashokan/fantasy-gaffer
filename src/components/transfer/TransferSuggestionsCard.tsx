@@ -73,7 +73,7 @@ export function TransferSuggestionsCard({
           >
             <View style={{ flex: 1, minWidth: 0 }}>
               <View style={styles.swapRow}>
-                <Kit club={s.outClub} size={24} />
+                <Kit club={s.outClub} size={24} playerName={s.out} />
                 <Text style={[styles.out, { color: tk.pink }]} numberOfLines={1}>
                   {s.out}
                 </Text>
@@ -86,7 +86,7 @@ export function TransferSuggestionsCard({
                     strokeLinejoin="round"
                   />
                 </Svg>
-                <Kit club={s.inClub} size={24} />
+                <Kit club={s.inClub} size={24} playerName={s.in} />
                 <Text style={[styles.in, { color: tk.green }]} numberOfLines={1}>
                   {s.in}
                 </Text>

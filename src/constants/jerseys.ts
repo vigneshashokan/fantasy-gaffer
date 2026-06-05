@@ -41,6 +41,7 @@ const JERSEY_MAP: Record<string, number> = {
   'Jackson':       require('@/assets/jerseys/chelsea.png'),
   'Cunha':         require('@/assets/jerseys/manchester_united.png'),
   'Mateta':        require('@/assets/jerseys/crystal_palace.png'),
+  'Walker':        require('@/assets/jerseys/manchester_city.png'),
 };
 
 export function jerseyFor(playerName: string): number | undefined {
