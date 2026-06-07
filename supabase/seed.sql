@@ -1,0 +1,9 @@
+-- Intentionally empty. Test data is created via the app's signup flow:
+-- run `npm start`, sign up with Google/Apple/email, complete profile.
+-- Direct seeding of auth.users is fragile (encrypted password format,
+-- identity rows, audit logs) and produces test rows that diverge from
+-- real-signup state.
+--
+-- If automated test seeding becomes needed (e.g. for E2E tests in #48),
+-- write a TypeScript script using supabase.auth.admin.createUser() via
+-- the service-role key — not raw SQL.
