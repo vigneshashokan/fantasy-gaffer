@@ -19,7 +19,7 @@ Managed BaaS removes the auth / DB / cron toil for a solo project, RLS gives Pos
 ### Future: adding staging
 When the app is closer to launch:
 1. Create a second Supabase project in the same region; capture its Project Ref + anon key.
-2. `supabase db dump --linked > schema.sql` from prod, then apply to staging.
+2. Apply the existing migrations to staging: `supabase link --project-ref <STAGING_REF>` then `supabase db push`. (Migrations in `supabase/migrations/` are the source of truth, so staging starts identical to prod.)
 3. Add a `staging` set of GitHub Actions secrets (or rename the existing ones to `_PROD` and add `_STAGING`).
 4. Change `deploy-supabase.yml` to target staging on merge to `main`; add a `workflow_dispatch` job that promotes staging → prod.
 5. Add an EAS Build `staging` profile injecting the staging URL into `EXPO_PUBLIC_SUPABASE_*`.
@@ -30,8 +30,14 @@ When the app is closer to launch:
 fpl-gaffer-react-native-app/
 ├─ supabase/
 │  ├─ config.toml
-│  ├─ migrations/         # SQL migrations, applied via `supabase db push`
-│  └─ functions/          # Deno Edge Functions, deployed via `supabase functions deploy`
+│  ├─ seed.sql
+│  ├─ migrations/
+│  │  └─ 20260604000000_init.sql
+│  └─ functions/
+│     └─ ping/
+│        ├─ index.ts
+│        ├─ deno.json
+│        └─ .npmrc
 ├─ src/
 │  └─ lib/supabase.ts     # @supabase/supabase-js client singleton
 ├─ app.config.ts          # Reads EXPO_PUBLIC_SUPABASE_* into Expo `extra`
@@ -57,6 +63,9 @@ fpl-gaffer-react-native-app/
 - `cp .env.example .env` + fill in values from your Supabase project.
 - (Optional, for a fully offline backend) `supabase start` to boot a local Postgres + Auth + Edge Functions stack in Docker.
 - `npm start` to run the Expo dev server.
+
+### How the app reads the env vars
+`app.config.ts` reads `process.env.EXPO_PUBLIC_SUPABASE_URL` / `..._ANON_KEY` at bundle time and maps them into Expo's `extra` field. App code then reads them via `Constants.expoConfig?.extra?.supabaseUrl` (see `src/lib/supabase.ts`). Don't read `process.env.EXPO_PUBLIC_*` directly from app code — it'll be `undefined` at runtime.
 
 ## Deploying
 - Merge to `main` → GitHub Actions runs `supabase db push` + `supabase functions deploy ping`. Path-filtered to `supabase/**`, so UI-only PRs don't spend CI minutes.
