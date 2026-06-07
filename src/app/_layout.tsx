@@ -15,8 +15,9 @@ import {
   JetBrainsMono_600SemiBold,
   JetBrainsMono_700Bold,
 } from '@expo-google-fonts/jetbrains-mono';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
+import { useThemeStore } from '@/store/themeStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -33,11 +34,18 @@ export default function RootLayout() {
     JetBrainsMono_700Bold,
   });
 
-  useEffect(() => {
-    if (fontsLoaded) SplashScreen.hideAsync();
-  }, [fontsLoaded]);
+  const [themeHydrated, setThemeHydrated] = useState(useThemeStore.persist.hasHydrated());
 
-  if (!fontsLoaded) return null;
+  useEffect(() => {
+    if (themeHydrated) return;
+    return useThemeStore.persist.onFinishHydration(() => setThemeHydrated(true));
+  }, [themeHydrated]);
+
+  useEffect(() => {
+    if (fontsLoaded && themeHydrated) SplashScreen.hideAsync();
+  }, [fontsLoaded, themeHydrated]);
+
+  if (!fontsLoaded || !themeHydrated) return null;
 
   return (
     <SafeAreaProvider>
