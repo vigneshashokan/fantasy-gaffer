@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useThemeStore } from '@/store/themeStore';
@@ -12,6 +12,7 @@ import { ThemeToggle } from '@/components/settings/ThemeToggle';
 import { NotificationsCard } from '@/components/settings/NotificationsCard';
 import { SettingsRow } from '@/components/settings/SettingsRow';
 import { FollowUsRow } from '@/components/settings/FollowUsRow';
+import { supabase } from '@/lib/supabase';
 
 export default function SettingsModal() {
   const router = useRouter();
@@ -73,6 +74,28 @@ export default function SettingsModal() {
         <Text style={[styles.version, { color: tk.faint }]}>
           FPL Gaffer · v1.0.0
         </Text>
+
+        {__DEV__ && (
+          <SectionCard title="Connectivity (dev)" tk={tk}>
+            <Pressable
+              onPress={async () => {
+                try {
+                  const { data, error } = await supabase.functions.invoke('ping');
+                  if (error) throw error;
+                  Alert.alert('ping ok', JSON.stringify(data));
+                } catch (e) {
+                  Alert.alert('ping failed', e instanceof Error ? e.message : String(e));
+                }
+              }}
+              style={({ pressed }) => [
+                styles.devButton,
+                { backgroundColor: tk.headStrip, borderColor: tk.cardBorder, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Text style={[styles.devButtonText, { color: tk.text }]}>Ping Edge Function</Text>
+            </Pressable>
+          </SectionCard>
+        )}
       </ScrollView>
     </View>
   );
@@ -144,5 +167,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     paddingTop: 4,
     paddingBottom: 28,
+  },
+  devButton: {
+    marginHorizontal: 16,
+    marginVertical: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  devButtonText: {
+    fontFamily: 'Archivo_700Bold',
+    fontSize: 14,
   },
 });
