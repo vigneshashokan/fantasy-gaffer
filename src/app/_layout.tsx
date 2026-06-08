@@ -18,6 +18,7 @@ import {
 import { useEffect, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useThemeStore } from '@/store/themeStore';
+import { useAuthStore } from '@/store/authStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -35,6 +36,7 @@ export default function RootLayout() {
   });
 
   const [themeHydrated, setThemeHydrated] = useState(useThemeStore.persist.hasHydrated());
+  const authHydrated = useAuthStore((s) => s.hydrated);
 
   useEffect(() => {
     if (themeHydrated) return;
@@ -42,10 +44,10 @@ export default function RootLayout() {
   }, [themeHydrated]);
 
   useEffect(() => {
-    if (fontsLoaded && themeHydrated) SplashScreen.hideAsync();
-  }, [fontsLoaded, themeHydrated]);
+    if (fontsLoaded && themeHydrated && authHydrated) SplashScreen.hideAsync();
+  }, [fontsLoaded, themeHydrated, authHydrated]);
 
-  if (!fontsLoaded || !themeHydrated) return null;
+  if (!fontsLoaded || !themeHydrated || !authHydrated) return null;
 
   return (
     <SafeAreaProvider>

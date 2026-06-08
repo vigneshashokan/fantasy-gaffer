@@ -1,7 +1,16 @@
 import React from 'react';
-import { Stack } from 'expo-router';
+import { Stack, Redirect } from 'expo-router';
+import { useAuthStore } from '@/store/authStore';
+import { useProfileGate } from '@/lib/useProfileGate';
 
 export default function HomeStackLayout() {
+  const session = useAuthStore((s) => s.session);
+  if (!session) return <Redirect href="/(onboarding)/signin" />;
+
+  const { status } = useProfileGate();
+  if (status === 'loading') return null;
+  if (status === 'missing') return <Redirect href="/(onboarding)/complete-profile" />;
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
