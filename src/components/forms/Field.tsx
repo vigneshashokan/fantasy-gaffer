@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, KeyboardTypeOptions } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 
-type IconName = 'mail' | 'lock';
+type IconName = 'mail' | 'lock' | 'person';
 
 interface FieldProps {
   icon: IconName;
