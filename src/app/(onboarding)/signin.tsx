@@ -9,7 +9,6 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuthStore } from '@/store/authStore';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
 import { GafferLogo } from '@/components/ui/GafferLogo';
@@ -20,15 +19,15 @@ import { SocialBtn } from '@/components/forms/SocialBtn';
 
 export default function SignIn() {
   const router = useRouter();
-  const signIn = useAuthStore((s) => s.signIn);
   const { paletteKey, dark } = useThemeStore();
   const t = getTheme(paletteKey, dark);
 
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
 
+  // Mock handler kept temporarily so the existing buttons compile; replaced
+  // in Task 7 by real Google sign-in + "Coming soon" alerts for the rest.
   const handleSignIn = () => {
-    signIn();
     router.replace('/(home)/(tabs)/team');
   };
 
