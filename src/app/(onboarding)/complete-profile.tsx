@@ -9,10 +9,10 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
-import { useProfileGate } from '@/lib/useProfileGate';
 import { getTheme } from '@/constants/theme';
 import { GafferLogo } from '@/components/ui/GafferLogo';
 import { PillBtn } from '@/components/ui/PillBtn';
@@ -31,7 +31,6 @@ function ageYears(dob: Date): number {
 
 export default function CompleteProfile() {
   const session = useAuthStore((s) => s.session);
-  const { refetch } = useProfileGate();
   const { paletteKey, dark } = useThemeStore();
   const t = getTheme(paletteKey, dark);
 
@@ -64,6 +63,7 @@ export default function CompleteProfile() {
       });
       if (profileError && profileError.code !== '23505') {
         Alert.alert("Couldn't save your profile", profileError.message);
+        setSubmitting(false);
         return;
       }
       const { error: prefsError } = await supabase
@@ -72,8 +72,9 @@ export default function CompleteProfile() {
       if (prefsError && prefsError.code !== '23505') {
         console.warn('notification_prefs insert failed (non-fatal):', prefsError.message);
       }
-      refetch();
-    } finally {
+      router.replace('/(home)/(tabs)/team');
+    } catch (err) {
+      console.error(err);
       setSubmitting(false);
     }
   };

@@ -47,10 +47,9 @@ export function BrandHeader() {
           setMenuOpen(false);
           router.push('/settings');
         }}
-        onSignOut={() => {
+        onSignOut={async () => {
           setMenuOpen(false);
-          signOut();
-          router.replace('/(onboarding)');
+          await signOut();
         }}
       />
     </View>

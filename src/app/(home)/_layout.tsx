@@ -5,9 +5,9 @@ import { useProfileGate } from '@/lib/useProfileGate';
 
 export default function HomeStackLayout() {
   const session = useAuthStore((s) => s.session);
-  if (!session) return <Redirect href="/(onboarding)/signin" />;
-
   const { status } = useProfileGate();
+
+  if (!session) return <Redirect href="/(onboarding)/signin" />;
   if (status === 'loading') return null;
   if (status === 'missing') return <Redirect href="/(onboarding)/complete-profile" />;
 
