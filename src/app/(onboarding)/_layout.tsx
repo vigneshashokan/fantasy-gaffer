@@ -8,11 +8,12 @@ export default function OnboardingLayout() {
   const { status } = useProfileGate();
   const segments = useSegments();
   const onCompleteProfile = segments[segments.length - 1] === 'complete-profile';
+  const onResetPassword = segments[segments.length - 1] === 'reset-password';
 
-  if (session && status === 'complete') {
+  if (session && status === 'complete' && !onResetPassword) {
     return <Redirect href="/(home)/(tabs)/team" />;
   }
-  if (session && status === 'missing' && !onCompleteProfile) {
+  if (session && status === 'missing' && !onCompleteProfile && !onResetPassword) {
     return <Redirect href="/(onboarding)/complete-profile" />;
   }
 

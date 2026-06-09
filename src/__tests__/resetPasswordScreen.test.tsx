@@ -52,13 +52,14 @@ describe('ResetPassword screen', () => {
     expect(mockReset).not.toHaveBeenCalled();
   });
 
-  it('calls resetPassword on valid submit', async () => {
+  it('calls resetPassword on valid submit and navigates home', async () => {
     mockReset.mockResolvedValueOnce({ ok: true });
     const { getByPlaceholderText, getByText } = render(<ResetPassword />);
     fireEvent.changeText(getByPlaceholderText('New password'), 'NewStrong1');
     fireEvent.changeText(getByPlaceholderText('Confirm password'), 'NewStrong1');
     fireEvent.press(getByText('Update password'));
     await waitFor(() => expect(mockReset).toHaveBeenCalledWith('NewStrong1'));
+    expect(mockReplace).toHaveBeenCalledWith('/(home)/(tabs)/team');
   });
 
   it('shows expired_link error from reset call', async () => {

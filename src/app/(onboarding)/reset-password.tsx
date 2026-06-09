@@ -71,7 +71,7 @@ export default function ResetPassword() {
     try {
       const r = await resetPassword(parsed.data.password);
       if (r.ok) {
-        // (onboarding)/_layout will redirect now that session exists with the new password.
+        router.replace('/(home)/(tabs)/team');
         return;
       }
       if (r.error === 'weak_password') {
