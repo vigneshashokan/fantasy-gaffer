@@ -19,6 +19,7 @@ import { useEffect, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
+import { useEmailAuthDeepLinks } from '@/lib/auth/deepLink';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,6 +38,7 @@ export default function RootLayout() {
 
   const [themeHydrated, setThemeHydrated] = useState(useThemeStore.persist.hasHydrated());
   const authHydrated = useAuthStore((s) => s.hydrated);
+  useEmailAuthDeepLinks();
 
   useEffect(() => {
     if (themeHydrated) return;
