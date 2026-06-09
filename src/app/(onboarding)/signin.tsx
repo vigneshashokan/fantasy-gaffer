@@ -10,9 +10,12 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
 import { signInWithGoogle } from '@/lib/auth/google';
+import { signInWithEmail } from '@/lib/auth/email';
+import type { AuthErrorKind } from '@/lib/auth/email';
 import { GafferLogo } from '@/components/ui/GafferLogo';
 import { PillBtn } from '@/components/ui/PillBtn';
 import { Icon } from '@/components/ui/Icon';
@@ -22,12 +25,28 @@ import { SocialBtn } from '@/components/forms/SocialBtn';
 const COMING_SOON = () =>
   Alert.alert('Coming soon', 'This sign-in option is in a future update.');
 
+function errorMessageFor(kind: AuthErrorKind): string {
+  switch (kind) {
+    case 'invalid_credentials':
+      return 'Email or password is incorrect';
+    case 'rate_limited':
+      return 'Too many attempts — try again in a few minutes';
+    case 'network':
+      return "Couldn't reach the server. Check your connection and try again";
+    default:
+      return 'Something went wrong. Please try again';
+  }
+}
+
 export default function SignIn() {
   const { paletteKey, dark } = useThemeStore();
   const t = getTheme(paletteKey, dark);
+  const params = useLocalSearchParams<{ verify_expired?: string }>();
 
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
 
@@ -41,6 +60,25 @@ export default function SignIn() {
       setGoogleError('Google sign-in failed. Please try again.');
     } finally {
       setGoogleSubmitting(false);
+    }
+  };
+
+  const onSubmit = async () => {
+    if (submitting) return;
+    setSubmitError(null);
+    setSubmitting(true);
+    try {
+      const r = await signInWithEmail(email.trim().toLowerCase(), pw);
+      if (r.ok) return; // (onboarding)/_layout redirects on session change
+      if (r.error === 'email_not_confirmed') {
+        router.push(
+          `/(onboarding)/verify-pending?email=${encodeURIComponent(email.trim().toLowerCase())}`,
+        );
+        return;
+      }
+      setSubmitError(errorMessageFor(r.error));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -58,6 +96,12 @@ export default function SignIn() {
         <Text style={[styles.subtitle, { color: t.textMuted }]}>
           Sign in to manage your squad
         </Text>
+
+        {params.verify_expired === '1' && (
+          <Text style={[styles.banner, { color: t.textMuted }]}>
+            Verification link expired. Sign in again to resend.
+          </Text>
+        )}
 
         <View style={{ gap: 11 }}>
           <SocialBtn provider="google" onPress={onGoogle} />
@@ -107,19 +151,26 @@ export default function SignIn() {
           />
         </View>
 
+        {submitError && (
+          <Text style={[styles.error, { color: '#FF3B5C' }]}>{submitError}</Text>
+        )}
+
         <View style={styles.forgotWrap}>
-          <Pressable onPress={COMING_SOON} hitSlop={8}>
+          <Pressable
+            onPress={() => router.push('/(onboarding)/forgot-password')}
+            hitSlop={8}
+          >
             <Text style={[styles.forgot, { color: t.accent }]}>Forgot password?</Text>
           </Pressable>
         </View>
 
         <PillBtn
           variant="accent"
-          onPress={COMING_SOON}
+          onPress={onSubmit}
           accentInk={t.accentInk}
           style={styles.signInBtn}
         >
-          Sign in
+          {submitting ? 'Signing in…' : 'Sign in'}
         </PillBtn>
 
         <View style={styles.faceWrap}>
@@ -137,6 +188,15 @@ export default function SignIn() {
             Sign in with Face ID
           </Text>
         </View>
+
+        <View style={styles.signUpWrap}>
+          <Text style={[styles.signUpHint, { color: t.textMuted }]}>
+            Don't have an account?{' '}
+          </Text>
+          <Pressable onPress={() => router.push('/(onboarding)/signup')} hitSlop={8}>
+            <Text style={[styles.signUpLink, { color: t.accent }]}>Sign up</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -148,10 +208,7 @@ const styles = StyleSheet.create({
     paddingTop: 64,
     paddingBottom: 32,
   },
-  logoWrap: {
-    alignItems: 'center',
-    marginBottom: 26,
-  },
+  logoWrap: { alignItems: 'center', marginBottom: 26 },
   title: {
     fontFamily: 'Archivo_900Black',
     fontSize: 30,
@@ -165,10 +222,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 26,
   },
-  spinnerWrap: {
-    marginTop: 10,
-    alignItems: 'center',
+  banner: {
+    fontFamily: 'Archivo_600SemiBold',
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 14,
   },
+  spinnerWrap: { marginTop: 10, alignItems: 'center' },
   error: {
     marginTop: 8,
     textAlign: 'center',
@@ -181,10 +241,7 @@ const styles = StyleSheet.create({
     gap: 14,
     marginVertical: 22,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
+  dividerLine: { flex: 1, height: 1 },
   dividerText: {
     fontFamily: 'Archivo_700Bold',
     fontSize: 12.5,
@@ -195,19 +252,9 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 18,
   },
-  forgot: {
-    fontFamily: 'Archivo_700Bold',
-    fontSize: 14,
-  },
-  signInBtn: {
-    width: '100%',
-    height: 54,
-  },
-  faceWrap: {
-    alignItems: 'center',
-    gap: 9,
-    marginTop: 22,
-  },
+  forgot: { fontFamily: 'Archivo_700Bold', fontSize: 14 },
+  signInBtn: { width: '100%', height: 54 },
+  faceWrap: { alignItems: 'center', gap: 9, marginTop: 22 },
   faceBtn: {
     width: 60,
     height: 60,
@@ -216,8 +263,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  faceLabel: {
-    fontFamily: 'Archivo_700Bold',
-    fontSize: 13.5,
+  faceLabel: { fontFamily: 'Archivo_700Bold', fontSize: 13.5 },
+  signUpWrap: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 26,
   },
+  signUpHint: { fontFamily: 'Archivo_500Medium', fontSize: 14 },
+  signUpLink: { fontFamily: 'Archivo_800ExtraBold', fontSize: 14 },
 });
