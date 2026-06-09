@@ -1,0 +1,43 @@
+import { supabase } from '@/lib/supabase';
+
+export type AuthErrorKind =
+  | 'invalid_credentials'
+  | 'email_not_confirmed'
+  | 'rate_limited'
+  | 'network'
+  | 'user_already_exists'
+  | 'weak_password'
+  | 'expired_link'
+  | 'unknown';
+
+export type Result<T = void> =
+  | { ok: true; value: T }
+  | { ok: false; error: AuthErrorKind };
+
+function classify(err: { code?: string; status?: number; message?: string }): AuthErrorKind {
+  if (err.code === 'invalid_credentials') return 'invalid_credentials';
+  if (err.code === 'email_not_confirmed') return 'email_not_confirmed';
+  if (err.code === 'user_already_exists') return 'user_already_exists';
+  if (err.code === 'weak_password') return 'weak_password';
+  if (err.code === 'otp_expired' || err.code === 'expired_link') return 'expired_link';
+  if (err.status === 429 || err.code === 'over_request_rate_limit' || err.code === 'over_email_send_rate_limit') {
+    return 'rate_limited';
+  }
+  return 'unknown';
+}
+
+function classifyThrown(err: unknown): AuthErrorKind {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/network/i.test(msg) || /fetch/i.test(msg)) return 'network';
+  return 'unknown';
+}
+
+export async function signInWithEmail(email: string, password: string): Promise<Result> {
+  try {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { ok: false, error: classify(error) };
+    return { ok: true, value: undefined };
+  } catch (err) {
+    return { ok: false, error: classifyThrown(err) };
+  }
+}
