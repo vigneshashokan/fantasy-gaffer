@@ -5,7 +5,8 @@ type IconName =
   | 'chevL' | 'chevR' | 'arrowR' | 'check'
   | 'mail' | 'lock' | 'swap' | 'team'
   | 'fire' | 'google' | 'apple' | 'faceid'
-  | 'person' | 'gear' | 'signOut';
+  | 'person' | 'gear' | 'signOut'
+  | 'eye' | 'eyeOff';
 
 interface IconProps {
   name: IconName;
@@ -53,6 +54,10 @@ export function Icon({ name, color = '#fff', size = 20 }: IconProps) {
       return <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><Circle cx="12" cy="12" r="3" /><Path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></Svg>;
     case 'signOut':
       return <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><Path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><Path d="M16 17l5-5-5-5" /><Path d="M21 12H9" /></Svg>;
+    case 'eye':
+      return <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><Circle cx="12" cy="12" r="3" /></Svg>;
+    case 'eyeOff':
+      return <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><Path d="M17.94 17.94A10 10 0 0112 20c-7 0-11-8-11-8a18 18 0 014.06-5.5" /><Path d="M9.9 4.24A10 10 0 0112 4c7 0 11 8 11 8a17 17 0 01-2.16 3.18" /><Path d="M1 1l22 22" /><Path d="M14.12 14.12a3 3 0 11-4.24-4.24" /></Svg>;
     default:
       return null;
   }

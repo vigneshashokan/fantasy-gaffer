@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import { Icon } from '@/components/ui/Icon';
 import { PosTag } from '@/components/ui/PosTag';
 import { PillBtn } from '@/components/ui/PillBtn';
@@ -192,6 +192,33 @@ describe('Field', () => {
       <Field {...baseProps} icon="lock" placeholder="Password" secureTextEntry />
     );
     expect(getByPlaceholderText('Password')).toBeTruthy();
+  });
+
+  it('renders a "Show password" toggle on a secure field', () => {
+    const { getByLabelText } = render(
+      <Field {...baseProps} icon="lock" placeholder="Password" secureTextEntry />
+    );
+    expect(getByLabelText('Show password')).toBeTruthy();
+  });
+
+  it('toggles secureTextEntry when the eye is pressed', () => {
+    const { getByPlaceholderText, getByLabelText } = render(
+      <Field {...baseProps} icon="lock" placeholder="Password" secureTextEntry />
+    );
+    const input = getByPlaceholderText('Password');
+    expect(input.props.secureTextEntry).toBe(true);
+    fireEvent.press(getByLabelText('Show password'));
+    expect(input.props.secureTextEntry).toBe(false);
+    expect(getByLabelText('Hide password')).toBeTruthy();
+    fireEvent.press(getByLabelText('Hide password'));
+    expect(input.props.secureTextEntry).toBe(true);
+  });
+
+  it('does not render a password toggle on a non-secure field', () => {
+    const { queryByLabelText } = render(
+      <Field {...baseProps} icon="mail" placeholder="Email address" />
+    );
+    expect(queryByLabelText(/password/i)).toBeNull();
   });
 });
 

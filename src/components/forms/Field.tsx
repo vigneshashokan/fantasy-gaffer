@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, KeyboardTypeOptions } from 'react-native';
+import { View, TextInput, StyleSheet, KeyboardTypeOptions, Pressable } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 
 type IconName = 'mail' | 'lock' | 'person';
@@ -34,6 +34,8 @@ export function Field({
   textMuted,
 }: FieldProps) {
   const [focused, setFocused] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const hidden = secureTextEntry && !revealed;
   return (
     <View
       style={[
@@ -47,7 +49,7 @@ export function Field({
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={textMuted}
-        secureTextEntry={secureTextEntry}
+        secureTextEntry={hidden}
         keyboardType={keyboardType}
         autoComplete={autoComplete}
         autoCapitalize="none"
@@ -55,6 +57,16 @@ export function Field({
         onBlur={() => setFocused(false)}
         style={[styles.input, { color: text }]}
       />
+      {secureTextEntry && (
+        <Pressable
+          onPress={() => setRevealed((r) => !r)}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={revealed ? 'Hide password' : 'Show password'}
+        >
+          <Icon name={revealed ? 'eyeOff' : 'eye'} color={textMuted} size={20} />
+        </Pressable>
+      )}
     </View>
   );
 }
