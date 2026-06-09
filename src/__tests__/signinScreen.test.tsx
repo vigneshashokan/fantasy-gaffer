@@ -100,4 +100,17 @@ describe('SignIn screen', () => {
     expect(queryByText(/valid email/i)).toBeTruthy();
     expect(mockSignIn).not.toHaveBeenCalled();
   });
+
+  it('clears the form fields when navigating to sign-up', async () => {
+    mockSignIn.mockResolvedValueOnce({ ok: false, error: 'invalid_credentials' });
+    const { getByPlaceholderText, getByText, findByText } = render(<SignIn />);
+    fireEvent.changeText(getByPlaceholderText('Email address'), 'a@b.co');
+    fireEvent.changeText(getByPlaceholderText('Password'), 'wrong');
+    fireEvent.press(getByText('Sign in'));
+    await findByText('Email or password is incorrect');
+    fireEvent.press(getByText('Sign up'));
+    expect(mockPush).toHaveBeenCalledWith('/(onboarding)/signup');
+    expect(getByPlaceholderText('Email address').props.value).toBe('');
+    expect(getByPlaceholderText('Password').props.value).toBe('');
+  });
 });

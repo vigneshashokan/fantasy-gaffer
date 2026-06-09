@@ -53,6 +53,19 @@ export default function SignIn() {
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
 
+  const clearForm = () => {
+    setEmail('');
+    setPw('');
+    setEmailError(null);
+    setPasswordError(null);
+    setSubmitError(null);
+  };
+
+  const goToSignUp = () => {
+    clearForm();
+    router.push('/(onboarding)/signup');
+  };
+
   const onGoogle = async () => {
     setGoogleError(null);
     setGoogleSubmitting(true);
@@ -223,7 +236,7 @@ export default function SignIn() {
           <Text style={[styles.signUpHint, { color: t.textMuted }]}>
             Don't have an account?{' '}
           </Text>
-          <Pressable onPress={() => router.push('/(onboarding)/signup')} hitSlop={8}>
+          <Pressable onPress={goToSignUp} hitSlop={8}>
             <Text style={[styles.signUpLink, { color: t.accent }]}>Sign up</Text>
           </Pressable>
         </View>

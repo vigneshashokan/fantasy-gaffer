@@ -104,4 +104,20 @@ describe('SignUp screen', () => {
     fireEvent.press(getByText('Sign in'));
     expect(mockBack).toHaveBeenCalled();
   });
+
+  it('clears the form fields when navigating back to sign-in', () => {
+    const { getByPlaceholderText, getByText } = render(<SignUp />);
+    fireEvent.changeText(getByPlaceholderText('First name'), 'Ada');
+    fireEvent.changeText(getByPlaceholderText('Last name'), 'Lovelace');
+    fireEvent.changeText(getByPlaceholderText('Email address'), 'ada@example.com');
+    fireEvent.changeText(getByPlaceholderText('Password'), 'Strong1Pass');
+    fireEvent.changeText(getByPlaceholderText('Confirm password'), 'Strong1Pass');
+    fireEvent.press(getByText('Sign in'));
+    expect(mockBack).toHaveBeenCalled();
+    expect(getByPlaceholderText('First name').props.value).toBe('');
+    expect(getByPlaceholderText('Last name').props.value).toBe('');
+    expect(getByPlaceholderText('Email address').props.value).toBe('');
+    expect(getByPlaceholderText('Password').props.value).toBe('');
+    expect(getByPlaceholderText('Confirm password').props.value).toBe('');
+  });
 });

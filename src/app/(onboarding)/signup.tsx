@@ -34,6 +34,20 @@ export default function SignUp() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
+  const clearForm = () => {
+    setFirstName('');
+    setLastName('');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setErrors({});
+  };
+
+  const goToSignIn = () => {
+    clearForm();
+    router.back();
+  };
+
   const onSubmit = async () => {
     if (submitting) return;
     setErrors({});
@@ -190,7 +204,7 @@ export default function SignUp() {
           <Text style={[styles.footerHint, { color: t.textMuted }]}>
             Already have an account?{' '}
           </Text>
-          <Pressable onPress={() => router.back()} hitSlop={8}>
+          <Pressable onPress={goToSignIn} hitSlop={8}>
             <Text style={[styles.footerLink, { color: t.accent }]}>Sign in</Text>
           </Pressable>
         </View>
