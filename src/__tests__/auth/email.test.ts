@@ -1,16 +1,18 @@
 const mockSignInWithPassword = jest.fn();
 const mockSignUp = jest.fn();
+const mockResetPasswordForEmail = jest.fn();
 
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
       signInWithPassword: (args: unknown) => mockSignInWithPassword(args),
       signUp: (args: unknown) => mockSignUp(args),
+      resetPasswordForEmail: (email: string, options: unknown) => mockResetPasswordForEmail(email, options),
     },
   },
 }));
 
-import { signInWithEmail, signUpWithEmail } from '@/lib/auth/email';
+import { signInWithEmail, signUpWithEmail, sendPasswordReset } from '@/lib/auth/email';
 
 describe('signInWithEmail', () => {
   beforeEach(() => {
@@ -124,5 +126,35 @@ describe('signUpWithEmail', () => {
     });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toBe('weak_password');
+  });
+});
+
+describe('sendPasswordReset', () => {
+  beforeEach(() => {
+    mockResetPasswordForEmail.mockReset();
+  });
+
+  it('calls supabase with email + redirectTo', async () => {
+    mockResetPasswordForEmail.mockResolvedValueOnce({ data: {}, error: null });
+    const r = await sendPasswordReset('a@b.co');
+    expect(mockResetPasswordForEmail).toHaveBeenCalledWith('a@b.co', {
+      redirectTo: 'fplgafferreactnativeapp://reset-password',
+    });
+    expect(r.ok).toBe(true);
+  });
+
+  it('returns ok even when supabase returns an error (no enumeration)', async () => {
+    mockResetPasswordForEmail.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'something_bad', message: 'nope' },
+    });
+    const r = await sendPasswordReset('a@b.co');
+    expect(r.ok).toBe(true);
+  });
+
+  it('returns ok even when supabase throws (no enumeration)', async () => {
+    mockResetPasswordForEmail.mockRejectedValueOnce(new Error('boom'));
+    const r = await sendPasswordReset('a@b.co');
+    expect(r.ok).toBe(true);
   });
 });

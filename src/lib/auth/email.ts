@@ -63,3 +63,18 @@ export async function signUpWithEmail(args: {
     return { ok: false, error: classifyThrown(err) };
   }
 }
+
+export async function sendPasswordReset(email: string): Promise<Result> {
+  // Always-success from the caller's perspective: never enumerate accounts.
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'fplgafferreactnativeapp://reset-password',
+    });
+    if (error) {
+      console.warn('[auth] resetPasswordForEmail returned error (swallowed):', error.message);
+    }
+  } catch (err) {
+    console.warn('[auth] resetPasswordForEmail threw (swallowed):', err);
+  }
+  return { ok: true, value: undefined };
+}
