@@ -94,3 +94,13 @@ export async function resetPassword(newPassword: string): Promise<Result> {
   }
   return { ok: true, value: undefined };
 }
+
+export async function resendVerification(email: string): Promise<Result> {
+  try {
+    const { error } = await supabase.auth.resend({ type: 'signup', email });
+    if (error) return { ok: false, error: classify(error) };
+    return { ok: true, value: undefined };
+  } catch (err) {
+    return { ok: false, error: classifyThrown(err) };
+  }
+}

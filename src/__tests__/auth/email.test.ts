@@ -3,6 +3,7 @@ const mockSignUp = jest.fn();
 const mockResetPasswordForEmail = jest.fn();
 const mockUpdateUser = jest.fn();
 const mockSignOut = jest.fn();
+const mockResend = jest.fn();
 
 jest.mock('@/lib/supabase', () => ({
   supabase: {
@@ -12,11 +13,12 @@ jest.mock('@/lib/supabase', () => ({
       resetPasswordForEmail: (email: string, options: unknown) => mockResetPasswordForEmail(email, options),
       updateUser: (args: unknown) => mockUpdateUser(args),
       signOut: (args: unknown) => mockSignOut(args),
+      resend: (args: unknown) => mockResend(args),
     },
   },
 }));
 
-import { signInWithEmail, signUpWithEmail, sendPasswordReset, resetPassword } from '@/lib/auth/email';
+import { signInWithEmail, signUpWithEmail, sendPasswordReset, resetPassword, resendVerification } from '@/lib/auth/email';
 
 describe('signInWithEmail', () => {
   beforeEach(() => {
@@ -204,5 +206,28 @@ describe('resetPassword', () => {
     const r = await resetPassword('NewStrong1');
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toBe('expired_link');
+  });
+});
+
+describe('resendVerification', () => {
+  beforeEach(() => {
+    mockResend.mockReset();
+  });
+
+  it('calls supabase resend with type=signup and the email', async () => {
+    mockResend.mockResolvedValueOnce({ data: {}, error: null });
+    const r = await resendVerification('a@b.co');
+    expect(mockResend).toHaveBeenCalledWith({ type: 'signup', email: 'a@b.co' });
+    expect(r.ok).toBe(true);
+  });
+
+  it('maps over_email_send_rate_limit to rate_limited', async () => {
+    mockResend.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'over_email_send_rate_limit', message: 'Try again later' },
+    });
+    const r = await resendVerification('a@b.co');
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toBe('rate_limited');
   });
 });
