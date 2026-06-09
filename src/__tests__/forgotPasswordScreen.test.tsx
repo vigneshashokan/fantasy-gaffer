@@ -62,4 +62,23 @@ describe('ForgotPassword screen', () => {
     const { getByText } = render(<ForgotPassword />);
     expect(getByText('That reset link has expired — request a new one.')).toBeTruthy();
   });
+
+  it('shows a Sign up link in the success state for users without an account', async () => {
+    mockSendReset.mockResolvedValueOnce({ ok: true });
+    const { getByPlaceholderText, getByText, findByText } = render(<ForgotPassword />);
+    fireEvent.changeText(getByPlaceholderText('Email address'), 'ada@example.com');
+    fireEvent.press(getByText('Send reset link'));
+    await findByText(/we've sent a reset link/i);
+    expect(getByText(/don't have an account yet/i)).toBeTruthy();
+    fireEvent.press(getByText('Sign up'));
+    expect(mockReplace).toHaveBeenCalledWith('/(onboarding)/signup');
+  });
+
+  it('mentions the spam folder in the success copy', async () => {
+    mockSendReset.mockResolvedValueOnce({ ok: true });
+    const { getByPlaceholderText, getByText, findByText } = render(<ForgotPassword />);
+    fireEvent.changeText(getByPlaceholderText('Email address'), 'ada@example.com');
+    fireEvent.press(getByText('Send reset link'));
+    await findByText(/spam folder/i);
+  });
 });

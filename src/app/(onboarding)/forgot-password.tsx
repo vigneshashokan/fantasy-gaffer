@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  Pressable,
   ScrollView,
   StyleSheet,
   KeyboardAvoidingView,
@@ -60,7 +61,7 @@ export default function ForgotPassword() {
             <Text style={[styles.title, { color: t.text }]}>Check your inbox</Text>
             <Text style={[styles.body, { color: t.textMuted }]}>
               If an account exists for <Text style={{ color: t.text }}>{sentEmail}</Text>, we've
-              sent a reset link. Check your inbox.
+              sent a reset link. Check your inbox (and spam folder) in the next minute.
             </Text>
             <PillBtn
               variant="accent"
@@ -70,6 +71,17 @@ export default function ForgotPassword() {
             >
               Back to sign in
             </PillBtn>
+            <View style={styles.signUpWrap}>
+              <Text style={[styles.signUpHint, { color: t.textMuted }]}>
+                Don't have an account yet?{' '}
+              </Text>
+              <Pressable
+                onPress={() => router.replace('/(onboarding)/signup')}
+                hitSlop={8}
+              >
+                <Text style={[styles.signUpLink, { color: t.accent }]}>Sign up</Text>
+              </Pressable>
+            </View>
           </>
         ) : (
           <>
@@ -146,4 +158,12 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   submitBtn: { width: '100%', height: 54, marginTop: 18 },
+  signUpWrap: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  signUpHint: { fontFamily: 'Archivo_500Medium', fontSize: 14 },
+  signUpLink: { fontFamily: 'Archivo_800ExtraBold', fontSize: 14 },
 });
