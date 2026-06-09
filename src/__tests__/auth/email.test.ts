@@ -1,6 +1,8 @@
 const mockSignInWithPassword = jest.fn();
 const mockSignUp = jest.fn();
 const mockResetPasswordForEmail = jest.fn();
+const mockUpdateUser = jest.fn();
+const mockSignOut = jest.fn();
 
 jest.mock('@/lib/supabase', () => ({
   supabase: {
@@ -8,11 +10,13 @@ jest.mock('@/lib/supabase', () => ({
       signInWithPassword: (args: unknown) => mockSignInWithPassword(args),
       signUp: (args: unknown) => mockSignUp(args),
       resetPasswordForEmail: (email: string, options: unknown) => mockResetPasswordForEmail(email, options),
+      updateUser: (args: unknown) => mockUpdateUser(args),
+      signOut: (args: unknown) => mockSignOut(args),
     },
   },
 }));
 
-import { signInWithEmail, signUpWithEmail, sendPasswordReset } from '@/lib/auth/email';
+import { signInWithEmail, signUpWithEmail, sendPasswordReset, resetPassword } from '@/lib/auth/email';
 
 describe('signInWithEmail', () => {
   beforeEach(() => {
@@ -156,5 +160,49 @@ describe('sendPasswordReset', () => {
     mockResetPasswordForEmail.mockRejectedValueOnce(new Error('boom'));
     const r = await sendPasswordReset('a@b.co');
     expect(r.ok).toBe(true);
+  });
+});
+
+describe('resetPassword', () => {
+  beforeEach(() => {
+    mockUpdateUser.mockReset();
+    mockSignOut.mockReset();
+  });
+
+  it('updates password and signs out other devices on success', async () => {
+    mockUpdateUser.mockResolvedValueOnce({ data: { user: { id: 'u1' } }, error: null });
+    mockSignOut.mockResolvedValueOnce({ error: null });
+    const r = await resetPassword('NewStrong1');
+    expect(mockUpdateUser).toHaveBeenCalledWith({ password: 'NewStrong1' });
+    expect(mockSignOut).toHaveBeenCalledWith({ scope: 'others' });
+    expect(r.ok).toBe(true);
+  });
+
+  it('returns ok even if signOut others fails (best-effort)', async () => {
+    mockUpdateUser.mockResolvedValueOnce({ data: { user: { id: 'u1' } }, error: null });
+    mockSignOut.mockRejectedValueOnce(new Error('boom'));
+    const r = await resetPassword('NewStrong1');
+    expect(r.ok).toBe(true);
+  });
+
+  it('maps weak_password from updateUser', async () => {
+    mockUpdateUser.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'weak_password', message: 'Too weak' },
+    });
+    const r = await resetPassword('weak');
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toBe('weak_password');
+    expect(mockSignOut).not.toHaveBeenCalled();
+  });
+
+  it('maps expired_link / otp_expired from updateUser', async () => {
+    mockUpdateUser.mockResolvedValueOnce({
+      data: null,
+      error: { code: 'otp_expired', message: 'Token expired' },
+    });
+    const r = await resetPassword('NewStrong1');
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toBe('expired_link');
   });
 });

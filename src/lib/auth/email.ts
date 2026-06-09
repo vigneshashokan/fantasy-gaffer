@@ -78,3 +78,19 @@ export async function sendPasswordReset(email: string): Promise<Result> {
   }
   return { ok: true, value: undefined };
 }
+
+export async function resetPassword(newPassword: string): Promise<Result> {
+  try {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) return { ok: false, error: classify(error) };
+  } catch (err) {
+    return { ok: false, error: classifyThrown(err) };
+  }
+  // Best-effort: invalidate other devices. Don't roll back if this fails.
+  try {
+    await supabase.auth.signOut({ scope: 'others' });
+  } catch (err) {
+    console.warn('[auth] signOut(others) failed after password reset (non-fatal):', err);
+  }
+  return { ok: true, value: undefined };
+}
