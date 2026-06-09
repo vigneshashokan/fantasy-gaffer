@@ -78,6 +78,26 @@ describe('signInWithEmail', () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toBe('unknown');
   });
+
+  it('maps message-only "Invalid login credentials" (no code field) to invalid_credentials', async () => {
+    mockSignInWithPassword.mockResolvedValueOnce({
+      data: null,
+      error: { status: 400, message: 'Invalid login credentials' },
+    });
+    const r = await signInWithEmail('a@b.co', 'wrong');
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toBe('invalid_credentials');
+  });
+
+  it('maps message-only "Invalid login credentials" case-insensitively', async () => {
+    mockSignInWithPassword.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'invalid login credentials' },
+    });
+    const r = await signInWithEmail('a@b.co', 'wrong');
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toBe('invalid_credentials');
+  });
 });
 
 describe('signUpWithEmail', () => {

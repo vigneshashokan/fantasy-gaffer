@@ -23,6 +23,12 @@ function classify(err: { code?: string; status?: number; message?: string }): Au
   if (err.status === 429 || err.code === 'over_request_rate_limit' || err.code === 'over_email_send_rate_limit') {
     return 'rate_limited';
   }
+  // Older gotrue versions omit `code`; fall back to message text for the
+  // common wrong-credentials case so the screen still shows the right copy.
+  if (err.message && /invalid login credentials/i.test(err.message)) {
+    return 'invalid_credentials';
+  }
+  console.warn('[auth] Unrecognised Supabase error (mapped to unknown):', err);
   return 'unknown';
 }
 
