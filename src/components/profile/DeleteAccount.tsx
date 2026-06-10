@@ -58,8 +58,10 @@ export function DeleteAccount({ tk }: DeleteAccountProps) {
           </Text>
           <Text style={[styles.confirmBody, { color: tk.variant }]}>
             This permanently erases your account with FPL Gaffer including
-            all your personal information, team, history and chips. This
-            cannot be undone.
+            all your personal information, team, history and chips. You will
+            have 30 days to restore your account after deletion before it
+            becomes permanent. You can't restore your account past the 30
+            days.
           </Text>
 
           <Text style={[styles.confirmHint, { color: tk.variant }]}>
