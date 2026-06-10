@@ -54,6 +54,12 @@ begin
 end;
 $$;
 
+-- Restrict execution: only postgres (the pg_cron runner) may invoke the
+-- function. Without this, any authenticated user could trigger the sweep
+-- via Supabase's REST RPC endpoint.
+revoke execute on function public.purge_expired_account_deletions() from public;
+grant execute on function public.purge_expired_account_deletions() to postgres;
+
 ----------------------------------------------------------------------
 -- Daily 03:00 UTC sweep
 ----------------------------------------------------------------------
