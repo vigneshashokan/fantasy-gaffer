@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -17,11 +17,14 @@ import { signInWithGoogle } from '@/lib/auth/google';
 import { signInWithEmail } from '@/lib/auth/email';
 import type { AuthErrorKind } from '@/lib/auth/email';
 import { emailSchema } from '@/lib/auth/validation';
+import { isSupported as biometricIsSupported } from '@/lib/auth/biometric/capability';
+import { attemptUnlock } from '@/lib/auth/biometric/enrollment';
+import { useBiometricStore } from '@/store/biometricStore';
 import { GafferLogo } from '@/components/ui/GafferLogo';
 import { PillBtn } from '@/components/ui/PillBtn';
-import { Icon } from '@/components/ui/Icon';
 import { Field } from '@/components/forms/Field';
 import { SocialBtn } from '@/components/forms/SocialBtn';
+import { Checkbox } from '@/components/forms/Checkbox';
 
 const COMING_SOON = () =>
   Alert.alert('Coming soon', 'This sign-in option is in a future update.');
@@ -43,6 +46,53 @@ export default function SignIn() {
   const { paletteKey, dark } = useThemeStore();
   const t = getTheme(paletteKey, dark);
   const params = useLocalSearchParams<{ verify_expired?: string }>();
+
+  const biometricEnabled = useBiometricStore((s) => s.enabled);
+  const biometricEnable = useBiometricStore((s) => s.enable);
+  const biometricHydrated = useBiometricStore((s) => s.hydrated);
+  const biometricJustSignedOut = useBiometricStore((s) => s.justSignedOut);
+  const consumeJustSignedOut = useBiometricStore((s) => s.consumeJustSignedOut);
+
+  const [supported, setSupported] = useState(false);
+  const [rememberBiometric, setRememberBiometric] = useState(false);
+  const [biometricBanner, setBiometricBanner] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    biometricIsSupported().then((v) => {
+      if (!cancelled) setSupported(v);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!biometricHydrated) return;
+    if (!biometricEnabled) return;
+    if (biometricJustSignedOut) {
+      consumeJustSignedOut();
+      return;
+    }
+    let cancelled = false;
+    attemptUnlock().then((r) => {
+      if (cancelled) return;
+      if (r.ok) return;
+      if (r.error === 'expired_link') {
+        setBiometricBanner(
+          'Face ID session expired — sign in with your password to re-enable.',
+        );
+      } else if (r.error === 'lockout') {
+        setBiometricBanner('Too many attempts. Sign in with your password.');
+      }
+      // 'cancel' and 'no_session' show no banner.
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [biometricHydrated, biometricEnabled, biometricJustSignedOut, consumeJustSignedOut]);
+
+  const showCheckbox = supported && !biometricEnabled;
 
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
@@ -71,7 +121,20 @@ export default function SignIn() {
     setGoogleSubmitting(true);
     try {
       const result = await signInWithGoogle();
-      if (result.ok) return;
+      if (result.ok) {
+        if (rememberBiometric) {
+          // iOS won't reliably show a system prompt (Face ID) while it's
+          // still dismissing another system UI (the in-app auth browser).
+          // Yield ~300ms so the browser dismissal finishes before the
+          // biometric confirm prompt is requested.
+          await new Promise((r) => setTimeout(r, 300));
+          const er = await biometricEnable();
+          if (!er.ok) {
+            console.warn('[biometric] enable failed (non-fatal):', er.error);
+          }
+        }
+        return;
+      }
       if (result.error === 'cancel' || result.error === 'dismiss') return;
       setGoogleError('Google sign-in failed. Please try again.');
     } finally {
@@ -106,7 +169,15 @@ export default function SignIn() {
     setSubmitting(true);
     try {
       const r = await signInWithEmail(normalisedEmail, pw);
-      if (r.ok) return; // (onboarding)/_layout redirects on session change
+      if (r.ok) {
+        if (rememberBiometric) {
+          const er = await biometricEnable();
+          if (!er.ok) {
+            console.warn('[biometric] enable failed (non-fatal):', er.error);
+          }
+        }
+        return; // (onboarding)/_layout redirects on session change
+      }
       if (r.error === 'email_not_confirmed') {
         router.push(
           `/(onboarding)/verify-pending?email=${encodeURIComponent(normalisedEmail)}`,
@@ -134,6 +205,9 @@ export default function SignIn() {
           Sign in to manage your squad
         </Text>
 
+        {biometricBanner && (
+          <Text style={[styles.banner, { color: t.textMuted }]}>{biometricBanner}</Text>
+        )}
         {params.verify_expired === '1' && (
           <Text style={[styles.banner, { color: t.textMuted }]}>
             Verification link expired. Sign in again to resend.
@@ -194,6 +268,19 @@ export default function SignIn() {
           )}
         </View>
 
+        {showCheckbox && (
+          <View style={{ marginTop: 14 }}>
+            <Checkbox
+              label="Remember to use Face ID"
+              value={rememberBiometric}
+              onChange={setRememberBiometric}
+              accent={t.accent}
+              text={t.text}
+              textMuted={t.textMuted}
+            />
+          </View>
+        )}
+
         {submitError && (
           <Text style={[styles.error, { color: '#FF3B5C' }]}>{submitError}</Text>
         )}
@@ -215,22 +302,6 @@ export default function SignIn() {
         >
           {submitting ? 'Signing in…' : 'Sign in'}
         </PillBtn>
-
-        <View style={styles.faceWrap}>
-          <Pressable
-            onPress={COMING_SOON}
-            style={({ pressed }) => [
-              styles.faceBtn,
-              { backgroundColor: t.surfaceAlt, borderColor: t.line },
-              pressed && { transform: [{ scale: 0.94 }] },
-            ]}
-          >
-            <Icon name="faceid" color={t.accent} size={32} />
-          </Pressable>
-          <Text style={[styles.faceLabel, { color: t.textMuted }]}>
-            Sign in with Face ID
-          </Text>
-        </View>
 
         <View style={styles.signUpWrap}>
           <Text style={[styles.signUpHint, { color: t.textMuted }]}>
@@ -303,16 +374,6 @@ const styles = StyleSheet.create({
   },
   forgot: { fontFamily: 'Archivo_700Bold', fontSize: 14 },
   signInBtn: { width: '100%', height: 54 },
-  faceWrap: { alignItems: 'center', gap: 9, marginTop: 22 },
-  faceBtn: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  faceLabel: { fontFamily: 'Archivo_700Bold', fontSize: 13.5 },
   signUpWrap: {
     flexDirection: 'row',
     justifyContent: 'center',

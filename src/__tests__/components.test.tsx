@@ -657,3 +657,53 @@ describe('PicksCard', () => {
     expect(getByText('Forwards')).toBeTruthy();
   });
 });
+
+// ── Checkbox ──────────────────────────────────────────────────
+import { Checkbox } from '@/components/forms/Checkbox';
+
+describe('Checkbox', () => {
+  it('renders label', () => {
+    const { getByText } = render(
+      <Checkbox
+        label="Remember to use Face ID"
+        value={false}
+        onChange={() => {}}
+        accent="#00B863"
+        text="#23042B"
+        textMuted="#74627E"
+      />,
+    );
+    expect(getByText('Remember to use Face ID')).toBeTruthy();
+  });
+
+  it('shows checked state via accessibility', () => {
+    const { getByLabelText } = render(
+      <Checkbox
+        label="Remember to use Face ID"
+        value={true}
+        onChange={() => {}}
+        accent="#00B863"
+        text="#23042B"
+        textMuted="#74627E"
+      />,
+    );
+    const node = getByLabelText('Remember to use Face ID');
+    expect(node.props.accessibilityState?.checked).toBe(true);
+  });
+
+  it('calls onChange with the inverted value when pressed', () => {
+    const onChange = jest.fn();
+    const { getByLabelText } = render(
+      <Checkbox
+        label="Remember to use Face ID"
+        value={false}
+        onChange={onChange}
+        accent="#00B863"
+        text="#23042B"
+        textMuted="#74627E"
+      />,
+    );
+    fireEvent.press(getByLabelText('Remember to use Face ID'));
+    expect(onChange).toHaveBeenCalledWith(true);
+  });
+});

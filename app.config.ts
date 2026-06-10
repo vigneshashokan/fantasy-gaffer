@@ -36,6 +36,12 @@ const config: ExpoConfig = {
     'expo-font',
     'expo-web-browser',
     '@react-native-community/datetimepicker',
+    [
+      'expo-local-authentication',
+      {
+        faceIDPermission: 'Allow $(PRODUCT_NAME) to use Face ID to sign you in.',
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,
