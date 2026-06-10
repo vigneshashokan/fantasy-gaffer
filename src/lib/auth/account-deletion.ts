@@ -17,6 +17,11 @@ export async function requestDeletion(): Promise<Result> {
   // 23505 = unique_violation in Postgres. Idempotent: the row we wanted is
   // already there, so the desired state holds.
   if (error && error.code !== '23505') {
+    // Surface the raw Postgres error so misapplied migrations (e.g. 42P01
+    // = relation does not exist) or RLS denials (42501) are obvious in the
+    // dev console next time. The screen shows a generic message — this
+    // tells us what actually failed.
+    console.warn('[account-deletion] INSERT failed:', error);
     return { ok: false, error: 'network' };
   }
 
@@ -45,7 +50,10 @@ export async function cancelDeletion(): Promise<Result> {
     .delete()
     .eq('user_id', data.session.user.id);
 
-  if (error) return { ok: false, error: 'network' };
+  if (error) {
+    console.warn('[account-deletion] DELETE failed:', error);
+    return { ok: false, error: 'network' };
+  }
   return { ok: true, value: undefined };
 }
 
@@ -68,7 +76,11 @@ export async function loadPendingDeletion(): Promise<PendingDeletion | null> {
       .eq('user_id', sessionData.session.user.id)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (error) {
+      console.warn('[account-deletion] SELECT failed:', error);
+      return null;
+    }
+    if (!data) return null;
 
     const requestedAt = new Date(data.requested_at);
     const expiresAt = requestedAt.getTime() + GRACE_PERIOD_DAYS * MS_PER_DAY;
