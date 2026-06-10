@@ -35,3 +35,16 @@ export async function requestDeletion(): Promise<Result> {
   }
   return { ok: true, value: undefined };
 }
+
+export async function cancelDeletion(): Promise<Result> {
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) return { ok: false, error: 'unauthorized' };
+
+  const { error } = await supabase
+    .from('account_deletions')
+    .delete()
+    .eq('user_id', data.session.user.id);
+
+  if (error) return { ok: false, error: 'network' };
+  return { ok: true, value: undefined };
+}
