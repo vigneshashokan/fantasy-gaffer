@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { fetchJson } from '../lib/fpl-client.ts';
-import { isBootstrapRefreshWindow } from '../lib/calendar.ts';
+import { isPLSeasonActive, isInTransferWindow } from '../lib/calendar.ts';
 import { finishRun, skipRun } from '../lib/ingestion-runs.ts';
 
 export interface BootstrapTeam {
@@ -136,7 +136,7 @@ export async function ingestBootstrap(
   opts: { force: boolean },
 ): Promise<void> {
   const today = deps.now();
-  if (!opts.force && !isBootstrapRefreshWindow(today)) {
+  if (!opts.force && !isPLSeasonActive(today) && !isInTransferWindow(today)) {
     await skipRun(deps.supabase, runId, 'outside refresh window');
     return;
   }

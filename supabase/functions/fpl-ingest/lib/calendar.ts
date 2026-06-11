@@ -19,19 +19,3 @@ export function isPLSeasonActive(d: Date): boolean {
 export function isInTransferWindow(d: Date): boolean {
   return TRANSFER_WINDOWS.some((w) => d >= w.start && d < w.end);
 }
-
-/**
- * Bootstrap data (teams/players) should be refreshed:
- *   - During any transfer window (roster changes are live), or
- *   - During the season-launch period (August–September) when the season
- *     kicks off and initial squad data needs to be seeded.
- *
- * Mid-season months (Oct–Dec, Mar–May) see very few structural changes to
- * the bootstrap endpoint, so we skip those by default unless force=1.
- */
-export function isBootstrapRefreshWindow(d: Date): boolean {
-  if (isInTransferWindow(d)) return true;
-  if (!isPLSeasonActive(d)) return false;
-  const month = d.getUTCMonth(); // 0=Jan … 7=Aug, 8=Sep
-  return month === 7 || month === 8; // August or September
-}

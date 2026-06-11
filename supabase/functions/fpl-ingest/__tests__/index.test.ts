@@ -178,7 +178,7 @@ Deno.test('source=bootstrap outside season + outside windows logs skipped, no up
   const { deps, calls } = makeDeps({
     source: 'bootstrap',
     fpl: SAMPLE_BOOTSTRAP,
-    now: new Date('2026-11-15T02:00:00Z'),
+    now: new Date('2027-06-01T02:00:00Z'),
   });
   const res = await handler(
     new Request('http://localhost/functions/v1/fpl-ingest?source=bootstrap'),
@@ -196,7 +196,7 @@ Deno.test('source=bootstrap with ?force=1 bypasses the calendar gate', async () 
   const { deps, calls } = makeDeps({
     source: 'bootstrap',
     fpl: SAMPLE_BOOTSTRAP,
-    now: new Date('2026-11-15T02:00:00Z'),
+    now: new Date('2027-06-01T02:00:00Z'),
   });
   await handler(
     new Request('http://localhost/functions/v1/fpl-ingest?source=bootstrap&force=1'),
