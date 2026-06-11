@@ -58,6 +58,40 @@ Deno.test('startRun inserts a row and returns the new id', async () => {
   assertEquals(calls[0].payload.source, 'bootstrap');
 });
 
+Deno.test('startRun throws when the insert returns an error', async () => {
+  // deno-lint-ignore no-explicit-any
+  const supabase: any = {
+    from() {
+      return {
+        insert() {
+          return {
+            select() {
+              return {
+                single() {
+                  return Promise.resolve({
+                    data: null,
+                    error: { message: 'insert failed', code: 'PGRST301' },
+                  });
+                },
+              };
+            },
+          };
+        },
+      };
+    },
+  };
+  let threw = false;
+  try {
+    await startRun(supabase, 'bootstrap');
+  } catch (e) {
+    threw = true;
+    if (!(e instanceof Object) || (e as { message?: unknown }).message !== 'insert failed') {
+      throw new Error('wrong error thrown: ' + String(e));
+    }
+  }
+  assertEquals(threw, true);
+});
+
 Deno.test('finishRun updates the row with success status + rows_upserted', async () => {
   const { supabase, calls } = makeMockSupabase();
   await finishRun(supabase, 'run-123', { rowsUpserted: 620 });
@@ -94,5 +128,5 @@ Deno.test('errorRun updates the row with error status + truncated error message'
   await errorRun(supabase, 'run-123', new Error(longMessage));
   assertEquals(calls[0].payload.status, 'error');
   const msg = String(calls[0].payload.error_message);
-  assertEquals(msg.length <= 2000, true, `expected <=2000 chars, got ${msg.length}`);
+  assertEquals(msg.length, 2000);
 });

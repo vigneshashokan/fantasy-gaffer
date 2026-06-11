@@ -26,7 +26,8 @@ export async function finishRun(
     rows_upserted: args.rowsUpserted,
   };
   if (args.contentHash !== undefined) patch.content_hash = args.contentHash;
-  await supabase.from('ingestion_runs').update(patch).eq('id', runId);
+  const { error } = await supabase.from('ingestion_runs').update(patch).eq('id', runId);
+  if (error) throw error;
 }
 
 export async function skipRun(
@@ -41,7 +42,8 @@ export async function skipRun(
     skip_reason: reason,
   };
   if (args.contentHash !== undefined) patch.content_hash = args.contentHash;
-  await supabase.from('ingestion_runs').update(patch).eq('id', runId);
+  const { error } = await supabase.from('ingestion_runs').update(patch).eq('id', runId);
+  if (error) throw error;
 }
 
 export async function errorRun(
