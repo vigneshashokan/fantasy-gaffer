@@ -1,7 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from './lib/supabase-admin.ts';
-import { errorRun, startRun } from './lib/ingestion-runs.ts';
+import { errorRun, serializeError, startRun } from './lib/ingestion-runs.ts';
 import { ingestBootstrap } from './sources/bootstrap.ts';
 import { ingestFixtures } from './sources/fixtures.ts';
 
@@ -47,9 +47,10 @@ export async function handler(req: Request, depsOverride?: Deps): Promise<Respon
     }
     return Response.json({ ok: true, runId, source }, { status: 200 });
   } catch (err) {
+    console.error('[fpl-ingest] handler caught:', err);
     await errorRun(deps.supabase, runId, err);
     return Response.json(
-      { ok: false, runId, source, error: err instanceof Error ? err.message : String(err) },
+      { ok: false, runId, source, error: serializeError(err) },
       { status: 500 },
     );
   }

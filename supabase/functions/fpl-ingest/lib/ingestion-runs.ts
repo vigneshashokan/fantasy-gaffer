@@ -2,6 +2,32 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 const MAX_ERROR_CHARS = 2000;
 
+export function serializeError(err: unknown): string {
+  if (err instanceof Error) {
+    return err.stack ?? err.message;
+  }
+  if (err && typeof err === 'object') {
+    const e = err as {
+      message?: string;
+      details?: string;
+      hint?: string;
+      code?: string;
+    };
+    const parts: string[] = [];
+    if (e.code) parts.push(`code=${e.code}`);
+    if (e.message) parts.push(`message=${e.message}`);
+    if (e.details) parts.push(`details=${e.details}`);
+    if (e.hint) parts.push(`hint=${e.hint}`);
+    if (parts.length > 0) return parts.join(' | ');
+    try {
+      return JSON.stringify(err);
+    } catch {
+      return String(err);
+    }
+  }
+  return String(err);
+}
+
 export async function startRun(
   supabase: SupabaseClient,
   source: 'bootstrap' | 'fixtures',
@@ -51,10 +77,10 @@ export async function errorRun(
   runId: string,
   err: unknown,
 ): Promise<void> {
-  const stack = err instanceof Error ? (err.stack ?? err.message) : String(err);
-  const truncated = stack.length > MAX_ERROR_CHARS
-    ? stack.slice(0, MAX_ERROR_CHARS)
-    : stack;
+  const msg = serializeError(err);
+  const truncated = msg.length > MAX_ERROR_CHARS
+    ? msg.slice(0, MAX_ERROR_CHARS)
+    : msg;
   const { error: closeError } = await supabase
     .from('ingestion_runs')
     .update({

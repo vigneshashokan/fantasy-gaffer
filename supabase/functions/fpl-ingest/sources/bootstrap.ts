@@ -22,7 +22,7 @@ export interface BootstrapElement {
   first_name: string;
   second_name: string;
   team: number;
-  element_type: 1 | 2 | 3 | 4;
+  element_type: number;
   now_cost: number;
   form: string;
   total_points: number;
@@ -79,12 +79,17 @@ export interface PlayerRow {
   transfers_in_event: number;
 }
 
-const POSITION_MAP: Record<1 | 2 | 3 | 4, Position> = {
+const POSITION_MAP: Record<number, Position> = {
   1: 'GKP',
   2: 'DEF',
   3: 'MID',
   4: 'FWD',
 };
+
+function safeParseFloat(s: string | null | undefined): number {
+  const n = parseFloat(s ?? '');
+  return Number.isFinite(n) ? n : 0;
+}
 
 export function normalizeClubs(raw: BootstrapStaticResponse): ClubRow[] {
   return raw.teams.map((t) => ({
@@ -102,26 +107,28 @@ export function normalizeClubs(raw: BootstrapStaticResponse): ClubRow[] {
 }
 
 export function normalizePlayers(raw: BootstrapStaticResponse): PlayerRow[] {
-  return raw.elements.map((e) => ({
-    id: e.id,
-    web_name: e.web_name,
-    full_name: `${e.first_name} ${e.second_name}`,
-    team_id: e.team,
-    position: POSITION_MAP[e.element_type],
-    now_cost: e.now_cost,
-    form: parseFloat(e.form),
-    total_points: e.total_points,
-    status: e.status,
-    news: e.news,
-    news_added: e.news_added,
-    chance_of_playing_next_round: e.chance_of_playing_next_round,
-    ep_next: parseFloat(e.ep_next),
-    ep_this: parseFloat(e.ep_this),
-    selected_by_percent: parseFloat(e.selected_by_percent),
-    ict_index: parseFloat(e.ict_index),
-    bps: e.bps,
-    transfers_in_event: e.transfers_in_event,
-  }));
+  return raw.elements
+    .filter((e) => POSITION_MAP[e.element_type] !== undefined)
+    .map((e) => ({
+      id: e.id,
+      web_name: e.web_name,
+      full_name: `${e.first_name} ${e.second_name}`,
+      team_id: e.team,
+      position: POSITION_MAP[e.element_type],
+      now_cost: e.now_cost,
+      form: safeParseFloat(e.form),
+      total_points: e.total_points,
+      status: e.status,
+      news: e.news,
+      news_added: e.news_added,
+      chance_of_playing_next_round: e.chance_of_playing_next_round,
+      ep_next: safeParseFloat(e.ep_next),
+      ep_this: safeParseFloat(e.ep_this),
+      selected_by_percent: safeParseFloat(e.selected_by_percent),
+      ict_index: safeParseFloat(e.ict_index),
+      bps: e.bps,
+      transfers_in_event: e.transfers_in_event,
+    }));
 }
 
 export interface IngestBootstrapDeps {
