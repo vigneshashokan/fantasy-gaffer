@@ -141,9 +141,13 @@ export default function CompleteProfile() {
               }}
             />
           )}
-          {dob && ageYears(dob) < COPPA_MIN_AGE_YEARS && (
+          {dob && ageYears(dob) < COPPA_MIN_AGE_YEARS ? (
             <Text style={[styles.error, { color: '#FF3B5C' }]}>
               You must be 13 or older to use FPL Gaffer.
+            </Text>
+          ) : (
+            <Text style={[styles.dobHelper, { color: t.textMuted }]}>
+              We need this to confirm you&apos;re 13 or older to use FPL Gaffer.
             </Text>
           )}
         </View>
@@ -201,6 +205,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Archivo_600SemiBold',
     fontSize: 13,
     marginTop: -4,
+  },
+  dobHelper: {
+    fontFamily: 'Archivo_500Medium',
+    fontSize: 12.5,
+    marginTop: -4,
+    paddingHorizontal: 2,
   },
   submitWrap: {
     marginTop: 22,
