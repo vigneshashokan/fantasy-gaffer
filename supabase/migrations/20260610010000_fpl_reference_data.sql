@@ -117,7 +117,8 @@ create table public.ingestion_runs (
 );
 
 alter table public.ingestion_runs enable row level security;
--- No policies; only service_role can read/write.
+-- No policies and no grants: service_role bypasses RLS; authenticated/anon
+-- have no access. Operator-only table, queried via Studio SQL.
 
 create index ingestion_runs_source_started_idx
   on public.ingestion_runs (source, started_at desc);
