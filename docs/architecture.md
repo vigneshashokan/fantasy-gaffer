@@ -24,6 +24,26 @@ When the app is closer to launch:
 4. Change `deploy-supabase.yml` to target staging on merge to `main`; add a `workflow_dispatch` job that promotes staging → prod.
 5. Add an EAS Build `staging` profile injecting the staging URL into `EXPO_PUBLIC_SUPABASE_*`.
 
+## Per-environment one-time setup
+
+Some features rely on values that live in Supabase Vault rather than CI secrets — they're referenced by SQL (`pg_cron`) and can't be passed via env vars.
+
+For each environment (currently: prod), open Studio → SQL Editor and run **once**:
+
+```sql
+-- For the FPL ingestion cron (#20).
+select vault.create_secret('https://<project-ref>.supabase.co', 'supabase_url');
+select vault.create_secret('<anon key from Settings → API>',    'supabase_anon_key');
+```
+
+Verify with `select name from vault.decrypted_secrets;` — both names should appear.
+
+The `fpl-ingest` Edge Function additionally needs the service-role key as a function-level secret. Run once per environment from a local terminal linked to the project:
+
+```bash
+supabase secrets set SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+```
+
 ## Repo layout
 
 ```
