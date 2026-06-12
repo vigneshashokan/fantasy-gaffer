@@ -1,10 +1,11 @@
 // src/components/team/LinkTeamCta.tsx
 //
-// Empty state shown when a user has no fpl_team_id set. CTA is non-functional
-// in #21; #22 will wire it to the squad-import flow.
+// Empty state shown when a user has no fpl_team_id set. Routes to the
+// connect-team flow.
 
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
 import { ApexTokens } from '@/constants/apexTokens';
 
 interface LinkTeamCtaProps {
@@ -20,14 +21,17 @@ export function LinkTeamCta({ tk, variant }: LinkTeamCtaProps) {
     <View style={[styles.card, { backgroundColor: tk.card, borderColor: tk.cardBorder }]}>
       <Text style={[styles.title, { color: tk.text }]}>{title}</Text>
       <Text style={[styles.body, { color: tk.faint }]}>
-        Paste your FPL team ID and we'll pull in your squad. Available in the next update.
+        Paste your FPL team ID and we'll pull in your squad.
       </Text>
       <Pressable
         accessibilityRole="button"
-        disabled
-        style={[styles.btn, { backgroundColor: tk.cardBorder, opacity: 0.6 }]}
+        onPress={() => router.push('/(onboarding)/connect-team')}
+        style={({ pressed }) => [
+          styles.btn,
+          { backgroundColor: '#7C3AED', opacity: pressed ? 0.85 : 1 },
+        ]}
       >
-        <Text style={styles.btnText}>Coming in #22</Text>
+        <Text style={styles.btnText}>Connect FPL team</Text>
       </Pressable>
     </View>
   );
