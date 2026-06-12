@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Image } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
-import { jerseyFor } from '@/constants/jerseys';
+import { jerseyForClub } from '@/constants/jerseys';
+import type { ClubCode } from '@/types/fpl';
 
 interface AvatarDiscPlayer {
   name: string;
+  club?: ClubCode;
 }
 
 interface AvatarDiscProps {
@@ -23,7 +25,7 @@ function PersonGlyph({ color = '#fff', size = 26 }: { color?: string; size?: num
 }
 
 export function AvatarDisc({ size = 54, glyph = '#FFFFFF', player }: AvatarDiscProps) {
-  const jersey = player?.name ? jerseyFor(player.name) : undefined;
+  const jersey = jerseyForClub(player?.club);
   if (jersey) {
     return (
       <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>

@@ -10,7 +10,7 @@ import {
 import { ApexPitchMarks } from '@/components/pitch/ApexPitchMarks';
 import { AvatarDisc } from '@/components/ui/AvatarDisc';
 import { PointPill } from '@/components/ui/PointPill';
-import { TransferPitchPlayer } from '@/constants/data';
+import type { TransferPitchPlayer } from '@/types/fpl';
 
 interface TransferPitchProps {
   rows: TransferPitchPlayer[][];

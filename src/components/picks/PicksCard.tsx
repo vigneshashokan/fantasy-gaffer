@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Path, G } from 'react-native-svg';
-import { TopPickPlayer, Position } from '@/constants/data';
+import type { TopPickPlayer, Position, Fixture, ClubCode } from '@/types/fpl';
 import { ApexTokens } from '@/constants/apexTokens';
 import { PickRow } from './PickRow';
 
@@ -17,9 +17,11 @@ interface PicksCardProps {
   rows: TopPickPlayer[];
   tk: ApexTokens;
   dark: boolean;
+  fixtures: Partial<Record<ClubCode, Fixture>>;
+  squadNames: Set<string>;
 }
 
-export function PicksCard({ pos, rows, tk, dark }: PicksCardProps) {
+export function PicksCard({ pos, rows, tk, dark, fixtures, squadNames }: PicksCardProps) {
   return (
     <View
       style={[
@@ -64,6 +66,8 @@ export function PicksCard({ pos, rows, tk, dark }: PicksCardProps) {
           last={i === rows.length - 1}
           tk={tk}
           dark={dark}
+          fixtures={fixtures}
+          squadNames={squadNames}
         />
       ))}
     </View>

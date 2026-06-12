@@ -4,7 +4,7 @@ import Svg, { Path } from 'react-native-svg';
 import { Icon } from '@/components/ui/Icon';
 import { ApplyCheckbox } from '@/components/ui/ApplyCheckbox';
 import { ApplyAllToggle } from '@/components/ui/ApplyAllToggle';
-import { Suggestion } from '@/constants/data';
+import type { Suggestion } from '@/types/fpl';
 import { ApexTokens } from '@/constants/apexTokens';
 
 interface SuggestionsCardProps {

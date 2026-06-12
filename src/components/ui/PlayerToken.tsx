@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Kit } from './Kit';
-import { Player } from '@/constants/data';
+import type { Player } from '@/types/fpl';
 
 interface PlayerTokenProps {
   pl: Player;

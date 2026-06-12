@@ -1,5 +1,6 @@
 import React from 'react';
-import { act, render } from '@testing-library/react-native';
+import { act } from '@testing-library/react-native';
+import { renderWithProviders as render } from './utils/renderWithProviders';
 
 const mockEnable = jest.fn();
 const mockDisable = jest.fn();
@@ -44,6 +45,21 @@ jest.mock('@/store/themeStore', () => ({
 jest.mock('expo-router', () => ({
   __esModule: true,
   useRouter: () => ({ back: jest.fn() }),
+}));
+
+jest.mock('@/api/profile', () => ({
+  useProfile: jest.fn().mockReturnValue({
+    data: {
+      firstName: 'Apex',
+      lastName: 'Gaffer',
+      dob: '14 Aug 1990',
+      gender: 'Prefer not to say',
+      email: 'apex.gaffer@example.com',
+      faceId: true,
+      fplTeamId: null,
+    },
+    isPending: false,
+  }),
 }));
 
 import Profile from '@/app/(home)/profile';

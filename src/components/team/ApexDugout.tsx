@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { AvatarDisc } from '@/components/ui/AvatarDisc';
 import { PointPill } from '@/components/ui/PointPill';
-import { PitchPlayer } from '@/constants/data';
+import type { PitchPlayer } from '@/types/fpl';
 
 interface ApexDugoutProps {
   players: PitchPlayer[];

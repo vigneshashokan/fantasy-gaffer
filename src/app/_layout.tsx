@@ -15,11 +15,13 @@ import {
   JetBrainsMono_600SemiBold,
   JetBrainsMono_700Bold,
 } from '@expo-google-fonts/jetbrains-mono';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useEmailAuthDeepLinks } from '@/lib/auth/deepLink';
+import { AuthErrorBoundary } from '@/lib/auth/authErrorBoundary';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -40,6 +42,20 @@ export default function RootLayout() {
   const authHydrated = useAuthStore((s) => s.hydrated);
   useEmailAuthDeepLinks();
 
+  const queryClient = useMemo(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: 2,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: true,
+          },
+        },
+      }),
+    [],
+  );
+
   useEffect(() => {
     if (themeHydrated) return;
     return useThemeStore.persist.onFinishHydration(() => setThemeHydrated(true));
@@ -52,9 +68,12 @@ export default function RootLayout() {
   if (!fontsLoaded || !themeHydrated || !authHydrated) return null;
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" />
-      <Stack screenOptions={{ headerShown: false }} />
-    </SafeAreaProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthErrorBoundary />
+      <SafeAreaProvider>
+        <StatusBar style="light" />
+        <Stack screenOptions={{ headerShown: false }} />
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 }

@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
-import { APEX_TEAM, PitchPlayer } from '@/constants/data';
+import type { PitchPlayer } from '@/types/fpl';
+import { useApexTeam } from '@/api/squad';
+import { LinkTeamCta } from '@/components/team/LinkTeamCta';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { ApexPitch } from '@/components/pitch/ApexPitch';
 import { HeroCard } from '@/components/team/HeroCard';
 import { ApexDugout } from '@/components/team/ApexDugout';
@@ -16,29 +19,66 @@ import { ApplyAllCard } from '@/components/team/ApplyAllCard';
 import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
 import { ChipsRow } from '@/components/transfer/ChipsRow';
 
-const LIVE_GW = APEX_TEAM.gw;
-const MIN_GW = 1;
-const MAX_GW = LIVE_GW + 1;
-
 type GwState = 'live' | 'upcoming' | 'past';
-
-function stateFor(gw: number): GwState {
-  if (gw === LIVE_GW) return 'live';
-  if (gw > LIVE_GW) return 'upcoming';
-  return 'past';
-}
 
 export default function TeamTab() {
   const router = useRouter();
   const { paletteKey, dark, pitchStyle } = useThemeStore();
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
-  const at = APEX_TEAM;
 
-  const [gw, setGw] = useState(LIVE_GW);
-  const [savedCaptain, setSavedCaptain] = useState(at.captainApplied);
-  const [pendingCaptain, setPendingCaptain] = useState(at.captainApplied);
+  const { data: at, isPending, noTeam, isError } = useApexTeam();
+
+  const [gw, setGw] = useState(0);
+  const [savedCaptain, setSavedCaptain] = useState('');
+  const [pendingCaptain, setPendingCaptain] = useState('');
   const [pendingSuggestions, setPendingSuggestions] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (at) {
+      setGw(at.gw);
+      setSavedCaptain(at.captainApplied);
+      setPendingCaptain(at.captainApplied);
+    }
+  }, [at?.gw, at?.captainApplied]);
+
+  if (noTeam) {
+    return (
+      <View style={{ flex: 1, backgroundColor: t.bg }}>
+        <LinkTeamCta tk={tk} variant="team" />
+      </View>
+    );
+  }
+  if (isPending || !at) {
+    return (
+      <View style={{ flex: 1, backgroundColor: t.bg, padding: 16 }}>
+        <Skeleton height={48} />
+        <View style={{ height: 12 }} />
+        <Skeleton height={180} radius={20} />
+        <View style={{ height: 12 }} />
+        <Skeleton height={260} radius={20} />
+      </View>
+    );
+  }
+  if (isError) {
+    return (
+      <View style={{ flex: 1, backgroundColor: t.bg, padding: 16 }}>
+        <Text style={{ color: tk.text, fontFamily: 'Archivo_700Bold' }}>
+          Could not reach FPL. Pull to retry.
+        </Text>
+      </View>
+    );
+  }
+
+  const LIVE_GW = at.gw;
+  const MIN_GW = 1;
+  const MAX_GW = LIVE_GW + 1;
+
+  function stateFor(gwArg: number): GwState {
+    if (gwArg === LIVE_GW) return 'live';
+    if (gwArg > LIVE_GW) return 'upcoming';
+    return 'past';
+  }
 
   const gwState = stateFor(gw);
   const isUpcoming = gwState === 'upcoming';

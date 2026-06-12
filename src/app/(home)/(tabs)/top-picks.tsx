@@ -11,7 +11,11 @@ import {
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
-import { TOP_PICKS, TEAM_INFO, Position } from '@/constants/data';
+import type { Position } from '@/types/fpl';
+import { useTopPicks } from '@/api/players';
+import { useCurrentGameweek, useFixturesByGw } from '@/api/fixtures';
+import { useSquad } from '@/api/squad';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { SegmentedControl } from '@/components/picks/SegmentedControl';
 import { PicksCard } from '@/components/picks/PicksCard';
 
@@ -26,6 +30,15 @@ export default function TopPicksTab() {
   const scrollerRef = useRef<ScrollView>(null);
   const [active, setActive] = useState(0);
 
+  const { data: gw }                               = useCurrentGameweek();
+  const { data: topPicks, isPending: picksPending } = useTopPicks();
+  const { data: fixtures }                          = useFixturesByGw(gw ?? 0);
+  const { data: squad }                             = useSquad();
+
+  const squadNames = new Set<string>(
+    squad ? [...squad.starters, ...squad.bench].map((p) => p.name) : [],
+  );
+
   const goTo = (i: number) => {
     setActive(i);
     scrollerRef.current?.scrollTo({ x: i * width, animated: true });
@@ -39,6 +52,18 @@ export default function TopPicksTab() {
     if (idx !== active && idx >= 0 && idx < ORDER.length) setActive(idx);
   };
 
+  if (picksPending || !topPicks) {
+    return (
+      <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
+        <Skeleton height={48} />
+        <View style={{ height: 12 }} />
+        <Skeleton height={48} />
+        <View style={{ height: 12 }} />
+        <Skeleton height={48} />
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: tk.bg }}>
       <View style={styles.header}>
@@ -47,7 +72,7 @@ export default function TopPicksTab() {
           <View style={[styles.livePill, { backgroundColor: tk.greenSoft }]}>
             <View style={[styles.dot, { backgroundColor: tk.green }]} />
             <Text style={[styles.liveText, { color: tk.green }]}>
-              GW{TEAM_INFO.gw} LIVE
+              GW{gw ?? '—'} LIVE
             </Text>
           </View>
         </View>
@@ -83,7 +108,14 @@ export default function TopPicksTab() {
             showsVerticalScrollIndicator={false}
             nestedScrollEnabled
           >
-            <PicksCard pos={pos} rows={TOP_PICKS[pos]} tk={tk} dark={dark} />
+            <PicksCard
+                pos={pos}
+                rows={topPicks[pos]}
+                tk={tk}
+                dark={dark}
+                fixtures={fixtures ?? {}}
+                squadNames={squadNames}
+              />
           </ScrollView>
         ))}
       </ScrollView>

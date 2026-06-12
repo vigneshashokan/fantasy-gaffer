@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Kit } from '@/components/ui/Kit';
 import { Icon } from '@/components/ui/Icon';
 import { ApplyCheckbox } from '@/components/ui/ApplyCheckbox';
-import { CaptainPick } from '@/constants/data';
+import type { CaptainPick } from '@/types/fpl';
 import { ApexTokens } from '@/constants/apexTokens';
 
 interface CaptainPickCardProps {

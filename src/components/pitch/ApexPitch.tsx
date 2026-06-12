@@ -16,7 +16,7 @@ import {
   BallBadge,
   CardIcons,
 } from '@/components/ui/PitchBadges';
-import { PitchPlayer } from '@/constants/data';
+import type { PitchPlayer } from '@/types/fpl';
 
 interface ApexPitchProps {
   rows: PitchPlayer[][];

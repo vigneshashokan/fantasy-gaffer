@@ -4,7 +4,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
-import { APEX_TEAM, CLUBS } from '@/constants/data';
+import { useSquad } from '@/api/squad';
+import { useClubs } from '@/api/clubs';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { Kit } from '@/components/ui/Kit';
 import { Icon } from '@/components/ui/Icon';
 
@@ -16,7 +18,20 @@ export default function PlayerDetailModal() {
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
-  const player = APEX_TEAM.transfer.pitch.flat().find((p) => p.name === name);
+  const { data: squad, isPending: squadPending } = useSquad();
+  const { data: clubs } = useClubs();
+
+  if (squadPending || !squad) {
+    return (
+      <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
+        <Skeleton height={120} radius={20} />
+        <View style={{ height: 12 }} />
+        <Skeleton height={180} radius={20} />
+      </View>
+    );
+  }
+
+  const player = [...squad.starters, ...squad.bench].find((p) => p.name === name);
 
   if (!player) {
     return (
@@ -29,7 +44,17 @@ export default function PlayerDetailModal() {
     );
   }
 
-  const club = CLUBS[player.club];
+  const club = clubs?.[player.club];
+  if (!club) {
+    return (
+      <View style={[styles.empty, { backgroundColor: tk.bg }]}>
+        <Text style={[styles.notFound, { color: tk.text }]}>Club not loaded</Text>
+        <Pressable onPress={() => router.back()} style={[styles.closeBtn, { backgroundColor: t.primary }]}>
+          <Text style={styles.closeText}>Close</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <ScrollView

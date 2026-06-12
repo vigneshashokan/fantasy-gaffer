@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
-import { PROFILE } from '@/constants/data';
+import { useProfile } from '@/api/profile';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { ReadField } from '@/components/profile/ReadField';
@@ -17,11 +18,28 @@ export default function ProfileModal() {
   const { paletteKey, dark } = useThemeStore();
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
-  const [gender, setGender] = useState(PROFILE.gender);
+
+  const { data: profile, isPending } = useProfile();
+  const [gender, setGender] = useState<string>('');
+
+  useEffect(() => {
+    if (profile?.gender) setGender(profile.gender);
+  }, [profile?.gender]);
+
+  if (isPending || !profile) {
+    return (
+      <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
+        <Skeleton height={140} radius={20} />
+        <View style={{ height: 16 }} />
+        <Skeleton height={220} radius={20} />
+      </View>
+    );
+  }
+
+  const initials = `${profile.firstName[0] ?? ''}${profile.lastName[0] ?? ''}`;
 
   const heroFrom = t.primary;
   const heroTo = dark ? '#0C1018' : '#5B0F63';
-  const initials = `${PROFILE.firstName[0]}${PROFILE.lastName[0]}`;
 
   return (
     <View style={{ flex: 1, backgroundColor: tk.bg }}>
@@ -37,10 +55,10 @@ export default function ProfileModal() {
           </View>
           <View style={{ flexShrink: 1 }}>
             <Text style={styles.name} numberOfLines={1}>
-              {PROFILE.firstName} {PROFILE.lastName}
+              {profile.firstName} {profile.lastName}
             </Text>
             <Text style={styles.email} numberOfLines={1}>
-              {PROFILE.email}
+              {profile.email}
             </Text>
           </View>
         </View>
@@ -51,11 +69,11 @@ export default function ProfileModal() {
         showsVerticalScrollIndicator={false}
       >
         <SectionCard title="Personal details" tk={tk}>
-          <ReadField label="First name" value={PROFILE.firstName} tk={tk} />
-          <ReadField label="Last name" value={PROFILE.lastName} tk={tk} showDivider />
-          <ReadField label="Date of birth" value={PROFILE.dob} tk={tk} showDivider />
+          <ReadField label="First name" value={profile.firstName} tk={tk} />
+          <ReadField label="Last name" value={profile.lastName} tk={tk} showDivider />
+          <ReadField label="Date of birth" value={profile.dob} tk={tk} showDivider />
           <GenderRow value={gender} onChange={setGender} tk={tk} />
-          <ReadField label="Email address" value={PROFILE.email} tk={tk} showDivider />
+          <ReadField label="Email address" value={profile.email} tk={tk} showDivider />
         </SectionCard>
 
         <SectionCard title="Security" tk={tk}>

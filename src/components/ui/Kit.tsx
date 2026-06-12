@@ -1,21 +1,24 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { CLUBS, ClubCode } from '@/constants/data';
-import { jerseyFor } from '@/constants/jerseys';
+import type { ClubCode } from '@/types/fpl';
+import { CLUB_COLORS } from '@/constants/clubColors';
+import { jerseyForClub } from '@/constants/jerseys';
 
 interface KitProps {
   club: string;
   size?: number;
   capt?: boolean;
   vice?: boolean;
+  // `playerName` is kept for backwards compatibility with existing call
+  // sites — the jersey lookup is now driven by `club`, so this is unused.
   playerName?: string;
 }
 
-export function Kit({ club, size = 46, capt, vice, playerName }: KitProps) {
-  const c = CLUBS[club as ClubCode] ?? { kit: '#666', kit2: '#fff', ink: '#fff' };
+export function Kit({ club, size = 46, capt, vice }: KitProps) {
+  const c = CLUB_COLORS[club as ClubCode] ?? { kit: '#666', kit2: '#fff', ink: '#fff' };
   const ring = Math.max(2, size * 0.085);
 
-  const jersey = playerName ? jerseyFor(playerName) : undefined;
+  const jersey = jerseyForClub(club as ClubCode);
 
   const badge = (capt || vice) ? (
     <View

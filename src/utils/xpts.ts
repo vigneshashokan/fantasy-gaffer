@@ -1,4 +1,4 @@
-import { TopPickPlayer } from '@/constants/data';
+import type { TopPickPlayer } from '@/types/fpl';
 
 // xPts derived from form, gently varied by price hash. Matches prototype formula.
 export function xPtsOf(p: Pick<TopPickPlayer, 'f' | 'p'>): number {
