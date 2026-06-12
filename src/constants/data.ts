@@ -1,3 +1,8 @@
+/**
+ * @deprecated This file's mock constants are scheduled for removal in #21 D2.
+ * Do NOT add new code here. Production code reads live data via src/api/*.
+ * Only test-file consumers remain — they will be rewritten in D2.
+ */
 // Re-export types from the canonical location so any existing
 // `import { Player } from '@/constants/data'` keeps working. The
 // inline mock constants below get removed in a later task.
