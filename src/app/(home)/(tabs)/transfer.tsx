@@ -4,7 +4,10 @@ import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
-import { APEX_TEAM, TransferPitchPlayer } from '@/constants/data';
+import type { TransferPitchPlayer } from '@/types/fpl';
+import { useApexTeam } from '@/api/squad';
+import { LinkTeamCta } from '@/components/team/LinkTeamCta';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { TransferInfoCard } from '@/components/transfer/TransferInfoCard';
 import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
 import { TransferPitch } from '@/components/transfer/TransferPitch';
@@ -16,10 +19,34 @@ export default function TransferTab() {
   const { paletteKey, dark, pitchStyle } = useThemeStore();
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
-  const tr = APEX_TEAM.transfer;
-
+  const { data: at, isPending, noTeam, isError } = useApexTeam();
   const [pendingTransfers, setPendingTransfers] = useState<Record<string, boolean>>({});
   const pendingCount = Object.values(pendingTransfers).filter(Boolean).length;
+
+  if (noTeam) {
+    return (
+      <View style={{ flex: 1, backgroundColor: tk.bg }}>
+        <LinkTeamCta tk={tk} variant="transfer" />
+      </View>
+    );
+  }
+  if (isPending || !at) {
+    return (
+      <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
+        <Skeleton height={72} radius={20} />
+        <View style={{ height: 12 }} />
+        <Skeleton height={260} radius={20} />
+      </View>
+    );
+  }
+  if (isError) {
+    return (
+      <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
+        <Text style={{ color: tk.text }}>Could not reach FPL. Pull to retry.</Text>
+      </View>
+    );
+  }
+  const tr = at.transfer;
 
   const heroFrom = t.primary;
   const heroTo = dark ? '#0C1018' : '#5B0F63';
@@ -56,7 +83,7 @@ export default function TransferTab() {
         <View style={styles.topGroup}>
           <DeadlineBanner nextGw={tr.nextGw} deadline={tr.deadline} tk={tk} />
           <TransferInfoCard
-            teamName={APEX_TEAM.teamName}
+            teamName={at.teamName}
             nextGw={tr.nextGw}
             squadValue={tr.squadValue}
             freeTransfers={tr.freeTransfers}
