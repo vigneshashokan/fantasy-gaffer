@@ -72,7 +72,7 @@ export default function CompleteProfile() {
       if (prefsError && prefsError.code !== '23505') {
         console.warn('notification_prefs insert failed (non-fatal):', prefsError.message);
       }
-      router.replace('/(home)/(tabs)/team');
+      router.replace('/(onboarding)/connect-team');
     } catch (err) {
       console.error(err);
       setSubmitting(false);
