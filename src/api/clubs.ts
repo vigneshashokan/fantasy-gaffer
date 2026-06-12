@@ -9,6 +9,11 @@ import { CLUB_COLORS } from '@/constants/clubColors';
 import { queryKeys } from './queryKeys';
 import type { Club, ClubCode } from '@/types/fpl';
 
+/**
+ * One row as returned by `select('id, short_name, name')` against
+ * `supabase.clubs`. `short_name` is the join key against `CLUB_COLORS`
+ * — see `clubsFromRows` for how unknown codes are dropped.
+ */
 interface ClubRow {
   id: number;
   short_name: string;
