@@ -92,8 +92,10 @@ export function useTeamPreview(teamId: number | null) {
   return useQuery<Preview, FplFetchError>({
     queryKey: ['teamPreview', teamId, gw],
     queryFn: async () => {
-      const entry = await fplGet<FplEntry>(`/entry/${teamId}/`);
-      const picks = await fplGet<PicksResponse>(`/entry/${teamId}/event/${gw}/picks/`);
+      const [entry, picks] = await Promise.all([
+        fplGet<FplEntry>(`/entry/${teamId}/`),
+        fplGet<PicksResponse>(`/entry/${teamId}/event/${gw}/picks/`),
+      ]);
       return composePreview(entry, picks, players.data ?? []);
     },
     enabled: teamId != null && gw != null && playersReady,

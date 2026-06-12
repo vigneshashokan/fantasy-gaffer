@@ -140,7 +140,7 @@ describe('useTeamPreview', () => {
     (useCurrentGameweek as jest.Mock).mockReturnValue({ data: 24 });
     (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE });
     const err = new FplFetchError('boom', 404);
-    (fplGet as jest.Mock).mockRejectedValueOnce(err);
+    (fplGet as jest.Mock).mockRejectedValue(err);
 
     const client = makeTestQueryClient();
     const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -149,6 +149,6 @@ describe('useTeamPreview', () => {
     const { result } = renderHook(() => useTeamPreview(12345), { wrapper });
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect((result.current.error as FplFetchError).status).toBe(404);
-    expect(fplGet).toHaveBeenCalledTimes(1);
+    expect(fplGet).toHaveBeenCalledTimes(2);
   });
 });
