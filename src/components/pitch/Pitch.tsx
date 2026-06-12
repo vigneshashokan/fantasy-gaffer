@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { PitchMarks } from './PitchMarks';
 import { PlayerToken } from '@/components/ui/PlayerToken';
-import { Player } from '@/constants/data';
+import type { Player } from '@/types/fpl';
 
 interface PitchProps {
   rows: Player[][];

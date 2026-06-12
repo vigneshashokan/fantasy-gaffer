@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
-import { CLUBS, ClubCode } from '@/constants/data';
+import type { ClubCode } from '@/types/fpl';
+import { CLUB_COLORS } from '@/constants/clubColors';
 import { jerseyFor } from '@/constants/jerseys';
 
 interface KitProps {
@@ -12,7 +13,7 @@ interface KitProps {
 }
 
 export function Kit({ club, size = 46, capt, vice, playerName }: KitProps) {
-  const c = CLUBS[club as ClubCode] ?? { kit: '#666', kit2: '#fff', ink: '#fff' };
+  const c = CLUB_COLORS[club as ClubCode] ?? { kit: '#666', kit2: '#fff', ink: '#fff' };
   const ring = Math.max(2, size * 0.085);
 
   const jersey = playerName ? jerseyFor(playerName) : undefined;

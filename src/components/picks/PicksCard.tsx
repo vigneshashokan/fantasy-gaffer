@@ -1,8 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle, Path, G } from 'react-native-svg';
-import { TopPickPlayer, Position } from '@/constants/data';
-import type { Fixture, ClubCode } from '@/types/fpl';
+import type { TopPickPlayer, Position, Fixture, ClubCode } from '@/types/fpl';
 import { ApexTokens } from '@/constants/apexTokens';
 import { PickRow } from './PickRow';
 

@@ -143,7 +143,7 @@ describe('Kit', () => {
 });
 
 // ── PlayerToken ───────────────────────────────────────────────
-import type { Player } from '@/constants/data';
+import type { Player } from '@/types/fpl';
 
 const mockPlayer: Player = {
   id: 'p1', name: 'Haaland', club: 'MCI', pos: 'FWD',

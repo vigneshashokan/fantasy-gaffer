@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { TransferChip } from '@/constants/data';
+import type { TransferChip } from '@/types/fpl';
 import { ApexTokens } from '@/constants/apexTokens';
 
 interface ChipsRowProps {
