@@ -1,0 +1,36 @@
+// src/__tests__/components/confirmHero.test.tsx
+import { render } from '@testing-library/react-native';
+import { ConfirmHero } from '@/components/connect-team/ConfirmHero';
+import type { Preview } from '@/api/teamPreview';
+
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock'),
+);
+
+const PREVIEW: Preview = {
+  teamName: 'Apex Pitch FC',
+  managerName: 'Vignesh A.',
+  rank: 142831,
+  totalPoints: 1452,
+  captainName: 'Haaland',
+  starters: [],
+  bench: [],
+};
+
+describe('<ConfirmHero />', () => {
+  it('renders team name, manager, and the three stats', () => {
+    const { getByText } = render(<ConfirmHero preview={PREVIEW} />);
+    expect(getByText('Apex Pitch FC')).toBeTruthy();
+    expect(getByText('Vignesh A.')).toBeTruthy();
+    expect(getByText('142,831')).toBeTruthy();
+    expect(getByText('1,452')).toBeTruthy();
+    expect(getByText('Haaland')).toBeTruthy();
+  });
+
+  it('shows an em-dash when captain name is missing', () => {
+    const { getByText } = render(
+      <ConfirmHero preview={{ ...PREVIEW, captainName: '' }} />,
+    );
+    expect(getByText('—')).toBeTruthy();
+  });
+});
