@@ -159,6 +159,7 @@ export default function ConnectTeam() {
               <Pressable
                 onPress={onContinue}
                 disabled={!validInput || validating}
+                accessibilityRole="button"
                 accessibilityState={{ disabled: !validInput || validating }}
                 style={[
                   styles.primaryBtn,
@@ -168,10 +169,7 @@ export default function ConnectTeam() {
                 {validating ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text
-                    style={styles.primaryBtnText}
-                    accessibilityState={{ disabled: !validInput || validating }}
-                  >
+                  <Text style={styles.primaryBtnText}>
                     Continue
                   </Text>
                 )}

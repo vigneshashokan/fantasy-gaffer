@@ -66,8 +66,8 @@ beforeEach(() => {
 describe('<ConnectTeam />', () => {
   it('Continue stays disabled until input is digits', () => {
     setHook('idle');
-    const { getByText } = renderWithProviders(<ConnectTeam />);
-    const continueBtn = getByText('Continue');
+    const { getByRole } = renderWithProviders(<ConnectTeam />);
+    const continueBtn = getByRole('button', { name: 'Continue' });
     expect(continueBtn.props.accessibilityState?.disabled).toBe(true);
   });
 
