@@ -115,8 +115,6 @@ export default function ConnectTeam() {
     setStage({ kind: 'submitted', teamId: Number(teamIdStr) });
   };
 
-  const showingConfirm = stage.kind === 'confirming' || stage.kind === 'link_error';
-
   return (
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: tk.bg }}
@@ -126,7 +124,7 @@ export default function ConnectTeam() {
         contentContainerStyle={styles.scroll}
         keyboardShouldPersistTaps="handled"
       >
-        {!showingConfirm && (
+        {(stage.kind === 'idle' || stage.kind === 'submitted') && (
           <>
             <Text style={[styles.title, { color: tk.text }]}>Connect your FPL team</Text>
             <Text style={[styles.subtitle, { color: tk.faint }]}>
@@ -148,6 +146,7 @@ export default function ConnectTeam() {
                 </Text>
                 <Pressable
                   onPress={onRetryFetch}
+                  accessibilityRole="button"
                   style={[styles.retryBtn, { backgroundColor: '#7C3AED' }]}
                 >
                   <Text style={styles.retryBtnText}>Try again</Text>
@@ -174,14 +173,14 @@ export default function ConnectTeam() {
                   </Text>
                 )}
               </Pressable>
-              <Pressable onPress={onSkip} style={styles.ghostBtn}>
+              <Pressable onPress={onSkip} accessibilityRole="button" style={styles.ghostBtn}>
                 <Text style={[styles.ghostBtnText, { color: tk.faint }]}>Skip for now</Text>
               </Pressable>
             </View>
           </>
         )}
 
-        {showingConfirm && stage.kind !== 'idle' && stage.kind !== 'submitted' && (
+        {(stage.kind === 'confirming' || stage.kind === 'link_error') && (
           <>
             <Text style={[styles.title, { color: tk.text }]}>Is this you?</Text>
             <ConfirmHero preview={stage.preview} />
@@ -197,13 +196,15 @@ export default function ConnectTeam() {
               <Pressable
                 onPress={onLink}
                 disabled={link.isPending}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: link.isPending }}
                 style={[styles.primaryBtn, { backgroundColor: '#7C3AED', opacity: link.isPending ? 0.7 : 1 }]}
               >
                 {link.isPending ? <ActivityIndicator color="#fff" /> : (
                   <Text style={styles.primaryBtnText}>Yes, link team</Text>
                 )}
               </Pressable>
-              <Pressable onPress={onWrongTeam} style={styles.ghostBtn}>
+              <Pressable onPress={onWrongTeam} accessibilityRole="button" style={styles.ghostBtn}>
                 <Text style={[styles.ghostBtnText, { color: tk.faint }]}>Wrong team — go back</Text>
               </Pressable>
             </View>
