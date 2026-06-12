@@ -1,122 +1,16 @@
-export type ClubCode =
-  | 'ARS' | 'LIV' | 'MCI' | 'CHE' | 'MUN' | 'NEW' | 'TOT'
-  | 'AVL' | 'NFO' | 'BHA' | 'BOU' | 'BRE' | 'CRY' | 'EVE'
-  | 'WOL' | 'FUL' | 'WHU';
-
-export type Position = 'GKP' | 'DEF' | 'MID' | 'FWD';
-
-export interface Club {
-  name: string;
-  kit: string;
-  kit2: string;
-  ink: string;
-}
-
-export interface Player {
-  id: string;
-  name: string;
-  pos: Position;
-  club: ClubCode;
-  p: number;
-  f: number;
-  tp: number;
-  own: number;
-  gw: number;
-  capt?: boolean;
-  vice?: boolean;
-  sub?: number;
-  subIn?: number;
-}
-
-export interface TopPickPlayer {
-  name: string;
-  club: ClubCode;
-  p: number;
-  f: number;
-  tp: number;
-  own: number;
-  gw: number;
-}
-
-export interface Chip {
-  id: string;
-  name: string;
-  sub: string;
-  available: boolean;
-  playedGW?: number;
-  icon: string;
-}
-
-export interface Fixture {
-  opp: ClubCode;
-  h: boolean;
-}
-
-export interface PitchPlayer {
-  name: string;
-  pts: number | null;
-  capt?: boolean;
-  ball?: boolean;
-  sub?: number;
-  subIn?: number;
-  cards?: Array<'yellow' | 'red'>;
-  gk?: boolean;
-  alert?: boolean;
-}
-
-export interface TransferPitchPlayer {
-  name: string;
-  p: number;
-  pos: Position;
-  club: ClubCode;
-  tp: number;
-  f: number;
-  own: number;
-  gw: number;
-  capt?: boolean;
-}
-
-export interface CaptainPick {
-  name: string;
-  club: ClubCode;
-  xp: number;
-  note: string;
-}
-
-export interface Suggestion {
-  id: string;
-  type: 'sub' | 'transfer';
-  text: string;
-  detail: string;
-  gain: string;
-  wasApplied: boolean;
-}
-
-export interface TransferSuggestion {
-  id: string;
-  out: string;
-  outClub: ClubCode;
-  in: string;
-  inClub: ClubCode;
-  detail: string;
-  gain: string;
-}
-
-export interface TransferChip {
-  name: string;
-  status: string;
-  state: 'active' | 'used' | 'idle';
-  playedGw?: number;
-  tip?: { title: string; lines: string[] };
-}
-
-export interface TeamInfo {
-  name: string;
-  gw: number;
-  gwPoints: number;
-  totalPoints: number;
-  rank: number;
-}
+// Re-export types from the canonical location so any existing
+// `import { Player } from '@/constants/data'` keeps working. The
+// inline mock constants below get removed in a later task.
+import type {
+  ClubCode, Club, Player, Position, TopPickPlayer, Chip, Fixture,
+  PitchPlayer, TransferPitchPlayer, CaptainPick, Suggestion,
+  TransferSuggestion, TransferChip, TeamInfo, Profile,
+} from '@/types/fpl';
+export type {
+  ClubCode, Club, Player, Position, TopPickPlayer, Chip, Fixture,
+  PitchPlayer, TransferPitchPlayer, CaptainPick, Suggestion,
+  TransferSuggestion, TransferChip, TeamInfo, Profile,
+};
 
 // ─── Clubs ────────────────────────────────────────────────────────────────────
 
@@ -333,15 +227,6 @@ export const TEAM_INFO: TeamInfo = {
 
 // ─── Profile ──────────────────────────────────────────────────────────────────
 
-export interface Profile {
-  firstName: string;
-  lastName: string;
-  dob: string;
-  gender: string;
-  email: string;
-  faceId: boolean;
-}
-
 export const PROFILE: Profile = {
   firstName: 'Apex',
   lastName: 'Gaffer',
@@ -349,4 +234,5 @@ export const PROFILE: Profile = {
   gender: 'Prefer not to say',
   email: 'apex.gaffer@example.com',
   faceId: true,
+  fplTeamId: null,
 };
