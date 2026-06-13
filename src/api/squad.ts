@@ -17,7 +17,7 @@ import type {
 } from '@/types/fpl';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { useCurrentGameweek, useFixturesByGw } from './fixtures';
+import { useCurrentGameweek, useEventLive, useFixturesByGw } from './fixtures';
 import { fplGet } from './fpl-client';
 import { useManager } from './manager';
 import { usePlayers } from './players';
@@ -34,20 +34,23 @@ interface PicksResponse {
   }>;
 }
 
+export type SquadPlayer = Player & { multiplier?: number };
+
 export function squadFromPicks(
   picks: PicksResponse,
   players: Player[],
-): { starters: Player[]; bench: Player[] } {
+): { starters: SquadPlayer[]; bench: SquadPlayer[] } {
   const byId = new Map(players.map((p) => [p.id, p]));
-  const starters: Player[] = [];
-  const bench: Player[] = [];
+  const starters: SquadPlayer[] = [];
+  const bench: SquadPlayer[] = [];
   for (const pick of picks.picks) {
     const base = byId.get(String(pick.element));
     if (!base) continue;
-    const enriched: Player = {
+    const enriched: SquadPlayer = {
       ...base,
       capt: pick.is_captain || undefined,
       vice: pick.is_vice_captain || undefined,
+      multiplier: pick.multiplier,
     };
     if (pick.position <= 11) starters.push(enriched);
     else bench.push(enriched);
@@ -84,6 +87,7 @@ export function useApexTeam() {
   const squadQ = useSquad();
   const managerQ = useManager();
   const fixturesQ = useFixturesByGw(gwQ.data?.gw ?? 0);
+  const liveQ = useEventLive(gwQ.data?.gw ?? 0);
 
   const isPending = profile.isPending || gwQ.isPending || squadQ.isPending || managerQ.isPending;
   const isError = profile.isError || gwQ.isError || squadQ.isError || managerQ.isError;
@@ -93,17 +97,29 @@ export function useApexTeam() {
   const data = useMemo(() => {
     if (noTeam) return null;
     if (!squadQ.data || !managerQ.data || !gwQ.data) return undefined;
-    return buildApexTeam(squadQ.data, managerQ.data, gwQ.data, fixturesQ.data);
-  }, [noTeam, squadQ.data, managerQ.data, gwQ.data, fixturesQ.data]);
+    return buildApexTeam(squadQ.data, managerQ.data, gwQ.data, fixturesQ.data, liveQ.data);
+  }, [noTeam, squadQ.data, managerQ.data, gwQ.data, fixturesQ.data, liveQ.data]);
 
   return { data, isPending, isError, error, noTeam };
 }
 
+// Captain shows multiplied points (×2 / ×3 TC) matching the FPL UI; bench
+// players (multiplier 0) show their raw total_points so users can see what
+// the dugout scored.
+function ptsFor(p: SquadPlayer, liveById: Map<number, number> | undefined): number | null {
+  if (!liveById) return null;
+  const raw = liveById.get(Number(p.id));
+  if (raw == null) return null;
+  const m = p.multiplier ?? 0;
+  return m > 0 ? raw * m : raw;
+}
+
 function buildApexTeam(
-  squad: { starters: Player[]; bench: Player[] },
+  squad: { starters: SquadPlayer[]; bench: SquadPlayer[] },
   manager: { name: string; gw: number; gwPoints: number; totalPoints: number; rank: number },
   current: { gw: number; avgPoints: number; highestPoints: number; finished: boolean; dataChecked: boolean },
   _fixturesByClub: Partial<Record<ClubCode, { opp: ClubCode; h: boolean }>> | undefined,
+  liveById: Map<number, number> | undefined,
 ) {
   const currentGw = current.gw;
   return {
@@ -115,9 +131,9 @@ function buildApexTeam(
     gwDataChecked: current.dataChecked,
     avgPoints: current.avgPoints,
     highestPoints: current.highestPoints,
-    pitch: groupByPosition(squad.starters),
+    pitch: groupByPosition(squad.starters, liveById),
     bench: squad.bench.map((p): PitchPlayer => ({
-      name: p.name, pts: null, gk: p.pos === 'GKP', club: p.club,
+      name: p.name, pts: ptsFor(p, liveById), gk: p.pos === 'GKP', club: p.club,
     })),
     captainPicks: [] as CaptainPick[],
     captainApplied: squad.starters.find((p) => p.capt)?.name ?? '',
@@ -136,13 +152,16 @@ function buildApexTeam(
   };
 }
 
-function groupByPosition(starters: Player[]): PitchPlayer[][] {
+function groupByPosition(
+  starters: SquadPlayer[],
+  liveById: Map<number, number> | undefined,
+): PitchPlayer[][] {
   const order: Position[] = ['FWD', 'MID', 'DEF', 'GKP'];
   return order.map((pos) =>
     starters
       .filter((p) => p.pos === pos)
       .map((p): PitchPlayer => ({
-        name: p.name, pts: null, capt: p.capt, gk: pos === 'GKP', club: p.club,
+        name: p.name, pts: ptsFor(p, liveById), capt: p.capt, gk: pos === 'GKP', club: p.club,
       })),
   );
 }

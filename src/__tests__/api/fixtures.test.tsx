@@ -4,7 +4,9 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import {
   fixturesFromRows,
   currentGwFromEvents,
+  livePointsById,
   useCurrentGameweek,
+  useEventLive,
   useFixturesByGw,
 } from '@/api/fixtures';
 import { makeTestQueryClient } from '../utils/renderWithProviders';
@@ -91,6 +93,49 @@ describe('useCurrentGameweek', () => {
     expect(result.current.data).toEqual({
       gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false,
     });
+  });
+});
+
+describe('livePointsById', () => {
+  it('builds a Map of element id → total_points', () => {
+    const result = livePointsById([
+      { id: 401, stats: { total_points: 14 } },
+      { id: 233, stats: { total_points: 9 } },
+    ]);
+    expect(result.get(401)).toBe(14);
+    expect(result.get(233)).toBe(9);
+    expect(result.size).toBe(2);
+  });
+});
+
+describe('useEventLive', () => {
+  it('fetches /event/{gw}/live/ and returns a Map of points', async () => {
+    (fplGet as jest.Mock).mockResolvedValueOnce({
+      elements: [
+        { id: 401, stats: { total_points: 14 } },
+        { id: 233, stats: { total_points: 9 } },
+      ],
+    });
+    const client = makeTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useEventLive(38), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(fplGet).toHaveBeenCalledWith('/event/38/live/');
+    expect(result.current.data?.get(401)).toBe(14);
+    expect(result.current.data?.get(233)).toBe(9);
+  });
+
+  it('stays idle when gw is 0', () => {
+    (fplGet as jest.Mock).mockClear();
+    const client = makeTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useEventLive(0), { wrapper });
+    expect(result.current.fetchStatus).toBe('idle');
+    expect(fplGet).not.toHaveBeenCalled();
   });
 });
 

@@ -49,6 +49,16 @@ describe('squadFromPicks', () => {
     expect(result.starters).toEqual([]);
     expect(result.bench).toEqual([]);
   });
+
+  it('carries the pick multiplier onto each enriched player', () => {
+    const result = squadFromPicks(PICKS_FIXTURE, PLAYERS_FIXTURE);
+    const haaland = result.starters.find((p) => p.name === 'Haaland');
+    const saka    = result.starters.find((p) => p.name === 'Saka');
+    const sub     = result.bench.find((p) => p.name === 'Sub');
+    expect(haaland?.multiplier).toBe(2);
+    expect(saka?.multiplier).toBe(1);
+    expect(sub?.multiplier).toBe(0);
+  });
 });
 
 describe('useSquad', () => {

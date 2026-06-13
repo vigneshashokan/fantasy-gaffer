@@ -63,6 +63,34 @@ export function useCurrentGameweek() {
   });
 }
 
+interface LiveElement {
+  id: number;
+  stats: { total_points: number };
+}
+
+interface LiveResponse {
+  elements: LiveElement[];
+}
+
+export function livePointsById(elements: LiveElement[]): Map<number, number> {
+  const out = new Map<number, number>();
+  for (const e of elements) out.set(e.id, e.stats.total_points);
+  return out;
+}
+
+export function useEventLive(gw: number) {
+  return useQuery({
+    queryKey: queryKeys.eventLive(gw),
+    queryFn: async () => {
+      const data = await fplGet<LiveResponse>(`/event/${gw}/live/`);
+      return livePointsById(data.elements);
+    },
+    staleTime: 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    enabled: Number.isFinite(gw) && gw > 0,
+  });
+}
+
 interface FixtureRow {
   event: number | null;
   team_h: number;
