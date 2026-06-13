@@ -8,6 +8,7 @@ interface HeroCardProps {
   gwPts: number;
   avgPoints: number;
   highestPoints: number;
+  gwInProgress?: boolean;
   gradFrom: string;
   gradTo: string;
 }
@@ -18,9 +19,11 @@ export function HeroCard({
   gwPts,
   avgPoints,
   highestPoints,
+  gwInProgress,
   gradFrom,
   gradTo,
 }: HeroCardProps) {
+  const showStat = (val: number) => (gwInProgress && val === 0 ? '—' : val);
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -47,12 +50,12 @@ export function HeroCard({
         <View style={styles.statsRow}>
           <View style={styles.stat}>
             <Text style={styles.label}>Avg Points</Text>
-            <Text style={styles.statValue}>{avgPoints}</Text>
+            <Text style={styles.statValue}>{showStat(avgPoints)}</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.stat}>
             <Text style={styles.label}>Highest Points</Text>
-            <Text style={styles.statValue}>{highestPoints}</Text>
+            <Text style={styles.statValue}>{showStat(highestPoints)}</Text>
           </View>
         </View>
       </View>

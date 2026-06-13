@@ -54,7 +54,7 @@ describe('squadFromPicks', () => {
 describe('useSquad', () => {
   it('fetches when fpl_team_id and currentGw are both set', async () => {
     (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 12345 }, isSuccess: true });
-    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: 24, isSuccess: true });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false }, isSuccess: true });
     (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE, isSuccess: true });
     (fplGet as jest.Mock).mockResolvedValueOnce(PICKS_FIXTURE);
 
@@ -70,7 +70,7 @@ describe('useSquad', () => {
 
   it('stays idle when fpl_team_id is null', async () => {
     (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: null }, isSuccess: true });
-    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: 24, isSuccess: true });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false }, isSuccess: true });
     (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE, isSuccess: true });
 
     const client = makeTestQueryClient();
