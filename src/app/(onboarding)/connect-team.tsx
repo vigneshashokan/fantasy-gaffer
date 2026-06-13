@@ -140,8 +140,10 @@ export default function ConnectTeam() {
       >
         {(stage.kind === 'idle' || stage.kind === 'submitted') && (
           <>
-            <Text style={[styles.title, { color: tk.text }]}>Connect your FPL team</Text>
-            <Text style={[styles.subtitle, { color: tk.faint }]}>
+            <Text style={[styles.title, { color: tk.text, textAlign: 'center' }]}>
+              Connect your FPL team
+            </Text>
+            <Text style={[styles.subtitle, { color: tk.faint, textAlign: 'center' }]}>
               Paste your FPL team ID.
             </Text>
             <TeamIdInput
