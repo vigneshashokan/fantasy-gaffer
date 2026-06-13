@@ -18,19 +18,26 @@ const PREVIEW: Preview = {
 };
 
 describe('<ConfirmHero />', () => {
-  it('renders team name, manager, and the three stats', () => {
+  it('renders team name and manager name', () => {
     const { getByText } = render(<ConfirmHero preview={PREVIEW} />);
     expect(getByText('Apex Pitch FC')).toBeTruthy();
     expect(getByText('Vignesh A.')).toBeTruthy();
-    expect(getByText('142,831')).toBeTruthy();
-    expect(getByText('1,452')).toBeTruthy();
-    expect(getByText('Haaland')).toBeTruthy();
   });
 
-  it('shows an em-dash when captain name is missing', () => {
+  it('shows an em-dash when manager name is missing', () => {
     const { getByText } = render(
-      <ConfirmHero preview={{ ...PREVIEW, captainName: '' }} />,
+      <ConfirmHero preview={{ ...PREVIEW, managerName: '' }} />,
     );
     expect(getByText('—')).toBeTruthy();
+  });
+
+  it('does not render rank, total points, or captain', () => {
+    const { queryByText } = render(<ConfirmHero preview={PREVIEW} />);
+    expect(queryByText('142,831')).toBeNull();
+    expect(queryByText('1,452')).toBeNull();
+    expect(queryByText('Haaland')).toBeNull();
+    expect(queryByText('Rank')).toBeNull();
+    expect(queryByText('Total pts')).toBeNull();
+    expect(queryByText('Captain')).toBeNull();
   });
 });

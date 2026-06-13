@@ -19,6 +19,7 @@ import {
   Platform,
 } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeStore } from '@/store/themeStore';
 import { apexTokens } from '@/constants/apexTokens';
 import { useTeamPreview, type Preview } from '@/api/teamPreview';
@@ -37,6 +38,7 @@ type Stage =
 export default function ConnectTeam() {
   const { paletteKey, dark } = useThemeStore();
   const tk = apexTokens(dark, paletteKey);
+  const insets = useSafeAreaInsets();
 
   const [teamIdStr, setTeamIdStr] = useState('');
   const [stage, setStage] = useState<Stage>({ kind: 'idle' });
@@ -121,7 +123,7 @@ export default function ConnectTeam() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 12 }]}
         keyboardShouldPersistTaps="handled"
       >
         {(stage.kind === 'idle' || stage.kind === 'submitted') && (

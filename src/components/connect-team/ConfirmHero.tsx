@@ -2,10 +2,10 @@
 //
 // Identity card shown above the pitch preview on the confirm view.
 // Purely presentational — takes a Preview, renders a gradient card with
-// team name + manager + rank / total pts / captain.
+// team name and manager name.
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { Preview } from '@/api/teamPreview';
 import { useThemeStore } from '@/store/themeStore';
@@ -30,21 +30,7 @@ export function ConfirmHero({ preview }: ConfirmHeroProps) {
     >
       <Text style={styles.teamName}>{preview.teamName}</Text>
       <Text style={styles.manager}>{preview.managerName || '—'}</Text>
-      <View style={styles.stats}>
-        <Stat label="Rank"      value={preview.rank.toLocaleString('en-US')} />
-        <Stat label="Total pts" value={preview.totalPoints.toLocaleString('en-US')} />
-        <Stat label="Captain"   value={preview.captainName || '—'} />
-      </View>
     </LinearGradient>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.statCell}>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
-    </View>
   );
 }
 
@@ -64,23 +50,5 @@ const styles = StyleSheet.create({
     fontFamily: 'Archivo_500Medium',
     fontSize: 13,
     color: 'rgba(255,255,255,0.78)',
-  },
-  stats: {
-    flexDirection: 'row',
-    gap: 18,
-    marginTop: 8,
-  },
-  statCell: { flexDirection: 'column' },
-  statLabel: {
-    fontFamily: 'Archivo_700Bold',
-    fontSize: 10.5,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    color: 'rgba(255,255,255,0.7)',
-  },
-  statValue: {
-    fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 16,
-    color: '#fff',
   },
 });
