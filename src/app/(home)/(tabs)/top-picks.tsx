@@ -30,7 +30,8 @@ export default function TopPicksTab() {
   const scrollerRef = useRef<ScrollView>(null);
   const [active, setActive] = useState(0);
 
-  const { data: gw }                               = useCurrentGameweek();
+  const { data: currentGw }                         = useCurrentGameweek();
+  const gw = currentGw?.gw;
   const { data: topPicks, isPending: picksPending } = useTopPicks();
   const { data: fixtures }                          = useFixturesByGw(gw ?? 0);
   const { data: squad }                             = useSquad();
