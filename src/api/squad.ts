@@ -4,25 +4,25 @@
 // useApexTeam() — composition of useSquad, useManager, useFixturesByGw,
 // shaped to mimic the APEX_TEAM mock (Gaffer fields are deliberately empty).
 
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { fplGet } from './fpl-client';
-import { queryKeys } from './queryKeys';
-import { useProfile } from './profile';
-import { useCurrentGameweek, useFixturesByGw } from './fixtures';
-import { usePlayers } from './players';
-import { useManager } from './manager';
 import type {
-  Player,
-  PitchPlayer,
-  Position,
-  TransferPitchPlayer,
-  ClubCode,
   CaptainPick,
+  ClubCode,
+  PitchPlayer,
+  Player,
+  Position,
   Suggestion,
   TransferChip,
+  TransferPitchPlayer,
   TransferSuggestion,
 } from '@/types/fpl';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useCurrentGameweek, useFixturesByGw } from './fixtures';
+import { fplGet } from './fpl-client';
+import { useManager } from './manager';
+import { usePlayers } from './players';
+import { useProfile } from './profile';
+import { queryKeys } from './queryKeys';
 
 interface PicksResponse {
   picks: Array<{
@@ -56,14 +56,14 @@ export function squadFromPicks(
 }
 
 const FPL_STALE = 15 * 60 * 1000;
-const FPL_GC    = 30 * 60 * 1000;
+const FPL_GC = 30 * 60 * 1000;
 
 export function useSquad() {
   const profile = useProfile();
   const gw = useCurrentGameweek();
   const players = usePlayers();
   const teamId = profile.data?.fplTeamId ?? null;
-  const gwId = gw.data ?? null;
+  const gwId = gw.data?.gw ?? null;
 
   return useQuery({
     queryKey: queryKeys.squad(teamId ?? 0, gwId ?? 0),
@@ -83,12 +83,12 @@ export function useApexTeam() {
   const gwQ = useCurrentGameweek();
   const squadQ = useSquad();
   const managerQ = useManager();
-  const fixturesQ = useFixturesByGw(gwQ.data ?? 0);
+  const fixturesQ = useFixturesByGw(gwQ.data?.gw ?? 0);
 
-  const isPending  = profile.isPending || gwQ.isPending || squadQ.isPending || managerQ.isPending;
-  const isError    = profile.isError   || gwQ.isError   || squadQ.isError   || managerQ.isError;
-  const error      = profile.error ?? gwQ.error ?? squadQ.error ?? managerQ.error ?? null;
-  const noTeam     = profile.data?.fplTeamId === null;
+  const isPending = profile.isPending || gwQ.isPending || squadQ.isPending || managerQ.isPending;
+  const isError = profile.isError || gwQ.isError || squadQ.isError || managerQ.isError;
+  const error = profile.error ?? gwQ.error ?? squadQ.error ?? managerQ.error ?? null;
+  const noTeam = profile.data?.fplTeamId === null;
 
   const data = useMemo(() => {
     if (noTeam) return null;
@@ -102,18 +102,21 @@ export function useApexTeam() {
 function buildApexTeam(
   squad: { starters: Player[]; bench: Player[] },
   manager: { name: string; gw: number; gwPoints: number; totalPoints: number; rank: number },
-  currentGw: number,
+  current: { gw: number; avgPoints: number; highestPoints: number; finished: boolean; dataChecked: boolean },
   _fixturesByClub: Partial<Record<ClubCode, { opp: ClubCode; h: boolean }>> | undefined,
 ) {
+  const currentGw = current.gw;
   return {
     teamName: manager.name,
     gw: currentGw,
     gwPts: manager.gwPoints,
     totalPoints: manager.totalPoints,
-    avgPoints: 0,
-    highestPoints: 0,
-    pitch:  groupByPosition(squad.starters),
-    bench:  squad.bench.map((p): PitchPlayer => ({
+    gwFinished: current.finished,
+    gwDataChecked: current.dataChecked,
+    avgPoints: current.avgPoints,
+    highestPoints: current.highestPoints,
+    pitch: groupByPosition(squad.starters),
+    bench: squad.bench.map((p): PitchPlayer => ({
       name: p.name, pts: null, gk: p.pos === 'GKP', club: p.club,
     })),
     captainPicks: [] as CaptainPick[],
@@ -123,7 +126,7 @@ function buildApexTeam(
       freeTransfers: 1,
       squadValue: sumPrice([...squad.starters, ...squad.bench]),
       inBank: 0,
-      nextGw: currentGw + 1,
+      nextGw: Math.min(38, currentGw + 1),
       deadline: '',
       captain: parseCaptain(squad.starters.find((p) => p.capt)?.name ?? ''),
       transferSuggestions: [] as TransferSuggestion[],

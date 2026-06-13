@@ -14,10 +14,21 @@ interface BootstrapEvent {
   is_current: boolean;
   is_next: boolean;
   finished: boolean;
+  data_checked?: boolean;
+  average_entry_score?: number;
+  highest_score?: number | null;
 }
 
 interface BootstrapResponse {
   events: BootstrapEvent[];
+}
+
+export interface CurrentGameweek {
+  gw: number;
+  avgPoints: number;
+  highestPoints: number;
+  finished: boolean;
+  dataChecked: boolean;
 }
 
 export function currentGwFromEvents(events: BootstrapEvent[]): number {
@@ -28,12 +39,24 @@ export function currentGwFromEvents(events: BootstrapEvent[]): number {
   return 1;
 }
 
+export function currentGameweekFromEvents(events: BootstrapEvent[]): CurrentGameweek {
+  const gw = currentGwFromEvents(events);
+  const event = events.find((e) => e.id === gw);
+  return {
+    gw,
+    avgPoints: event?.average_entry_score ?? 0,
+    highestPoints: event?.highest_score ?? 0,
+    finished: event?.finished ?? false,
+    dataChecked: event?.data_checked ?? false,
+  };
+}
+
 export function useCurrentGameweek() {
   return useQuery({
     queryKey: queryKeys.currentGw,
-    queryFn: async () => {
+    queryFn: async (): Promise<CurrentGameweek> => {
       const data = await fplGet<BootstrapResponse>('/bootstrap-static/');
-      return currentGwFromEvents(data.events);
+      return currentGameweekFromEvents(data.events);
     },
     staleTime: 60 * 60 * 1000,
     gcTime:    60 * 60 * 1000,

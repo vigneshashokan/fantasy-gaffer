@@ -59,7 +59,26 @@ describe('fixturesFromRows', () => {
 });
 
 describe('useCurrentGameweek', () => {
-  it('returns current gw from bootstrap-static', async () => {
+  it('returns current gw + stats + finished/dataChecked from bootstrap-static', async () => {
+    (fplGet as jest.Mock).mockResolvedValueOnce({
+      events: [{
+        id: 24, is_current: true, is_next: false, finished: true,
+        data_checked: true, average_entry_score: 52, highest_score: 128,
+      }],
+    });
+    const client = makeTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useCurrentGameweek(), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual({
+      gw: 24, avgPoints: 52, highestPoints: 128, finished: true, dataChecked: true,
+    });
+    expect(fplGet).toHaveBeenCalledWith('/bootstrap-static/');
+  });
+
+  it('defaults stats/flags to 0/false when bootstrap omits them', async () => {
     (fplGet as jest.Mock).mockResolvedValueOnce({
       events: [{ id: 24, is_current: true, is_next: false, finished: false }],
     });
@@ -69,8 +88,9 @@ describe('useCurrentGameweek', () => {
     );
     const { result } = renderHook(() => useCurrentGameweek(), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toBe(24);
-    expect(fplGet).toHaveBeenCalledWith('/bootstrap-static/');
+    expect(result.current.data).toEqual({
+      gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false,
+    });
   });
 });
 

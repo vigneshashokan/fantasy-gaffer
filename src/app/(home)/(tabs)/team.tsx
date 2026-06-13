@@ -71,11 +71,13 @@ export default function TeamTab() {
   }
 
   const LIVE_GW = at.gw;
+  const LIVE_GW_FINISHED = at.gwFinished;
   const MIN_GW = 1;
-  const MAX_GW = LIVE_GW + 1;
+  const SEASON_FINAL_GW = 38;
+  const MAX_GW = Math.min(SEASON_FINAL_GW, LIVE_GW + 1);
 
   function stateFor(gwArg: number): GwState {
-    if (gwArg === LIVE_GW) return 'live';
+    if (gwArg === LIVE_GW) return LIVE_GW_FINISHED ? 'past' : 'live';
     if (gwArg > LIVE_GW) return 'upcoming';
     return 'past';
   }
@@ -150,6 +152,7 @@ export default function TeamTab() {
           gwPts={at.gwPts}
           avgPoints={at.avgPoints}
           highestPoints={at.highestPoints}
+          gwInProgress={!at.gwFinished}
           gradFrom={heroFrom}
           gradTo={heroTo}
         />
