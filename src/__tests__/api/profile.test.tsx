@@ -124,7 +124,7 @@ describe('useProfile', () => {
 
     // Auth user changes — same hook instance, different session.
     setSession({ user: { id: 'user-B', email: 'b@x.com' } });
-    rerender();
+    rerender(undefined);
     await waitFor(() => expect(result.current.data?.firstName).toBe('Bob'));
 
     expect(client.getQueryCache().findAll({ queryKey: queryKeys.profile('user-A') })).toHaveLength(1);

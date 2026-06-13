@@ -21,6 +21,7 @@ import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useEmailAuthDeepLinks } from '@/lib/auth/deepLink';
 import { AuthErrorBoundary } from '@/lib/auth/authErrorBoundary';
+import { AuthCacheClear } from '@/lib/auth/authCacheClear';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 SplashScreen.preventAutoHideAsync();
@@ -70,6 +71,7 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthErrorBoundary />
+      <AuthCacheClear />
       <SafeAreaProvider>
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false }} />
