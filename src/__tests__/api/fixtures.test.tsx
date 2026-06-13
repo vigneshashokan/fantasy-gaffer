@@ -4,9 +4,11 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import {
   fixturesFromRows,
   currentGwFromEvents,
+  eventStatsFromEvents,
   livePointsById,
   useCurrentGameweek,
   useEventLive,
+  useEventStats,
   useFixturesByGw,
 } from '@/api/fixtures';
 import { makeTestQueryClient } from '../utils/renderWithProviders';
@@ -93,6 +95,58 @@ describe('useCurrentGameweek', () => {
     expect(result.current.data).toEqual({
       gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false,
     });
+  });
+});
+
+describe('eventStatsFromEvents', () => {
+  it('returns the requested event\'s stats', () => {
+    const events = [
+      { id: 23, is_current: false, is_next: false, finished: true,  data_checked: true,  average_entry_score: 48, highest_score: 124 },
+      { id: 24, is_current: true,  is_next: false, finished: false, data_checked: false, average_entry_score: 52, highest_score: 88  },
+    ];
+    expect(eventStatsFromEvents(events, 23)).toEqual({
+      gw: 23, avgPoints: 48, highestPoints: 124, finished: true, dataChecked: true,
+    });
+    expect(eventStatsFromEvents(events, 24)).toEqual({
+      gw: 24, avgPoints: 52, highestPoints: 88, finished: false, dataChecked: false,
+    });
+  });
+
+  it('defaults to 0/false for unknown gw', () => {
+    expect(eventStatsFromEvents([], 5)).toEqual({
+      gw: 5, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false,
+    });
+  });
+});
+
+describe('useEventStats', () => {
+  it('derives per-gw stats from a single bootstrap fetch', async () => {
+    (fplGet as jest.Mock).mockResolvedValueOnce({
+      events: [
+        { id: 23, is_current: false, is_next: false, finished: true,  data_checked: true,  average_entry_score: 48, highest_score: 124 },
+        { id: 24, is_current: true,  is_next: false, finished: false, data_checked: false, average_entry_score: 52, highest_score: 88  },
+      ],
+    });
+    const client = makeTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useEventStats(23), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.data).toEqual({
+      gw: 23, avgPoints: 48, highestPoints: 124, finished: true, dataChecked: true,
+    });
+  });
+
+  it('stays idle when gw is 0', () => {
+    (fplGet as jest.Mock).mockClear();
+    const client = makeTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useEventStats(0), { wrapper });
+    expect(result.current.isSuccess).toBe(false);
+    expect(result.current.data).toBeUndefined();
   });
 });
 

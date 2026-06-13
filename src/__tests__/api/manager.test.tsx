@@ -4,7 +4,9 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import {
   managerFromEntry,
   chipsFromHistory,
+  gwPointsFromHistory,
   useManager,
+  useManagerHistory,
   useChips,
 } from '@/api/manager';
 import { makeTestQueryClient } from '../utils/renderWithProviders';
@@ -31,6 +33,11 @@ const ENTRY_FIXTURE = {
 };
 
 const HISTORY_FIXTURE = {
+  current: [
+    { event: 22, points: 51, total_points: 1340, rank: 200_000 },
+    { event: 23, points: 78, total_points: 1418, rank: 150_000 },
+    { event: 24, points: 64, total_points: 1482, rank: 142_831 },
+  ],
   chips: [
     { name: 'bboost',    event: 12 },
     { name: 'wildcard',  event: 18 },
@@ -87,6 +94,36 @@ describe('useManager', () => {
     const { result } = renderHook(() => useManager(), { wrapper });
     expect(result.current.fetchStatus).toBe('idle');
     expect(fplGet).not.toHaveBeenCalled();
+  });
+});
+
+describe('gwPointsFromHistory', () => {
+  it('returns the points for the requested gw', () => {
+    expect(gwPointsFromHistory(HISTORY_FIXTURE, 23)).toBe(78);
+    expect(gwPointsFromHistory(HISTORY_FIXTURE, 22)).toBe(51);
+  });
+
+  it('returns 0 when gw is not in history', () => {
+    expect(gwPointsFromHistory(HISTORY_FIXTURE, 99)).toBe(0);
+    expect(gwPointsFromHistory({ chips: [] }, 23)).toBe(0);
+  });
+});
+
+describe('useManagerHistory', () => {
+  it('fetches /entry/{id}/history/ and returns the raw payload', async () => {
+    (useProfile as jest.Mock).mockReturnValue({
+      data: { fplTeamId: 12345 }, isSuccess: true,
+    });
+    (fplGet as jest.Mock).mockResolvedValueOnce(HISTORY_FIXTURE);
+
+    const client = makeTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useManagerHistory(), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(fplGet).toHaveBeenCalledWith('/entry/12345/history/');
+    expect(result.current.data?.current?.[1]?.points).toBe(78);
   });
 });
 

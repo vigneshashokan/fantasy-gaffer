@@ -19,7 +19,15 @@ interface FplEntry {
   summary_overall_rank: number;
 }
 
+interface FplHistoryCurrent {
+  event: number;
+  points: number;
+  total_points: number;
+  rank: number;
+}
+
 interface FplHistory {
+  current?: FplHistoryCurrent[];
   chips: Array<{ name: string; event: number }>;
 }
 
@@ -39,6 +47,10 @@ const CHIP_CATALOG: Array<{ id: string; fplName: string; name: string; sub: stri
   { id: 'bb', fplName: 'bboost',    name: 'Bench Boost',    sub: 'All 15 players score', icon: 'benchboost' },
   { id: 'tc', fplName: '3xc',       name: 'Triple Captain', sub: '3× captain points',    icon: 'triplecaptain' },
 ];
+
+export function gwPointsFromHistory(history: FplHistory, gw: number): number {
+  return history.current?.find((e) => e.event === gw)?.points ?? 0;
+}
 
 export function chipsFromHistory(history: FplHistory): Chip[] {
   const playedByFpl: Record<string, number> = {};
@@ -66,14 +78,25 @@ export function useManager() {
   });
 }
 
-export function useChips() {
+export function useManagerHistory() {
   const profile = useProfile();
   const teamId = profile.data?.fplTeamId ?? null;
   return useQuery({
-    queryKey: queryKeys.chips(teamId ?? 0),
-    queryFn: async () => chipsFromHistory(await fplGet<FplHistory>(`/entry/${teamId}/history/`)),
+    queryKey: queryKeys.managerHistory(teamId ?? 0),
+    queryFn: () => fplGet<FplHistory>(`/entry/${teamId}/history/`),
     enabled: teamId !== null,
     staleTime: FPL_STALE,
     gcTime: FPL_GC,
   });
+}
+
+export function useChips() {
+  const history = useManagerHistory();
+  return {
+    data: history.data ? chipsFromHistory(history.data) : undefined,
+    isPending: history.isPending,
+    isError: history.isError,
+    error: history.error,
+    isSuccess: history.isSuccess,
+  };
 }

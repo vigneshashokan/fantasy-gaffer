@@ -17,9 +17,9 @@ import type {
 } from '@/types/fpl';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { useCurrentGameweek, useEventLive, useFixturesByGw } from './fixtures';
+import { useCurrentGameweek, useEventLive, useEventStats, useFixturesByGw } from './fixtures';
 import { fplGet } from './fpl-client';
-import { useManager } from './manager';
+import { gwPointsFromHistory, useManager, useManagerHistory } from './manager';
 import { usePlayers } from './players';
 import { useProfile } from './profile';
 import { queryKeys } from './queryKeys';
@@ -61,12 +61,12 @@ export function squadFromPicks(
 const FPL_STALE = 15 * 60 * 1000;
 const FPL_GC = 30 * 60 * 1000;
 
-export function useSquad() {
+export function useSquad(targetGw?: number) {
   const profile = useProfile();
-  const gw = useCurrentGameweek();
+  const currentGw = useCurrentGameweek();
   const players = usePlayers();
   const teamId = profile.data?.fplTeamId ?? null;
-  const gwId = gw.data?.gw ?? null;
+  const gwId = targetGw ?? currentGw.data?.gw ?? null;
 
   return useQuery({
     queryKey: queryKeys.squad(teamId ?? 0, gwId ?? 0),
@@ -74,31 +74,78 @@ export function useSquad() {
       const picks = await fplGet<PicksResponse>(`/entry/${teamId}/event/${gwId}/picks/`);
       return squadFromPicks(picks, players.data ?? []);
     },
-    enabled: teamId !== null && gwId !== null && Array.isArray(players.data),
+    enabled: teamId !== null && gwId !== null && gwId > 0 && Array.isArray(players.data),
     staleTime: FPL_STALE,
     gcTime: FPL_GC,
   });
 }
 
-// Composition hook: assembles the APEX_TEAM shape minus Gaffer fields.
-export function useApexTeam() {
+// Composition hook: assembles the APEX_TEAM shape for the requested gameweek.
+// When targetGw is omitted, defaults to the live (current) gameweek.
+export function useApexTeam(targetGw?: number) {
   const profile = useProfile();
-  const gwQ = useCurrentGameweek();
-  const squadQ = useSquad();
-  const managerQ = useManager();
-  const fixturesQ = useFixturesByGw(gwQ.data?.gw ?? 0);
-  const liveQ = useEventLive(gwQ.data?.gw ?? 0);
+  const currentGwQ = useCurrentGameweek();
+  const liveGw = currentGwQ.data?.gw ?? 0;
+  const gw = targetGw ?? liveGw;
 
-  const isPending = profile.isPending || gwQ.isPending || squadQ.isPending || managerQ.isPending;
-  const isError = profile.isError || gwQ.isError || squadQ.isError || managerQ.isError;
-  const error = profile.error ?? gwQ.error ?? squadQ.error ?? managerQ.error ?? null;
+  const eventStatsQ = useEventStats(gw);
+  const squadQ = useSquad(targetGw);
+  const managerQ = useManager();
+  const historyQ = useManagerHistory();
+  const fixturesQ = useFixturesByGw(gw);
+  const liveQ = useEventLive(gw);
+
+  const isPending =
+    profile.isPending ||
+    currentGwQ.isPending ||
+    squadQ.isPending ||
+    managerQ.isPending ||
+    historyQ.isPending;
+  const isError =
+    profile.isError ||
+    currentGwQ.isError ||
+    squadQ.isError ||
+    managerQ.isError ||
+    historyQ.isError;
+  const error =
+    profile.error ??
+    currentGwQ.error ??
+    squadQ.error ??
+    managerQ.error ??
+    historyQ.error ??
+    null;
   const noTeam = profile.data?.fplTeamId === null;
 
   const data = useMemo(() => {
     if (noTeam) return null;
-    if (!squadQ.data || !managerQ.data || !gwQ.data) return undefined;
-    return buildApexTeam(squadQ.data, managerQ.data, gwQ.data, fixturesQ.data, liveQ.data);
-  }, [noTeam, squadQ.data, managerQ.data, gwQ.data, fixturesQ.data, liveQ.data]);
+    if (
+      !squadQ.data ||
+      !managerQ.data ||
+      !currentGwQ.data ||
+      !eventStatsQ.data ||
+      !historyQ.data
+    ) {
+      return undefined;
+    }
+    return buildApexTeam(
+      squadQ.data,
+      managerQ.data,
+      eventStatsQ.data,
+      currentGwQ.data,
+      historyQ.data,
+      fixturesQ.data,
+      liveQ.data,
+    );
+  }, [
+    noTeam,
+    squadQ.data,
+    managerQ.data,
+    eventStatsQ.data,
+    currentGwQ.data,
+    historyQ.data,
+    fixturesQ.data,
+    liveQ.data,
+  ]);
 
   return { data, isPending, isError, error, noTeam };
 }
@@ -117,20 +164,30 @@ function ptsFor(p: SquadPlayer, liveById: Map<number, number> | undefined): numb
 function buildApexTeam(
   squad: { starters: SquadPlayer[]; bench: SquadPlayer[] },
   manager: { name: string; gw: number; gwPoints: number; totalPoints: number; rank: number },
-  current: { gw: number; avgPoints: number; highestPoints: number; finished: boolean; dataChecked: boolean },
+  eventStats: { gw: number; avgPoints: number; highestPoints: number; finished: boolean; dataChecked: boolean },
+  liveCurrent: { gw: number; finished: boolean; dataChecked: boolean },
+  history: { current?: Array<{ event: number; points: number; total_points: number; rank: number }>; chips: Array<{ name: string; event: number }> },
   _fixturesByClub: Partial<Record<ClubCode, { opp: ClubCode; h: boolean }>> | undefined,
   liveById: Map<number, number> | undefined,
 ) {
-  const currentGw = current.gw;
+  const gw = eventStats.gw;
+  // For the live GW, manager.summary_event_points is the freshest value; for
+  // past GWs, look up the historical entry.
+  const gwPts = gw === manager.gw
+    ? manager.gwPoints
+    : gwPointsFromHistory(history, gw);
   return {
     teamName: manager.name,
-    gw: currentGw,
-    gwPts: manager.gwPoints,
+    gw,
+    liveGw: liveCurrent.gw,
+    liveGwFinished: liveCurrent.finished,
+    liveGwDataChecked: liveCurrent.dataChecked,
+    gwPts,
     totalPoints: manager.totalPoints,
-    gwFinished: current.finished,
-    gwDataChecked: current.dataChecked,
-    avgPoints: current.avgPoints,
-    highestPoints: current.highestPoints,
+    gwFinished: eventStats.finished,
+    gwDataChecked: eventStats.dataChecked,
+    avgPoints: eventStats.avgPoints,
+    highestPoints: eventStats.highestPoints,
     pitch: groupByPosition(squad.starters, liveById),
     bench: squad.bench.map((p): PitchPlayer => ({
       name: p.name, pts: ptsFor(p, liveById), gk: p.pos === 'GKP', club: p.club,
@@ -142,7 +199,7 @@ function buildApexTeam(
       freeTransfers: 1,
       squadValue: sumPrice([...squad.starters, ...squad.bench]),
       inBank: 0,
-      nextGw: Math.min(38, currentGw + 1),
+      nextGw: Math.min(38, liveCurrent.gw + 1),
       deadline: '',
       captain: parseCaptain(squad.starters.find((p) => p.capt)?.name ?? ''),
       transferSuggestions: [] as TransferSuggestion[],

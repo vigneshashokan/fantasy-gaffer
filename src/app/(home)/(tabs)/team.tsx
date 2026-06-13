@@ -27,20 +27,20 @@ export default function TeamTab() {
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
-  const { data: at, isPending, noTeam, isError } = useApexTeam();
-
   const [gw, setGw] = useState(0);
+  const { data: at, isPending, noTeam, isError } = useApexTeam(gw > 0 ? gw : undefined);
+
   const [savedCaptain, setSavedCaptain] = useState('');
   const [pendingCaptain, setPendingCaptain] = useState('');
   const [pendingSuggestions, setPendingSuggestions] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (at) {
+    if (at && gw === 0) {
       setGw(at.gw);
       setSavedCaptain(at.captainApplied);
       setPendingCaptain(at.captainApplied);
     }
-  }, [at?.gw, at?.captainApplied]);
+  }, [at?.gw, at?.captainApplied, gw]);
 
   if (noTeam) {
     return (
@@ -70,8 +70,8 @@ export default function TeamTab() {
     );
   }
 
-  const LIVE_GW = at.gw;
-  const LIVE_GW_FINISHED = at.gwFinished;
+  const LIVE_GW = at.liveGw;
+  const LIVE_GW_FINISHED = at.liveGwFinished;
   const MIN_GW = 1;
   const SEASON_FINAL_GW = 38;
   const MAX_GW = Math.min(SEASON_FINAL_GW, LIVE_GW + 1);

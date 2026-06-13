@@ -39,8 +39,7 @@ export function currentGwFromEvents(events: BootstrapEvent[]): number {
   return 1;
 }
 
-export function currentGameweekFromEvents(events: BootstrapEvent[]): CurrentGameweek {
-  const gw = currentGwFromEvents(events);
+export function eventStatsFromEvents(events: BootstrapEvent[], gw: number): CurrentGameweek {
   const event = events.find((e) => e.id === gw);
   return {
     gw,
@@ -51,16 +50,40 @@ export function currentGameweekFromEvents(events: BootstrapEvent[]): CurrentGame
   };
 }
 
-export function useCurrentGameweek() {
+export function currentGameweekFromEvents(events: BootstrapEvent[]): CurrentGameweek {
+  return eventStatsFromEvents(events, currentGwFromEvents(events));
+}
+
+function useBootstrap() {
   return useQuery({
-    queryKey: queryKeys.currentGw,
-    queryFn: async (): Promise<CurrentGameweek> => {
-      const data = await fplGet<BootstrapResponse>('/bootstrap-static/');
-      return currentGameweekFromEvents(data.events);
-    },
+    queryKey: queryKeys.bootstrap,
+    queryFn: () => fplGet<BootstrapResponse>('/bootstrap-static/'),
     staleTime: 60 * 60 * 1000,
     gcTime:    60 * 60 * 1000,
   });
+}
+
+export function useCurrentGameweek() {
+  const q = useBootstrap();
+  return {
+    data: q.data ? currentGameweekFromEvents(q.data.events) : undefined,
+    isPending: q.isPending,
+    isError: q.isError,
+    error: q.error,
+    isSuccess: q.isSuccess,
+  };
+}
+
+export function useEventStats(gw: number) {
+  const q = useBootstrap();
+  const enabled = Number.isFinite(gw) && gw > 0;
+  return {
+    data: q.data && enabled ? eventStatsFromEvents(q.data.events, gw) : undefined,
+    isPending: q.isPending,
+    isError: q.isError,
+    error: q.error,
+    isSuccess: q.isSuccess && enabled,
+  };
 }
 
 interface LiveElement {
