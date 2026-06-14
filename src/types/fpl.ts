@@ -10,6 +10,8 @@ export type ClubCode =
 
 export type Position = 'GKP' | 'DEF' | 'MID' | 'FWD';
 
+export type PlayerStatus = 'a' | 'i' | 'd' | 'u' | 's' | 'n';
+
 export interface Club {
   name: string;
   kit: string;
@@ -27,6 +29,11 @@ export interface Player {
   tp: number;
   own: number;
   gw: number;
+  status: PlayerStatus;
+  news: string;
+  chanceNext: number | null;
+  ict: number;
+  bps: number;
   capt?: boolean;
   vice?: boolean;
   sub?: number;
@@ -34,6 +41,7 @@ export interface Player {
 }
 
 export interface TopPickPlayer {
+  id: string;
   name: string;
   club: ClubCode;
   p: number;
@@ -58,6 +66,7 @@ export interface Fixture {
 }
 
 export interface PitchPlayer {
+  id: string;
   name: string;
   pts: number | null;
   club?: ClubCode;
@@ -71,6 +80,7 @@ export interface PitchPlayer {
 }
 
 export interface TransferPitchPlayer {
+  id: string;
   name: string;
   p: number;
   pos: Position;

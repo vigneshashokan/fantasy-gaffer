@@ -162,6 +162,7 @@ import type { Player } from '@/types/fpl';
 const mockPlayer: Player = {
   id: 'p1', name: 'Haaland', club: 'MCI', pos: 'FWD',
   gw: 12, p: 15.0, f: 9.1, tp: 175, own: 62.3, capt: false, vice: false,
+  status: 'a', news: '', chanceNext: null, ict: 312.4, bps: 640,
 };
 
 describe('PlayerToken', () => {
@@ -321,7 +322,7 @@ describe('Pitch', () => {
 
 // ── ApexPitch ─────────────────────────────────────────────────
 const mockApexRows = [[
-  { name: 'Haaland', pts: 12, capt: true },
+  { id: '328', name: 'Haaland', pts: 12, capt: true },
 ]];
 
 describe('ApexPitch', () => {
@@ -360,8 +361,8 @@ describe('HeroCard', () => {
 describe('ApexDugout', () => {
   it('renders bench players', () => {
     const players = [
-      { name: 'Henderson', pts: 0, gk: true },
-      { name: 'Truffert',  pts: 1 },
+      { id: '116', name: 'Henderson', pts: 0, gk: true },
+      { id: '245', name: 'Truffert',  pts: 1 },
     ];
     const { getByText } = render(
       <ApexDugout players={players} card="#fff" cardBorder="#E7E9F2" faint="#8B8694" />
@@ -427,7 +428,7 @@ describe('SegmentedControl', () => {
 
 // ── PickRow ───────────────────────────────────────────────────
 describe('PickRow', () => {
-  const player = { name: 'Haaland', club: 'MCI' as const, p: 14.6, f: 9.1, tp: 175, own: 62.3, gw: 16 };
+  const player = { id: '328', name: 'Haaland', club: 'MCI' as const, p: 14.6, f: 9.1, tp: 175, own: 62.3, gw: 16 };
 
   it('shows name and price', () => {
     const tk = apexTokens(false, 'classic');
@@ -493,8 +494,8 @@ describe('ChipsRow', () => {
 describe('TransferPitch', () => {
   it('renders rows with players', () => {
     const rows = [
-      [{ name: 'Haaland', p: 14.6, pos: 'FWD' as const, club: 'MCI' as const, tp: 175, f: 9.1, own: 62.3, gw: 16 }],
-      [{ name: 'Raya', p: 4.2, pos: 'GKP' as const, club: 'ARS' as const, tp: 78, f: 4.2, own: 9.1, gw: 3 }],
+      [{ id: '328', name: 'Haaland', p: 14.6, pos: 'FWD' as const, club: 'MCI' as const, tp: 175, f: 9.1, own: 62.3, gw: 16 }],
+      [{ id: '427', name: 'Raya', p: 4.2, pos: 'GKP' as const, club: 'ARS' as const, tp: 78, f: 4.2, own: 9.1, gw: 3 }],
     ];
     const { getByText } = render(<TransferPitch rows={rows} pitchStyle="realistic" />);
     expect(getByText('Haaland')).toBeTruthy();
@@ -697,7 +698,7 @@ describe('PicksCard', () => {
   it('renders header for GKP', () => {
     const tk = apexTokens(false, 'classic');
     const rows = [
-      { name: 'Raya', club: 'ARS' as const, p: 5.6, f: 4.8, tp: 92, own: 28.4, gw: 6 },
+      { id: '427', name: 'Raya', club: 'ARS' as const, p: 5.6, f: 4.8, tp: 92, own: 28.4, gw: 6 },
     ];
     const { getByText } = render(<PicksCard pos="GKP" rows={rows} tk={tk} dark={false} fixtures={{}} squadNames={new Set()} />);
     expect(getByText('Goalkeepers')).toBeTruthy();
@@ -707,7 +708,7 @@ describe('PicksCard', () => {
   it('renders header for FWD', () => {
     const tk = apexTokens(false, 'classic');
     const rows = [
-      { name: 'Wood', club: 'NFO' as const, p: 7.5, f: 6.7, tp: 101, own: 26.1, gw: 9 },
+      { id: '519', name: 'Wood', club: 'NFO' as const, p: 7.5, f: 6.7, tp: 101, own: 26.1, gw: 9 },
     ];
     const { getByText } = render(<PicksCard pos="FWD" rows={rows} tk={tk} dark={false} fixtures={{}} squadNames={new Set()} />);
     expect(getByText('Forwards')).toBeTruthy();

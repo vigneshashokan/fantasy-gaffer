@@ -67,6 +67,7 @@ const PLAYERS_FIXTURE: Player[] = Array.from({ length: 15 }, (_, i) => ({
   pos: i === 0 || i === 11 ? 'GKP' : i < 4 ? 'DEF' : i < 8 ? 'MID' : 'FWD',
   club: 'ARS',
   p: 5.0, f: 5.0, tp: 50, own: 5.0, gw: 5.0,
+  status: 'a', news: '', chanceNext: null, ict: 100.0, bps: 100,
 }));
 
 describe('composePreview', () => {

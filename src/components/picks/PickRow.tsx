@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import type { TopPickPlayer, Fixture, ClubCode } from '@/types/fpl';
 import { jerseyForClub } from '@/constants/jerseys';
 import { ApexTokens } from '@/constants/apexTokens';
@@ -16,6 +17,7 @@ interface PickRowProps {
 }
 
 export function PickRow({ p, zebra, last, tk, dark, fixtures, squadNames }: PickRowProps) {
+  const router = useRouter();
   const fx = fixtures[p.club] ?? { opp: '—' as unknown as ClubCode, h: true };
   const owned = squadNames.has(p.name);
   const xp = xPtsOf(p);
@@ -26,7 +28,8 @@ export function PickRow({ p, zebra, last, tk, dark, fixtures, squadNames }: Pick
   const jersey = jerseyForClub(p.club);
 
   return (
-    <View
+    <Pressable
+      onPress={() => router.push({ pathname: '/(home)/player/[id]', params: { id: p.id } })}
       style={[
         styles.row,
         {
@@ -73,7 +76,7 @@ export function PickRow({ p, zebra, last, tk, dark, fixtures, squadNames }: Pick
       <View style={styles.xpCell}>
         <Text style={[styles.statBold, { color: xpC }]}>{Math.round(xp)}</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

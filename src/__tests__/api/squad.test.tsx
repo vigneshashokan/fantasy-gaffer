@@ -28,9 +28,9 @@ const PICKS_FIXTURE = {
 };
 
 const PLAYERS_FIXTURE: Player[] = [
-  { id: '401', name: 'Haaland', pos: 'FWD', club: 'MCI', p: 14.2, f: 8.4, tp: 175, own: 62.3, gw: 9.1 },
-  { id: '233', name: 'Saka',    pos: 'MID', club: 'ARS', p: 9.2,  f: 6.1, tp: 131, own: 38.6, gw: 7.2 },
-  { id: '100', name: 'Sub',     pos: 'DEF', club: 'CHE', p: 4.0,  f: 4.0, tp: 30,  own: 1.0,  gw: 2.0 },
+  { id: '401', name: 'Haaland', pos: 'FWD', club: 'MCI', p: 14.2, f: 8.4, tp: 175, own: 62.3, gw: 9.1, status: 'a', news: '', chanceNext: null, ict: 312.4, bps: 640 },
+  { id: '233', name: 'Saka',    pos: 'MID', club: 'ARS', p: 9.2,  f: 6.1, tp: 131, own: 38.6, gw: 7.2, status: 'a', news: '', chanceNext: null, ict: 288.1, bps: 510 },
+  { id: '100', name: 'Sub',     pos: 'DEF', club: 'CHE', p: 4.0,  f: 4.0, tp: 30,  own: 1.0,  gw: 2.0, status: 'a', news: '', chanceNext: null, ict: 40.0,  bps: 90 },
 ];
 
 describe('squadFromPicks', () => {

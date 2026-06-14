@@ -15,11 +15,15 @@ const FIXTURE_ROWS = [
     id: 401, web_name: 'Haaland', team_id: 13,
     position: 'FWD', now_cost: 142, form: '8.4',
     total_points: 175, selected_by_percent: '62.3', ep_next: '9.1',
+    status: 'a', news: '', chance_of_playing_next_round: null,
+    ict_index: '312.4', bps: 640,
   },
   {
     id: 233, web_name: 'Saka', team_id: 1,
     position: 'MID', now_cost: 92, form: '6.1',
     total_points: 131, selected_by_percent: '38.6', ep_next: '7.2',
+    status: 'a', news: '', chance_of_playing_next_round: null,
+    ict_index: '288.1', bps: 510,
   },
 ];
 
@@ -39,6 +43,11 @@ describe('playersFromRows adapter', () => {
       tp: 175,
       own: 62.3,
       gw: 9.1,
+      status: 'a',
+      news: '',
+      chanceNext: null,
+      ict: 312.4,
+      bps: 640,
     });
   });
 

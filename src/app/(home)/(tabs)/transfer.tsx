@@ -53,8 +53,8 @@ export default function TransferTab() {
 
   const openPlayer = (p: TransferPitchPlayer) => {
     router.push({
-      pathname: '/(home)/player/[name]',
-      params: { name: p.name },
+      pathname: '/(home)/player/[id]',
+      params: { id: p.id },
     });
   };
 

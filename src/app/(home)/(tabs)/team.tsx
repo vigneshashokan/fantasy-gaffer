@@ -113,8 +113,8 @@ export default function TeamTab() {
 
   const openPlayer = (p: PitchPlayer) => {
     router.push({
-      pathname: '/(home)/player/[name]',
-      params: { name: p.name, from: 'team' },
+      pathname: '/(home)/player/[id]',
+      params: { id: p.id },
     });
   };
 

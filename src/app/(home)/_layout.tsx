@@ -19,7 +19,7 @@ export default function HomeStackLayout() {
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
       <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="player/[name]" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="player/[id]" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

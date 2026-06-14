@@ -190,7 +190,7 @@ function buildApexTeam(
     highestPoints: eventStats.highestPoints,
     pitch: groupByPosition(squad.starters, liveById),
     bench: squad.bench.map((p): PitchPlayer => ({
-      name: p.name, pts: ptsFor(p, liveById), gk: p.pos === 'GKP', club: p.club,
+      id: p.id, name: p.name, pts: ptsFor(p, liveById), gk: p.pos === 'GKP', club: p.club,
     })),
     captainPicks: [] as CaptainPick[],
     captainApplied: squad.starters.find((p) => p.capt)?.name ?? '',
@@ -218,7 +218,7 @@ function groupByPosition(
     starters
       .filter((p) => p.pos === pos)
       .map((p): PitchPlayer => ({
-        name: p.name, pts: ptsFor(p, liveById), capt: p.capt, gk: pos === 'GKP', club: p.club,
+        id: p.id, name: p.name, pts: ptsFor(p, liveById), capt: p.capt, gk: pos === 'GKP', club: p.club,
       })),
   );
 }
@@ -230,7 +230,7 @@ function groupTransferPitch(starters: Player[], bench: Player[]): TransferPitchP
     all
       .filter((p) => p.pos === pos)
       .map((p): TransferPitchPlayer => ({
-        name: p.name, p: p.p, pos: p.pos, club: p.club,
+        id: p.id, name: p.name, p: p.p, pos: p.pos, club: p.club,
         tp: p.tp, f: p.f, own: p.own, gw: p.gw, capt: p.capt,
       })),
   );
