@@ -6,6 +6,7 @@ import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { TransferPitchPlayer } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
+import { useSeasonState } from '@/api/fixtures';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { TransferInfoCard } from '@/components/transfer/TransferInfoCard';
@@ -20,6 +21,7 @@ export default function TransferTab() {
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
   const { data: at, isPending, noTeam, isError } = useApexTeam();
+  const { data: seasonState } = useSeasonState();
   const [pendingTransfers, setPendingTransfers] = useState<Record<string, boolean>>({});
   const pendingCount = Object.values(pendingTransfers).filter(Boolean).length;
 
@@ -47,6 +49,7 @@ export default function TransferTab() {
     );
   }
   const tr = at.transfer;
+  const seasonOver = seasonState?.kind === 'complete';
 
   const heroFrom = t.primary;
   const heroTo = dark ? '#0C1018' : '#5B0F63';
@@ -81,7 +84,7 @@ export default function TransferTab() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topGroup}>
-          <DeadlineBanner nextGw={tr.nextGw} deadline={tr.deadline} tk={tk} />
+          {!seasonOver && <DeadlineBanner nextGw={tr.nextGw} deadline={tr.deadline} tk={tk} />}
           <TransferInfoCard
             teamName={at.teamName}
             nextGw={tr.nextGw}
@@ -104,15 +107,17 @@ export default function TransferTab() {
           </Text>
         </View>
 
-        <View style={styles.suggestionsWrap}>
-          <TransferSuggestionsCard
-            suggestions={tr.transferSuggestions}
-            tk={tk}
-            applied={pendingTransfers}
-            onToggle={toggleTransfer}
-            onToggleAll={toggleAllTransfers}
-          />
-        </View>
+        {!seasonOver && (
+          <View style={styles.suggestionsWrap}>
+            <TransferSuggestionsCard
+              suggestions={tr.transferSuggestions}
+              tk={tk}
+              applied={pendingTransfers}
+              onToggle={toggleTransfer}
+              onToggleAll={toggleAllTransfers}
+            />
+          </View>
+        )}
       </ScrollView>
 
       {pendingCount > 0 && (

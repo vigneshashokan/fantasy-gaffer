@@ -9,6 +9,16 @@ export function CaptBadge() {
   );
 }
 
+// Vice-captain. Same shape as the captain badge but a lighter, secondary
+// fill so the two read as a hierarchy at a glance.
+export function ViceBadge() {
+  return (
+    <View style={[styles.badge, styles.viceBadge]}>
+      <Text style={[styles.text, styles.viceText]}>V</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   badge: {
     position: 'absolute',
@@ -29,10 +39,17 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 4,
   },
+  viceBadge: {
+    backgroundColor: '#C4B5FD',
+    borderColor: 'rgba(123,9,229,0.35)',
+  },
   text: {
     fontFamily: 'Archivo_800ExtraBold',
     fontSize: 11,
     color: '#fff',
     lineHeight: 13,
+  },
+  viceText: {
+    color: '#3D1A78',
   },
 });

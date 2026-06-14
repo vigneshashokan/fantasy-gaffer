@@ -54,6 +54,31 @@ export function currentGameweekFromEvents(events: BootstrapEvent[]): CurrentGame
   return eventStatsFromEvents(events, currentGwFromEvents(events));
 }
 
+export type SeasonPhase =
+  | { kind: 'live'; gw: number }
+  | { kind: 'next'; gw: number }
+  | { kind: 'complete' };
+
+// live     — the current GW is in progress
+// next     — the current GW has finished; `gw` is the upcoming one ("GW23 Next")
+// complete — no upcoming GW remains (season over)
+export function seasonStateFromEvents(events: BootstrapEvent[]): SeasonPhase {
+  if (events.length === 0) return { kind: 'complete' };
+  const current = events.find((e) => e.is_current);
+  const next = events.find((e) => e.is_next);
+  if (current && !current.finished) return { kind: 'live', gw: current.id };
+  if (next) return { kind: 'next', gw: next.id };
+  return { kind: 'complete' };
+}
+
+// PL seasons span Aug–May, so before August the "current" season started the
+// previous calendar year. Derives e.g. "2025/26" rather than hard-coding it.
+export function currentSeasonLabel(now: Date = new Date()): string {
+  const y = now.getFullYear();
+  const start = now.getMonth() >= 7 ? y : y - 1;
+  return `${start}/${String((start + 1) % 100).padStart(2, '0')}`;
+}
+
 function useBootstrap() {
   return useQuery({
     queryKey: queryKeys.bootstrap,
@@ -71,6 +96,15 @@ export function useCurrentGameweek() {
     isError: q.isError,
     error: q.error,
     isSuccess: q.isSuccess,
+  };
+}
+
+export function useSeasonState() {
+  const q = useBootstrap();
+  return {
+    data: q.data ? seasonStateFromEvents(q.data.events) : undefined,
+    isPending: q.isPending,
+    isError: q.isError,
   };
 }
 

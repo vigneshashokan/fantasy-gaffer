@@ -13,9 +13,16 @@ import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { Position } from '@/types/fpl';
 import { useTopPicks } from '@/api/players';
-import { useCurrentGameweek, useFixturesByGw } from '@/api/fixtures';
+import {
+  useCurrentGameweek,
+  useFixturesByGw,
+  useSeasonState,
+  currentSeasonLabel,
+  type SeasonPhase,
+} from '@/api/fixtures';
 import { useSquad } from '@/api/squad';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { Icon } from '@/components/ui/Icon';
 import { SegmentedControl } from '@/components/picks/SegmentedControl';
 import { PicksCard } from '@/components/picks/PicksCard';
 
@@ -32,6 +39,8 @@ export default function TopPicksTab() {
 
   const { data: currentGw }                         = useCurrentGameweek();
   const gw = currentGw?.gw;
+  const { data: seasonState }                       = useSeasonState();
+  const seasonLabel = currentSeasonLabel();
   const { data: topPicks, isPending: picksPending } = useTopPicks();
   const { data: fixtures }                          = useFixturesByGw(gw ?? 0);
   const { data: squad }                             = useSquad();
@@ -70,15 +79,12 @@ export default function TopPicksTab() {
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Text style={[styles.title, { color: tk.text }]}>Top Picks</Text>
-          <View style={[styles.livePill, { backgroundColor: tk.greenSoft }]}>
-            <View style={[styles.dot, { backgroundColor: tk.green }]} />
-            <Text style={[styles.liveText, { color: tk.green }]}>
-              GW{gw ?? '—'} LIVE
-            </Text>
-          </View>
+          <StatusPill state={seasonState} seasonLabel={seasonLabel} tk={tk} />
         </View>
         <Text style={[styles.subtitle, { color: tk.variant }]}>
-          Top Picks will refresh once the current game week is done.
+          {seasonState?.kind === 'complete'
+            ? 'The season has ended — picks resume next campaign.'
+            : 'Top Picks will refresh once the current game week is done.'}
         </Text>
       </View>
 
@@ -120,6 +126,39 @@ export default function TopPicksTab() {
           </ScrollView>
         ))}
       </ScrollView>
+    </View>
+  );
+}
+
+function StatusPill({
+  state,
+  seasonLabel,
+  tk,
+}: {
+  state: SeasonPhase | undefined;
+  seasonLabel: string;
+  tk: ReturnType<typeof apexTokens>;
+}) {
+  if (!state) return null;
+  if (state.kind === 'complete') {
+    return (
+      <View style={[styles.livePill, { backgroundColor: tk.greenSoft }]}>
+        <Text style={[styles.liveText, { color: tk.green }]}>{seasonLabel} Season completed</Text>
+        <Icon name="check" color={tk.green} size={12} />
+      </View>
+    );
+  }
+  if (state.kind === 'live') {
+    return (
+      <View style={[styles.livePill, { backgroundColor: tk.greenSoft }]}>
+        <View style={[styles.dot, { backgroundColor: tk.green }]} />
+        <Text style={[styles.liveText, { color: tk.green }]}>GW{state.gw} LIVE</Text>
+      </View>
+    );
+  }
+  return (
+    <View style={[styles.livePill, { backgroundColor: tk.headStrip }]}>
+      <Text style={[styles.liveText, { color: tk.variant }]}>GW{state.gw} Next</Text>
     </View>
   );
 }

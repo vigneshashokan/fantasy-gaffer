@@ -78,7 +78,7 @@ export default function PlayerDetailModal() {
       ) : summary.data ? (
         <>
           <Text style={[styles.sectionTitle, { color: tk.text }]}>Last 5 gameweeks</Text>
-          <FormSparkline points={last5FromHistory(summary.data.history)} tk={tk} />
+          <FormSparkline gameweeks={last5FromHistory(summary.data.history)} tk={tk} />
           <Text style={[styles.sectionTitle, { color: tk.text }]}>Next 5 fixtures</Text>
           <FixtureStrip
             fixtures={next5Fixtures(summary.data.fixtures)}

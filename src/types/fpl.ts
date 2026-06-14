@@ -71,6 +71,7 @@ export interface PitchPlayer {
   pts: number | null;
   club?: ClubCode;
   capt?: boolean;
+  vice?: boolean;
   ball?: boolean;
   sub?: number;
   subIn?: number;

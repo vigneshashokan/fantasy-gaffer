@@ -25,9 +25,11 @@ export interface ElementSummary {
   fixtures: SummaryFixtureRow[];
 }
 
-export interface FormPoint {
+export interface FormGameweek {
   round: number;
-  points: number;
+  // Points for each fixture in this gameweek — usually one entry, two for a
+  // double gameweek. Kept separate (not summed) to mirror the FPL app.
+  fixtures: number[];
 }
 export interface NextFixture {
   event: number | null;
@@ -36,20 +38,21 @@ export interface NextFixture {
   difficulty: number;
 }
 
-// One FPL history row exists per FIXTURE, so a double gameweek produces two
-// rows with the same `round` (e.g. GW36 played twice). Sum points per round —
-// collapsing a DGW into a single gameweek total — before taking the last 5
-// DISTINCT rounds. This keeps `round` unique, so it's a safe React key for the
-// sparkline and each bar represents one gameweek.
-export function last5FromHistory(history: SummaryHistoryRow[]): FormPoint[] {
-  const pointsByRound = new Map<number, number>();
+// FPL history has one row per FIXTURE, so a double gameweek yields two rows
+// with the same `round`. Group fixtures by round — keeping each fixture's
+// points separate, like the FPL app, rather than summing — and return the
+// last 5 DISTINCT rounds (so `round` is a unique key per sparkline column).
+export function last5FromHistory(history: SummaryHistoryRow[]): FormGameweek[] {
+  const byRound = new Map<number, number[]>();
   for (const h of history) {
-    pointsByRound.set(h.round, (pointsByRound.get(h.round) ?? 0) + h.total_points);
+    const fixtures = byRound.get(h.round) ?? [];
+    fixtures.push(h.total_points);
+    byRound.set(h.round, fixtures);
   }
-  return [...pointsByRound.entries()]
+  return [...byRound.entries()]
     .sort((a, b) => a[0] - b[0])
     .slice(-5)
-    .map(([round, points]) => ({ round, points }));
+    .map(([round, fixtures]) => ({ round, fixtures }));
 }
 
 export function next5Fixtures(fixtures: SummaryFixtureRow[]): NextFixture[] {

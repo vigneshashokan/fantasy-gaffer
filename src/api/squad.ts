@@ -218,7 +218,7 @@ function groupByPosition(
     starters
       .filter((p) => p.pos === pos)
       .map((p): PitchPlayer => ({
-        id: p.id, name: p.name, pts: ptsFor(p, liveById), capt: p.capt, gk: pos === 'GKP', club: p.club,
+        id: p.id, name: p.name, pts: ptsFor(p, liveById), capt: p.capt, vice: p.vice, gk: pos === 'GKP', club: p.club,
       })),
   );
 }
