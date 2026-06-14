@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
@@ -9,7 +9,6 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { ReadField } from '@/components/profile/ReadField';
-import { GenderRow } from '@/components/profile/GenderRow';
 import { ChangePassword } from '@/components/profile/ChangePassword';
 import { DeleteAccount } from '@/components/profile/DeleteAccount';
 
@@ -20,11 +19,6 @@ export default function ProfileModal() {
   const tk = apexTokens(dark, paletteKey);
 
   const { data: profile, isPending } = useProfile();
-  const [gender, setGender] = useState<string>('');
-
-  useEffect(() => {
-    if (profile?.gender) setGender(profile.gender);
-  }, [profile?.gender]);
 
   if (isPending || !profile) {
     return (
@@ -72,7 +66,6 @@ export default function ProfileModal() {
           <ReadField label="First name" value={profile.firstName} tk={tk} />
           <ReadField label="Last name" value={profile.lastName} tk={tk} showDivider />
           <ReadField label="Date of birth" value={profile.dob} tk={tk} showDivider />
-          <GenderRow value={gender} onChange={setGender} tk={tk} />
           <ReadField label="Email address" value={profile.email} tk={tk} showDivider />
         </SectionCard>
 

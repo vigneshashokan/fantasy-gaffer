@@ -53,7 +53,6 @@ jest.mock('@/api/profile', () => ({
       firstName: 'Apex',
       lastName: 'Gaffer',
       dob: '14 Aug 1990',
-      gender: 'Prefer not to say',
       email: 'apex.gaffer@example.com',
       faceId: true,
       fplTeamId: null,

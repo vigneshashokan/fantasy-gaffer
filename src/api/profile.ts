@@ -36,7 +36,6 @@ export function profileFromRow(row: ProfileRow, email: string, faceId: boolean):
     firstName: row.first_name,
     lastName: row.last_name,
     dob: formatDob(row.dob),
-    gender: 'Prefer not to say',
     email,
     faceId,
     fplTeamId: row.fpl_team_id,

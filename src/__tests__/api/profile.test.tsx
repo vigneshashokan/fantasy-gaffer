@@ -43,7 +43,6 @@ describe('profileFromRow', () => {
       firstName: 'Apex',
       lastName: 'Gaffer',
       dob: '14 Aug 1990',
-      gender: 'Prefer not to say',
       email: 'apex@example.com',
       faceId: true,
       fplTeamId: 12345,

@@ -128,7 +128,6 @@ export interface Profile {
   firstName: string;
   lastName: string;
   dob: string;
-  gender: string;
   email: string;
   faceId: boolean;
   fplTeamId: number | null;

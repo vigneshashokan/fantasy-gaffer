@@ -57,7 +57,6 @@ import { SectionCard } from '@/components/ui/SectionCard';
 import { Toggle } from '@/components/ui/Toggle';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { ReadField } from '@/components/profile/ReadField';
-import { GenderRow } from '@/components/profile/GenderRow';
 import { ToggleRow } from '@/components/profile/ToggleRow';
 import { ChangePassword } from '@/components/profile/ChangePassword';
 import { DeleteAccount } from '@/components/profile/DeleteAccount';
@@ -604,11 +603,6 @@ describe('Profile components', () => {
     const { getByText } = render(<ReadField label="First name" value="Apex" tk={tk} />);
     expect(getByText('First name')).toBeTruthy();
     expect(getByText('Apex')).toBeTruthy();
-  });
-
-  it('GenderRow shows current value', () => {
-    const { getByText } = render(<GenderRow value="Female" onChange={() => {}} tk={tk} />);
-    expect(getByText('Female')).toBeTruthy();
   });
 
   it('ToggleRow shows label and sub', () => {
