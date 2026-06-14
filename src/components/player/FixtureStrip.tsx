@@ -5,24 +5,24 @@ import type { ClubCode } from '@/types/fpl';
 import type { NextFixture } from '@/api/playerSummary';
 import { fdrColor } from '@/constants/fdr';
 
-interface Props {
+interface FixtureStripProps {
   fixtures: NextFixture[];
   codeByTeamId: Record<number, ClubCode>;
   dark: boolean;
   tk: ApexTokens;
 }
 
-export function FixtureStrip({ fixtures, codeByTeamId, dark, tk }: Props) {
+export function FixtureStrip({ fixtures, codeByTeamId, dark, tk }: FixtureStripProps) {
   if (fixtures.length === 0) {
     return <Text style={[styles.empty, { color: tk.faint }]}>No upcoming fixtures</Text>;
   }
   return (
     <View style={styles.wrap}>
-      {fixtures.map((f, i) => {
+      {fixtures.map((f) => {
         const c = fdrColor(f.difficulty, dark);
         const opp = codeByTeamId[f.opponentTeamId] ?? '—';
         return (
-          <View key={`${f.event}-${i}`} style={[styles.chip, { backgroundColor: c.bg }]}>
+          <View key={`${f.opponentTeamId}-${f.isHome ? 'H' : 'A'}-${f.event ?? 'tbd'}`} style={[styles.chip, { backgroundColor: c.bg }]}>
             <Text style={[styles.opp, { color: c.text }]}>{opp}</Text>
             <Text style={[styles.ha, { color: c.text }]}>{f.isHome ? 'H' : 'A'}</Text>
           </View>

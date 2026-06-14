@@ -3,14 +3,14 @@ import { View, Text, StyleSheet } from 'react-native';
 import type { ApexTokens } from '@/constants/apexTokens';
 import { availabilityState } from '@/utils/availability';
 
-interface Props {
+interface AvailabilityBannerProps {
   status: string;
   news: string;
   chanceNext: number | null;
   tk: ApexTokens;
 }
 
-export function AvailabilityBanner({ status, news, chanceNext, tk }: Props) {
+export function AvailabilityBanner({ status, news, chanceNext, tk }: AvailabilityBannerProps) {
   const state = availabilityState(status, chanceNext);
   if (!state) return null;
   const bg = state.severity === 'out' ? tk.pinkSoft : tk.yellowSoft;

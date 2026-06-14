@@ -4,7 +4,7 @@ import type { ApexTokens } from '@/constants/apexTokens';
 import type { ClubCode, Position } from '@/types/fpl';
 import { Kit } from '@/components/ui/Kit';
 
-interface Props {
+interface PlayerHeroProps {
   name: string;
   club: ClubCode;
   clubName: string;
@@ -14,7 +14,7 @@ interface Props {
   tk: ApexTokens;
 }
 
-export function PlayerHero({ name, club, clubName, pos, price, ownership, tk }: Props) {
+export function PlayerHero({ name, club, clubName, pos, price, ownership, tk }: PlayerHeroProps) {
   return (
     <View style={[styles.card, { backgroundColor: tk.card, borderColor: tk.cardBorder }]}>
       <Kit club={club} size={72} playerName={name} />

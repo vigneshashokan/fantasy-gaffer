@@ -5,12 +5,12 @@ import type { FormPoint } from '@/api/playerSummary';
 
 const MAX_H = 48;
 
-interface Props {
+interface FormSparklineProps {
   points: FormPoint[];
   tk: ApexTokens;
 }
 
-export function FormSparkline({ points, tk }: Props) {
+export function FormSparkline({ points, tk }: FormSparklineProps) {
   if (points.length === 0) {
     return <Text style={[styles.empty, { color: tk.faint }]}>No appearances yet</Text>;
   }

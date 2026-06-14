@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { ApexTokens } from '@/constants/apexTokens';
 
-interface Props {
+interface KeyStatsRowProps {
   form: number;
   total: number;
   ep: number;
@@ -11,7 +11,7 @@ interface Props {
   tk: ApexTokens;
 }
 
-export function KeyStatsRow({ form, total, ep, ict, bps, tk }: Props) {
+export function KeyStatsRow({ form, total, ep, ict, bps, tk }: KeyStatsRowProps) {
   const stats = [
     { label: 'Form', value: form.toFixed(1) },
     { label: 'Total', value: String(total) },
