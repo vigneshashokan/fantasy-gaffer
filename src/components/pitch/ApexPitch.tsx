@@ -31,8 +31,14 @@ interface ApexPitchProps {
 const MAX_ROW = 5;
 // Page paddingHorizontal (16×2 in team.tsx) + pitch paddingHorizontal (6×2).
 const SIDE_CHROME = 32 + 12;
-const SLOT_MIN = 56;
+// Keep the floor low enough that a full 5-wide row still fits the narrowest
+// supported screen (~320pt → (320-44)/5 ≈ 55), so jerseys scale down with the
+// screen instead of overflowing it.
+const SLOT_MIN = 48;
 const SLOT_MAX = 90;
+// Upper bound for a name pill on a sparse row (e.g. 2 forwards) so a long
+// name can show in full without the pill growing unboundedly.
+const PILL_MAX = 120;
 const AVATAR_RATIO = 0.51;
 const WRAPPER_RATIO = 0.6;
 
@@ -61,21 +67,27 @@ export function ApexPitch({
     >
       <ApexPitchMarks width={pitch.w} height={pitch.h} />
       <View style={styles.rows}>
-        {rows.map((row, i) => (
-          <View key={i} style={styles.row}>
-            {row.map((p) => (
-              <ApexPitchPlayerCard
-                key={p.name}
-                p={p}
-                upcoming={upcoming}
-                slotW={slotW}
-                avatarSize={avatarSize}
-                wrapperSize={wrapperSize}
-                onPress={onPlayerPress}
-              />
-            ))}
-          </View>
-        ))}
+        {rows.map((row, i) => {
+          // Pills size to the room available in THIS row: a 2-player row gets
+          // wide pills (full names), a 5-player row gets tighter ones.
+          const pillMaxW = Math.min(PILL_MAX, (screenW - SIDE_CHROME) / Math.max(1, row.length) - 6);
+          return (
+            <View key={i} style={styles.row}>
+              {row.map((p) => (
+                <ApexPitchPlayerCard
+                  key={p.name}
+                  p={p}
+                  upcoming={upcoming}
+                  slotW={slotW}
+                  avatarSize={avatarSize}
+                  wrapperSize={wrapperSize}
+                  pillMaxW={pillMaxW}
+                  onPress={onPlayerPress}
+                />
+              ))}
+            </View>
+          );
+        })}
       </View>
     </View>
   );
@@ -87,6 +99,7 @@ interface PlayerCardProps {
   slotW: number;
   avatarSize: number;
   wrapperSize: number;
+  pillMaxW: number;
   onPress?: (p: PitchPlayer) => void;
 }
 
@@ -96,6 +109,7 @@ function ApexPitchPlayerCard({
   slotW,
   avatarSize,
   wrapperSize,
+  pillMaxW,
   onPress,
 }: PlayerCardProps) {
   const body = (
@@ -113,7 +127,7 @@ function ApexPitchPlayerCard({
         pts={upcoming ? undefined : p.pts}
         name={p.name}
         upcoming={upcoming}
-        maxWidth={slotW}
+        maxWidth={pillMaxW}
       />
     </>
   );

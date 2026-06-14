@@ -22,9 +22,12 @@ interface TransferPitchProps {
 // transfer.tsx pitchWrap) + pitch paddingHorizontal (2×2) = 36.
 const MAX_ROW = 5;
 const SIDE_CHROME = 32 + 4;
-const SLOT_MIN = 56;
+// Low floor so a full 5-wide row fits the narrowest screen and jerseys scale
+// down instead of bleeding off the edge.
+const SLOT_MIN = 50;
 const SLOT_MAX = 72;
 const AVATAR_RATIO = 0.64;
+const PILL_MAX = 120;
 
 export function TransferPitch({
   rows,
@@ -51,6 +54,10 @@ export function TransferPitch({
           // GKP row sits inside a half-width band so the keeper is centred
           // between the goal posts.
           const isKeeperRow = row[0]?.pos === 'GKP';
+          // Pills size to the room available in this row (keeper band is half
+          // width), so names show in full without overlapping neighbours.
+          const rowAvail = (screenW - SIDE_CHROME) * (isKeeperRow ? 0.5 : 1);
+          const pillMaxW = Math.min(PILL_MAX, rowAvail / Math.max(1, row.length) - 6);
           return (
             <View key={i} style={styles.row}>
               {isKeeperRow ? (
@@ -62,6 +69,7 @@ export function TransferPitch({
                       onPress={onPlayerPress}
                       slotW={slotW}
                       avatarSize={avatarSize}
+                      pillMaxW={pillMaxW}
                     />
                   ))}
                 </View>
@@ -73,6 +81,7 @@ export function TransferPitch({
                     onPress={onPlayerPress}
                     slotW={slotW}
                     avatarSize={avatarSize}
+                    pillMaxW={pillMaxW}
                   />
                 ))
               )}
@@ -89,9 +98,10 @@ interface TransferPlayerProps {
   onPress?: (p: TransferPitchPlayer) => void;
   slotW: number;
   avatarSize: number;
+  pillMaxW: number;
 }
 
-function TransferPlayer({ p, onPress, slotW, avatarSize }: TransferPlayerProps) {
+function TransferPlayer({ p, onPress, slotW, avatarSize, pillMaxW }: TransferPlayerProps) {
   return (
     <Pressable
       style={({ pressed }) => [
@@ -105,7 +115,7 @@ function TransferPlayer({ p, onPress, slotW, avatarSize }: TransferPlayerProps) 
         <Text style={styles.priceText}>£{p.p.toFixed(1)}m</Text>
       </View>
       <AvatarDisc size={avatarSize} player={p} />
-      <PointPill name={p.name} upcoming maxWidth={slotW} />
+      <PointPill name={p.name} upcoming maxWidth={pillMaxW} />
     </Pressable>
   );
 }
