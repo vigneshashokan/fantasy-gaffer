@@ -1,46 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, FlatList, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
-import type { PitchPlayer } from '@/types/fpl';
+import type { PitchPlayer, Suggestion } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
 import { Skeleton } from '@/components/ui/Skeleton';
-import { ApexPitch } from '@/components/pitch/ApexPitch';
-import { HeroCard } from '@/components/team/HeroCard';
-import { ApexDugout } from '@/components/team/ApexDugout';
-import { CaptainPickCard } from '@/components/team/CaptainPickCard';
-import { SuggestionsCard } from '@/components/team/SuggestionsCard';
-import { GwNavBar } from '@/components/team/GwNavBar';
-import { ApplyAllCard } from '@/components/team/ApplyAllCard';
-import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
-import { ChipsRow } from '@/components/transfer/ChipsRow';
+import { GameweekScreen } from '@/components/team/GameweekScreen';
 
-type GwState = 'live' | 'upcoming' | 'past';
+const MIN_GW = 1;
+const SEASON_FINAL_GW = 38;
 
 export default function TeamTab() {
   const router = useRouter();
-  const { paletteKey, dark, pitchStyle } = useThemeStore();
+  const { paletteKey, dark } = useThemeStore();
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
-  const [gw, setGw] = useState(0);
-  const { data: at, isPending, noTeam, isError } = useApexTeam(gw > 0 ? gw : undefined);
+  const { width, height: winH } = useWindowDimensions();
+  const [areaH, setAreaH] = useState(0);
+  const listRef = useRef<FlatList<number>>(null);
+
+  // Live team — drives the gating states and the page-list bounds.
+  const { data: at, isPending, noTeam, isError } = useApexTeam();
 
   const [savedCaptain, setSavedCaptain] = useState('');
   const [pendingCaptain, setPendingCaptain] = useState('');
   const [pendingSuggestions, setPendingSuggestions] = useState<Record<string, boolean>>({});
 
+  const initialized = useRef(false);
+  const initialCaptain = at?.captainApplied;
   useEffect(() => {
-    if (at && gw === 0) {
-      setGw(at.gw);
-      setSavedCaptain(at.captainApplied);
-      setPendingCaptain(at.captainApplied);
+    if (initialCaptain !== undefined && !initialized.current) {
+      initialized.current = true;
+      setSavedCaptain(initialCaptain);
+      setPendingCaptain(initialCaptain);
     }
-  }, [at?.gw, at?.captainApplied, gw]);
+  }, [initialCaptain]);
 
   if (noTeam) {
     return (
@@ -70,226 +68,77 @@ export default function TeamTab() {
     );
   }
 
-  const LIVE_GW = at.liveGw;
-  const LIVE_GW_FINISHED = at.liveGwFinished;
-  const MIN_GW = 1;
-  const SEASON_FINAL_GW = 38;
-  const MAX_GW = Math.min(SEASON_FINAL_GW, LIVE_GW + 1);
+  const liveGw = at.liveGw;
+  const maxGw = Math.min(SEASON_FINAL_GW, liveGw + 1);
+  const gwList = Array.from({ length: maxGw - MIN_GW + 1 }, (_, i) => MIN_GW + i);
+  const initialIndex = liveGw - MIN_GW;
+  const pageH = areaH || winH;
 
-  function stateFor(gwArg: number): GwState {
-    if (gwArg === LIVE_GW) return LIVE_GW_FINISHED ? 'past' : 'live';
-    if (gwArg > LIVE_GW) return 'upcoming';
-    return 'past';
-  }
-
-  const gwState = stateFor(gw);
-  const isUpcoming = gwState === 'upcoming';
-
-  const captainChanged = isUpcoming && pendingCaptain !== savedCaptain;
-  const suggestionCount = Object.values(pendingSuggestions).filter(Boolean).length;
-  const totalChanges = (captainChanged ? 1 : 0) + suggestionCount;
-
-  const heroFrom = t.primary;
-  const heroTo = dark ? '#0C1018' : '#5B0F63';
+  const scrollToGw = (target: number) => {
+    const index = target - MIN_GW;
+    if (index < 0 || index >= gwList.length) return;
+    listRef.current?.scrollToIndex({ index, animated: true });
+  };
 
   const toggleSuggestion = (id: string) =>
     setPendingSuggestions((s) => ({ ...s, [id]: !s[id] }));
-
-  const toggleAllSuggestions = (next: boolean) => {
+  const toggleAllSuggestions = (next: boolean, suggestions: Suggestion[]) => {
     const all: Record<string, boolean> = {};
-    if (next) at.suggestions.forEach((s) => (all[s.id] = true));
+    if (next) suggestions.forEach((s) => (all[s.id] = true));
     setPendingSuggestions(all);
   };
-
   const undo = () => {
     setPendingCaptain(savedCaptain);
     setPendingSuggestions({});
   };
-
   const confirm = () => {
     setSavedCaptain(pendingCaptain);
     setPendingSuggestions({});
   };
 
-  const openPlayer = (p: PitchPlayer) => {
-    router.push({
-      pathname: '/(home)/player/[id]',
-      params: { id: p.id },
-    });
-  };
-
-  const activeChip = at.transfer.chips.find((c) => c.playedGw === gw);
+  const openPlayer = (p: PitchPlayer) =>
+    router.push({ pathname: '/(home)/player/[id]', params: { id: p.id } });
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={[
-          styles.scroll,
-          isUpcoming && totalChanges > 0 && { paddingBottom: 140 },
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <GwNavBar
-          gw={gw}
-          state={gwState}
-          onPrev={() => setGw((g) => Math.max(MIN_GW, g - 1))}
-          onNext={() => setGw((g) => Math.min(MAX_GW, g + 1))}
-          disablePrev={gw <= MIN_GW}
-          disableNext={gw >= MAX_GW}
-          tk={tk}
-        />
-
-        {isUpcoming && (
-          <View style={{ marginBottom: 16 }}>
-            <DeadlineBanner nextGw={gw} deadline={at.transfer.deadline} tk={tk} />
-          </View>
-        )}
-
-        <HeroCard
-          teamName={at.teamName}
-          totalPoints={at.totalPoints}
-          gwPts={at.gwPts}
-          avgPoints={at.avgPoints}
-          highestPoints={at.highestPoints}
-          gwInProgress={!at.gwFinished}
-          gradFrom={heroFrom}
-          gradTo={heroTo}
-        />
-
-        {isUpcoming && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionLabel, { color: tk.faint }]}>Play a Chip</Text>
-            <ChipsRow chips={at.transfer.chips} tk={tk} />
-          </View>
-        )}
-
-        <View style={styles.section}>
-          {activeChip && (
-            <View style={[styles.chipBanner, { backgroundColor: tk.chipFill }]}>
-              <BoltGlyph />
-              <View style={styles.chipBannerText}>
-                <Text style={styles.chipBannerName}>{activeChip.name}</Text>
-                <Text style={styles.chipBannerSub}>
-                  {gwState === 'live'
-                    ? 'Chip active this gameweek'
-                    : 'Chip played this gameweek'}
-                </Text>
-              </View>
-            </View>
-          )}
-          <ApexPitch
-            rows={at.pitch}
-            pitchStyle={pitchStyle}
-            upcoming={isUpcoming}
-            onPlayerPress={openPlayer}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <ApexDugout
-            players={at.bench}
-            card={tk.card}
-            cardBorder={tk.cardBorder}
-            faint={tk.faint}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <CaptainPickCard
-            picks={at.captainPicks}
-            captainApplied={savedCaptain}
-            tk={tk}
-            editable={isUpcoming}
+    <View
+      style={{ flex: 1, backgroundColor: t.bg }}
+      onLayout={(e) => setAreaH(e.nativeEvent.layout.height)}
+    >
+      <FlatList
+        testID="gw-carousel"
+        ref={listRef}
+        data={gwList}
+        keyExtractor={(g) => String(g)}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        initialScrollIndex={initialIndex}
+        getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+        onScrollToIndexFailed={(info) =>
+          listRef.current?.scrollToOffset({ offset: info.index * width, animated: false })
+        }
+        windowSize={3}
+        initialNumToRender={1}
+        maxToRenderPerBatch={1}
+        renderItem={({ item }) => (
+          <GameweekScreen
+            gw={item}
+            width={width}
+            height={pageH}
+            savedCaptain={savedCaptain}
             pendingCaptain={pendingCaptain}
-            onPick={setPendingCaptain}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <SuggestionsCard
-            suggestions={at.suggestions}
-            tk={tk}
-            editable={isUpcoming}
-            applied={pendingSuggestions}
-            onToggle={toggleSuggestion}
-            onToggleAll={toggleAllSuggestions}
-            lockedNote={
-              gwState === 'live'
-                ? 'Gameweek is live — suggestions are locked.'
-                : 'Past gameweek — suggestions are locked.'
-            }
-          />
-        </View>
-      </ScrollView>
-
-      {isUpcoming && totalChanges > 0 && (
-        <View style={styles.applyWrap}>
-          <ApplyAllCard
-            count={totalChanges}
-            tk={tk}
+            pendingSuggestions={pendingSuggestions}
+            onPickCaptain={setPendingCaptain}
+            onToggleSuggestion={toggleSuggestion}
+            onToggleAllSuggestions={toggleAllSuggestions}
             onUndo={undo}
             onConfirm={confirm}
+            onPrev={() => scrollToGw(item - 1)}
+            onNext={() => scrollToGw(item + 1)}
+            onOpenPlayer={openPlayer}
           />
-        </View>
-      )}
+        )}
+      />
     </View>
   );
 }
-
-function BoltGlyph() {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-      <Path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13l0-8z" fill="#FFC53D" />
-    </Svg>
-  );
-}
-
-const styles = StyleSheet.create({
-  scroll: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 32,
-  },
-  section: {
-    marginTop: 16,
-  },
-  sectionLabel: {
-    fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 12,
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    marginBottom: 10,
-  },
-  chipBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 14,
-    marginBottom: 12,
-  },
-  chipBannerText: {
-    flex: 1,
-  },
-  chipBannerName: {
-    fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 15,
-    color: '#fff',
-    letterSpacing: -0.15,
-  },
-  chipBannerSub: {
-    fontFamily: 'Archivo_500Medium',
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.78)',
-    marginTop: 2,
-  },
-  applyWrap: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 24,
-    zIndex: 20,
-  },
-});

@@ -1,0 +1,57 @@
+import React from 'react';
+import { renderWithProviders } from './utils/renderWithProviders';
+
+jest.mock('expo-router', () => ({
+  __esModule: true,
+  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+}));
+jest.mock('@/store/themeStore', () => ({
+  __esModule: true,
+  useThemeStore: () => ({ paletteKey: 'classic', dark: true, pitchStyle: 'classic' }),
+}));
+// Stand in for the page so we assert shell wiring, not page internals.
+jest.mock('@/components/team/GameweekScreen', () => {
+  const { Text } = jest.requireActual('react-native');
+  return { __esModule: true, GameweekScreen: ({ gw }: { gw: number }) => <Text>Page {gw}</Text> };
+});
+jest.mock('@/components/team/LinkTeamCta', () => {
+  const { Text } = jest.requireActual('react-native');
+  return { __esModule: true, LinkTeamCta: () => <Text>Link your team</Text> };
+});
+
+let mockTeam: {
+  data: unknown; isPending: boolean; isError: boolean; error: unknown; noTeam: boolean;
+};
+jest.mock('@/api/squad', () => ({
+  __esModule: true,
+  useApexTeam: () => mockTeam,
+}));
+
+import TeamTab from '@/app/(home)/(tabs)/team';
+
+const liveTeam = (liveGw: number) => ({
+  data: { liveGw, liveGwFinished: false, captainApplied: '' },
+  isPending: false, isError: false, error: null, noTeam: false,
+});
+
+describe('TeamTab carousel shell', () => {
+  it('shows the link-team CTA when there is no team', () => {
+    mockTeam = { data: null, isPending: false, isError: false, error: null, noTeam: true };
+    const { getByText, queryByTestId } = renderWithProviders(<TeamTab />);
+    expect(getByText('Link your team')).toBeTruthy();
+    expect(queryByTestId('gw-carousel')).toBeNull();
+  });
+
+  it('renders the carousel with at least the live gameweek page', () => {
+    mockTeam = liveTeam(30);
+    const { getByTestId, getAllByText } = renderWithProviders(<TeamTab />);
+    expect(getByTestId('gw-carousel')).toBeTruthy();
+    expect(getAllByText(/^Page \d+$/).length).toBeGreaterThan(0);
+  });
+
+  it('shows the loading skeleton (no carousel) while the live team loads', () => {
+    mockTeam = { data: undefined, isPending: true, isError: false, error: null, noTeam: false };
+    const { queryByTestId } = renderWithProviders(<TeamTab />);
+    expect(queryByTestId('gw-carousel')).toBeNull();
+  });
+});
