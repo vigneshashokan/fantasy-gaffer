@@ -36,11 +36,20 @@ export interface NextFixture {
   difficulty: number;
 }
 
+// One FPL history row exists per FIXTURE, so a double gameweek produces two
+// rows with the same `round` (e.g. GW36 played twice). Sum points per round —
+// collapsing a DGW into a single gameweek total — before taking the last 5
+// DISTINCT rounds. This keeps `round` unique, so it's a safe React key for the
+// sparkline and each bar represents one gameweek.
 export function last5FromHistory(history: SummaryHistoryRow[]): FormPoint[] {
-  return [...history]
-    .sort((a, b) => a.round - b.round)
+  const pointsByRound = new Map<number, number>();
+  for (const h of history) {
+    pointsByRound.set(h.round, (pointsByRound.get(h.round) ?? 0) + h.total_points);
+  }
+  return [...pointsByRound.entries()]
+    .sort((a, b) => a[0] - b[0])
     .slice(-5)
-    .map((h) => ({ round: h.round, points: h.total_points }));
+    .map(([round, points]) => ({ round, points }));
 }
 
 export function next5Fixtures(fixtures: SummaryFixtureRow[]): NextFixture[] {

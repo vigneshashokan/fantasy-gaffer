@@ -36,6 +36,33 @@ describe('last5FromHistory', () => {
       { round: 1, points: 3 },
     ]);
   });
+  it('aggregates points per round for double gameweeks so rounds stay unique', () => {
+    // FPL history has one row PER FIXTURE; a double gameweek yields two rows
+    // with the same round. They must collapse into one gameweek total.
+    const history = [
+      { round: 34, total_points: 5 },
+      { round: 35, total_points: 7 },
+      { round: 36, total_points: 6 }, // DGW match 1
+      { round: 36, total_points: 9 }, // DGW match 2
+      { round: 37, total_points: 2 },
+    ];
+    const result = last5FromHistory(history);
+    expect(result).toEqual([
+      { round: 34, points: 5 },
+      { round: 35, points: 7 },
+      { round: 36, points: 15 },
+      { round: 37, points: 2 },
+    ]);
+    // rounds must be unique (this is what the sparkline keys on)
+    expect(new Set(result.map((p) => p.round)).size).toBe(result.length);
+  });
+  it('keeps the last 5 DISTINCT rounds when there are more', () => {
+    const history = Array.from({ length: 8 }, (_, i) => ({
+      round: i + 1,
+      total_points: i,
+    }));
+    expect(last5FromHistory(history).map((p) => p.round)).toEqual([4, 5, 6, 7, 8]);
+  });
 });
 
 describe('next5Fixtures', () => {
