@@ -94,7 +94,7 @@ export function useTopPicks() {
     const buckets: Record<Position, TopPickPlayer[]> = { GKP: [], DEF: [], MID: [], FWD: [] };
     for (const p of players.data) {
       buckets[p.pos].push({
-        name: p.name, club: p.club, p: p.p, f: p.f, tp: p.tp, own: p.own, gw: p.gw,
+        id: p.id, name: p.name, club: p.club, p: p.p, f: p.f, tp: p.tp, own: p.own, gw: p.gw,
       });
     }
     for (const pos of Object.keys(buckets) as Position[]) {

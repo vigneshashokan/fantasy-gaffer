@@ -41,6 +41,7 @@ export interface Player {
 }
 
 export interface TopPickPlayer {
+  id: string;
   name: string;
   club: ClubCode;
   p: number;
@@ -65,6 +66,7 @@ export interface Fixture {
 }
 
 export interface PitchPlayer {
+  id: string;
   name: string;
   pts: number | null;
   club?: ClubCode;
@@ -78,6 +80,7 @@ export interface PitchPlayer {
 }
 
 export interface TransferPitchPlayer {
+  id: string;
   name: string;
   p: number;
   pos: Position;
