@@ -446,10 +446,9 @@ describe('PickRow', () => {
 
 // ── TransferInfoCard ──────────────────────────────────────────
 describe('TransferInfoCard', () => {
-  it('shows team name, GW, squad value', () => {
-    const { getByText } = render(
+  it('shows the gameweek title and three stats, no team name', () => {
+    const { getByText, queryByText } = render(
       <TransferInfoCard
-        teamName="Apex Pitch FC"
         nextGw={25}
         squadValue={102.5}
         freeTransfers={1}
@@ -458,10 +457,14 @@ describe('TransferInfoCard', () => {
         gradTo="#5B0F63"
       />
     );
-    expect(getByText('Apex Pitch FC')).toBeTruthy();
     expect(getByText('Gameweek 25')).toBeTruthy();
-    expect(getByText('£102.5m')).toBeTruthy();
+    expect(getByText('Free Transfers')).toBeTruthy();
+    expect(getByText('1')).toBeTruthy();
+    expect(getByText('In the Bank')).toBeTruthy();
     expect(getByText('£2.4m')).toBeTruthy();
+    expect(getByText('Squad Value')).toBeTruthy();
+    expect(getByText('£102.5m')).toBeTruthy();
+    expect(queryByText('Apex Pitch FC')).toBeNull();
   });
 });
 

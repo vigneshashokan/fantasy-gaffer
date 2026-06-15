@@ -88,7 +88,6 @@ export default function TransferTab() {
         <View style={styles.topGroup}>
           {!seasonOver && <DeadlineBanner nextGw={tr.nextGw} deadline={tr.deadline} tk={tk} />}
           <TransferInfoCard
-            teamName={at.teamName}
             nextGw={tr.nextGw}
             squadValue={tr.squadValue}
             freeTransfers={tr.freeTransfers}
