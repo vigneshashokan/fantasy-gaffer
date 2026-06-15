@@ -5,7 +5,10 @@ import {
   last5FromHistory,
   next5Fixtures,
   useElementSummary,
+  gwFixtureLines,
+  gwBreakdown,
 } from '@/api/playerSummary';
+import type { SummaryHistoryRow } from '@/api/playerSummary';
 import { makeTestQueryClient } from '../utils/renderWithProviders';
 
 jest.mock('@/api/fpl-client', () => ({ fplGet: jest.fn() }));
@@ -90,5 +93,84 @@ describe('useElementSummary', () => {
     const { result } = renderHook(() => useElementSummary(undefined), { wrapper });
     expect(result.current.fetchStatus).toBe('idle');
     expect(fplGet).not.toHaveBeenCalled();
+  });
+});
+
+const baseRow = (over: Partial<SummaryHistoryRow>): SummaryHistoryRow => ({
+  round: 5, total_points: 0, minutes: 0, goals_scored: 0, assists: 0,
+  clean_sheets: 0, goals_conceded: 0, own_goals: 0, penalties_saved: 0,
+  penalties_missed: 0, yellow_cards: 0, red_cards: 0, saves: 0, bonus: 0,
+  was_home: true, opponent_team: 1, team_h_score: null, team_a_score: null,
+  ...over,
+});
+
+describe('gwFixtureLines', () => {
+  it('attributes a forward goal at 4 and reconciles exactly (no Other line)', () => {
+    const row = baseRow({ minutes: 90, goals_scored: 1, bonus: 3, total_points: 9 });
+    expect(gwFixtureLines(row, 'FWD')).toEqual([
+      { label: "Played 90'", points: 2 },
+      { label: 'Goal', points: 4 },
+      { label: 'Bonus', points: 3 },
+    ]);
+  });
+
+  it('gives a defender a clean sheet at 4', () => {
+    const row = baseRow({ minutes: 90, clean_sheets: 1, total_points: 6 });
+    expect(gwFixtureLines(row, 'DEF')).toEqual([
+      { label: "Played 90'", points: 2 },
+      { label: 'Clean sheet', points: 4 },
+    ]);
+  });
+
+  it('omits a clean-sheet line for a forward (0 pts) but reconciles via Other', () => {
+    const row = baseRow({ minutes: 90, clean_sheets: 1, total_points: 2 });
+    expect(gwFixtureLines(row, 'FWD')).toEqual([{ label: "Played 90'", points: 2 }]);
+  });
+
+  it('folds unmodelled points (e.g. defensive contribution) into a single Other line', () => {
+    const row = baseRow({ minutes: 90, total_points: 4 });
+    expect(gwFixtureLines(row, 'DEF')).toEqual([
+      { label: "Played 90'", points: 2 },
+      { label: 'Other', points: 2 },
+    ]);
+  });
+
+  it('handles negatives and sub appearances without an Other line when it balances', () => {
+    const row = baseRow({ minutes: 30, yellow_cards: 1, total_points: 0 });
+    expect(gwFixtureLines(row, 'MID')).toEqual([
+      { label: "Played 30'", points: 1 },
+      { label: 'Yellow card', points: -1 },
+    ]);
+  });
+});
+
+describe('gwBreakdown', () => {
+  const history: SummaryHistoryRow[] = [
+    baseRow({ round: 4, minutes: 90, goals_scored: 1, total_points: 6 }),
+    baseRow({ round: 5, minutes: 0, total_points: 0 }),
+  ];
+
+  it('returns upcoming when the round has no history row', () => {
+    expect(gwBreakdown(history, 8, 'MID')).toEqual({ state: 'upcoming', round: 8 });
+  });
+
+  it('marks a 0-minute round as a result with a not-played fixture', () => {
+    const result = gwBreakdown(history, 5, 'MID');
+    expect(result.state).toBe('result');
+    if (result.state === 'result') {
+      expect(result.fixtures).toHaveLength(1);
+      expect(result.fixtures[0].played).toBe(false);
+      expect(result.fixtures[0].lines).toEqual([]);
+    }
+  });
+
+  it('returns one fixture per row for a double gameweek', () => {
+    const dgw = [
+      baseRow({ round: 6, minutes: 90, total_points: 2 }),
+      baseRow({ round: 6, minutes: 75, goals_scored: 1, total_points: 6 }),
+    ];
+    const result = gwBreakdown(dgw, 6, 'MID');
+    if (result.state === 'result') expect(result.fixtures).toHaveLength(2);
+    else throw new Error('expected result state');
   });
 });
