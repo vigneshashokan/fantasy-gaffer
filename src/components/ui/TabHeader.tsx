@@ -46,9 +46,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 24,
-    letterSpacing: -0.48,
-    lineHeight: 32,
+    fontSize: 36,
+    letterSpacing: -0.72,
+    lineHeight: 48,
   },
   subtitle: {
     fontFamily: 'Archivo_400Regular',
