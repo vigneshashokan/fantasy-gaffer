@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useThemeStore } from '@/store/themeStore';
@@ -32,6 +32,9 @@ interface GameweekScreenProps {
   onUndo: () => void;
   onConfirm: () => void;
   onOpenPlayer: (p: PitchPlayer) => void;
+  // Reports this page's vertical scroll offset so the shell can hide the fixed
+  // paging arrows once the user scrolls past the header.
+  onVerticalScroll?: (y: number) => void;
 }
 
 export function GameweekScreen({
@@ -47,12 +50,22 @@ export function GameweekScreen({
   onUndo,
   onConfirm,
   onOpenPlayer,
+  onVerticalScroll,
 }: GameweekScreenProps) {
   const { paletteKey, dark, pitchStyle } = useThemeStore();
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
   const { data: at, isPending, isError } = useApexTeam(gw);
+
+  // Report a fresh "at the top" position on mount so the shell's per-gameweek
+  // scroll record is reset whenever this page (re)mounts after recycling.
+  useEffect(() => {
+    onVerticalScroll?.(0);
+    // Mount-only: re-running on every onVerticalScroll identity change would
+    // clobber the live scroll position with 0.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (isPending || !at) {
     return (
@@ -94,12 +107,15 @@ export function GameweekScreen({
   return (
     <View style={{ width, height, backgroundColor: t.bg }}>
       <ScrollView
+        testID="gw-scroll"
         style={{ flex: 1 }}
         contentContainerStyle={[
           styles.scroll,
           isUpcoming && totalChanges > 0 && { paddingBottom: 140 },
         ]}
         showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={(e) => onVerticalScroll?.(e.nativeEvent.contentOffset.y)}
       >
         <GwPill gw={gw} state={gwState} tk={tk} />
 

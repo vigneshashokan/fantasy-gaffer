@@ -1,4 +1,5 @@
 import React from 'react';
+import { fireEvent } from '@testing-library/react-native';
 import { renderWithProviders } from './utils/renderWithProviders';
 
 jest.mock('@/store/themeStore', () => ({
@@ -56,5 +57,23 @@ describe('GameweekScreen', () => {
     const { queryByTestId } = renderWithProviders(<GameweekScreen {...baseProps} gw={30} />);
     expect(queryByTestId('gw-prev')).toBeNull();
     expect(queryByTestId('gw-next')).toBeNull();
+  });
+
+  it('reports its vertical scroll offset (0 on mount, then live offsets)', () => {
+    const onVerticalScroll = jest.fn();
+    const { getByTestId } = renderWithProviders(
+      <GameweekScreen {...baseProps} gw={30} onVerticalScroll={onVerticalScroll} />,
+    );
+    // Mount reports the top so the shell's per-gameweek record stays fresh.
+    expect(onVerticalScroll).toHaveBeenCalledWith(0);
+
+    fireEvent.scroll(getByTestId('gw-scroll'), {
+      nativeEvent: {
+        contentOffset: { x: 0, y: 140 },
+        contentSize: { width: 320, height: 1200 },
+        layoutMeasurement: { width: 320, height: 640 },
+      },
+    });
+    expect(onVerticalScroll).toHaveBeenLastCalledWith(140);
   });
 });

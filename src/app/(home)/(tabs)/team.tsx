@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Animated, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
@@ -13,6 +13,9 @@ import { GwArrow } from '@/components/team/GwNav';
 
 const MIN_GW = 1;
 const SEASON_FINAL_GW = 38;
+// Hide the fixed paging arrows once a gameweek is scrolled past this offset, so
+// they don't float over the pitch. Small enough that a tiny nudge keeps them.
+const ARROW_HIDE_Y = 24;
 
 export default function TeamTab() {
   const router = useRouter();
@@ -26,6 +29,20 @@ export default function TeamTab() {
   // and disabled state. Null until the first settle — falls back to the live gw.
   const [activeGw, setActiveGw] = useState<number | null>(null);
   const listRef = useRef<FlatList<number>>(null);
+
+  // Hide the fixed arrows while a gameweek is scrolled down. We track scroll per
+  // gameweek so the arrows are correct after a horizontal swipe lands on a page
+  // that was left scrolled (or fresh at the top).
+  const scrollYByGw = useRef<Record<number, number>>({});
+  const [arrowsVisible, setArrowsVisible] = useState(true);
+  const arrowOpacity = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    Animated.timing(arrowOpacity, {
+      toValue: arrowsVisible ? 1 : 0,
+      duration: 160,
+      useNativeDriver: true,
+    }).start();
+  }, [arrowsVisible, arrowOpacity]);
 
   // Live team — drives the gating states and the page-list bounds.
   const { data: at, isPending, noTeam, isError } = useApexTeam();
@@ -88,7 +105,15 @@ export default function TeamTab() {
   const onSettle = (offsetX: number) => {
     if (!width) return;
     const landed = gwList[Math.round(offsetX / width)];
-    if (landed != null) setActiveGw(landed);
+    if (landed != null) {
+      setActiveGw(landed);
+      setArrowsVisible((scrollYByGw.current[landed] ?? 0) <= ARROW_HIDE_Y);
+    }
+  };
+
+  const handlePageScroll = (gw: number, y: number) => {
+    scrollYByGw.current[gw] = y;
+    if (gw === currentGw) setArrowsVisible(y <= ARROW_HIDE_Y);
   };
 
   const toggleSuggestion = (id: string) =>
@@ -146,28 +171,36 @@ export default function TeamTab() {
             onUndo={undo}
             onConfirm={confirm}
             onOpenPlayer={openPlayer}
+            onVerticalScroll={(y) => handlePageScroll(item, y)}
           />
         )}
       />
 
       {/* Fixed paging arrows — pinned at the top edges while the gameweek
-          content (incl. the "Gameweek N" pill) swipes beneath them. */}
-      <View style={[styles.arrow, styles.arrowLeft]}>
+          content (incl. the "Gameweek N" pill) swipes beneath them. They fade
+          out once the active gameweek is scrolled past the header. */}
+      <Animated.View
+        style={[styles.arrow, styles.arrowLeft, { opacity: arrowOpacity }]}
+        pointerEvents={arrowsVisible ? 'auto' : 'none'}
+      >
         <GwArrow
           dir="l"
           onPress={() => scrollToGw(currentGw - 1)}
           disabled={currentGw <= MIN_GW}
           tk={tk}
         />
-      </View>
-      <View style={[styles.arrow, styles.arrowRight]}>
+      </Animated.View>
+      <Animated.View
+        style={[styles.arrow, styles.arrowRight, { opacity: arrowOpacity }]}
+        pointerEvents={arrowsVisible ? 'auto' : 'none'}
+      >
         <GwArrow
           dir="r"
           onPress={() => scrollToGw(currentGw + 1)}
           disabled={currentGw >= maxGw}
           tk={tk}
         />
-      </View>
+      </Animated.View>
     </View>
   );
 }
