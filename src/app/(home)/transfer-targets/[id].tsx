@@ -82,7 +82,6 @@ export default function TransferTargetsScreen() {
           price={out.p}
           points={out.tp}
           captain={!!out.capt}
-          tk={tk}
         />
         <PicksCard
           pos={out.pos}

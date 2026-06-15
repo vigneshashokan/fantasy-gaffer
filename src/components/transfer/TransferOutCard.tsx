@@ -2,8 +2,6 @@ import React from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import type { ClubCode } from '@/types/fpl';
 import { jerseyForClub } from '@/constants/jerseys';
-import { ApexTokens } from '@/constants/apexTokens';
-
 interface TransferOutCardProps {
   name: string;
   clubName: string;
@@ -11,7 +9,6 @@ interface TransferOutCardProps {
   price: number;
   points: number;
   captain: boolean;
-  tk: ApexTokens;
 }
 
 export function TransferOutCard({ name, clubName, club, price, points, captain }: TransferOutCardProps) {

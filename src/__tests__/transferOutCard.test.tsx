@@ -1,10 +1,8 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { apexTokens } from '@/constants/apexTokens';
 import { TransferOutCard } from '@/components/transfer/TransferOutCard';
 
-const tk = apexTokens(true, 'classic');
-const base = { name: 'Haaland', clubName: 'Man City', club: 'MCI' as const, price: 14.2, points: 175, tk };
+const base = { name: 'Haaland', clubName: 'Man City', club: 'MCI' as const, price: 14.2, points: 175 };
 
 describe('TransferOutCard', () => {
   it('shows name, meta line and OUT pill', () => {
