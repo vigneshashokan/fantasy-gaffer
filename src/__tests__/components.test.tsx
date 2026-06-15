@@ -50,6 +50,7 @@ import { PickRow } from '@/components/picks/PickRow';
 import { PicksCard } from '@/components/picks/PicksCard';
 import { TransferInfoCard } from '@/components/transfer/TransferInfoCard';
 import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
+import { SeasonCompleteBanner } from '@/components/transfer/SeasonCompleteBanner';
 import { ChipsRow } from '@/components/transfer/ChipsRow';
 import { TransferPitch } from '@/components/transfer/TransferPitch';
 import { TransferSuggestionsCard } from '@/components/transfer/TransferSuggestionsCard';
@@ -476,6 +477,17 @@ describe('DeadlineBanner', () => {
       <DeadlineBanner nextGw={25} deadline="Sat 11:00AM PST" tk={tk} />
     );
     expect(getByText('Deadline for Gameweek 25: Sat 11:00AM PST')).toBeTruthy();
+  });
+});
+
+// ── SeasonCompleteBanner ──────────────────────────────────────
+describe('SeasonCompleteBanner', () => {
+  it('renders the season-completed message with the season label', () => {
+    const tk = apexTokens(false, 'classic');
+    const { getByText } = render(
+      <SeasonCompleteBanner seasonLabel="2025/26" tk={tk} />
+    );
+    expect(getByText('2025/26 Season completed')).toBeTruthy();
   });
 });
 
