@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ApexTokens } from '@/constants/apexTokens';
 
 interface HeroCardProps {
-  teamName: string;
+  tk: ApexTokens;
   totalPoints: number;
   gwPts: number;
   avgPoints: number;
@@ -14,7 +15,7 @@ interface HeroCardProps {
 }
 
 export function HeroCard({
-  teamName,
+  tk,
   totalPoints,
   gwPts,
   avgPoints,
@@ -24,6 +25,14 @@ export function HeroCard({
   gradTo,
 }: HeroCardProps) {
   const showStat = (val: number) => (gwInProgress && val === 0 ? '—' : val);
+
+  // GW points relative to the gameweek average. Only meaningful once the
+  // gameweek has finished (and an average exists).
+  const diff = gwPts - avgPoints;
+  const up = diff >= 0;
+  const showVsAvg = !gwInProgress && avgPoints > 0;
+  const vsAvgText = `${up ? '↑' : '↓'} ${diff > 0 ? '+' : ''}${diff} vs avg`;
+
   return (
     <View style={styles.container}>
       <LinearGradient
@@ -33,29 +42,44 @@ export function HeroCard({
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.inner}>
-        <View style={styles.topRow}>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={styles.teamName} numberOfLines={1}>{teamName}</Text>
-            <Text style={styles.totalNum}>{totalPoints.toLocaleString()}</Text>
-            <Text style={styles.label}>Total Points</Text>
-          </View>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={styles.label}>GW PTS</Text>
-            <Text style={styles.gwBig}>{gwPts}</Text>
-          </View>
+        <View style={styles.gwBlock}>
+          <Text style={styles.gwBig}>{gwPts}</Text>
+          <Text style={styles.label}>GW PTS</Text>
+          {showVsAvg && (
+            <View
+              style={[
+                styles.vsAvgPill,
+                { backgroundColor: up ? tk.greenSoft : 'rgba(255,255,255,0.12)' },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.vsAvgText,
+                  { color: up ? tk.green : 'rgba(255,255,255,0.7)' },
+                ]}
+              >
+                {vsAvgText}
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.divider} />
 
         <View style={styles.statsRow}>
           <View style={styles.stat}>
-            <Text style={styles.label}>Avg Points</Text>
             <Text style={styles.statValue}>{showStat(avgPoints)}</Text>
+            <Text style={styles.label}>Avg Points</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.stat}>
-            <Text style={styles.label}>Highest Points</Text>
             <Text style={styles.statValue}>{showStat(highestPoints)}</Text>
+            <Text style={styles.label}>Highest</Text>
+          </View>
+          <View style={styles.statDivider} />
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{totalPoints.toLocaleString()}</Text>
+            <Text style={styles.label}>Total Points</Text>
           </View>
         </View>
       </View>
@@ -78,22 +102,8 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 18,
   },
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  teamName: {
-    fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 23,
-    letterSpacing: -0.46,
-    color: '#fff',
-  },
-  totalNum: {
-    fontFamily: 'JetBrainsMono_700Bold',
-    fontSize: 19,
-    color: '#fff',
-    marginTop: 10,
+  gwBlock: {
+    alignItems: 'center',
   },
   label: {
     fontFamily: 'Archivo_700Bold',
@@ -106,10 +116,20 @@ const styles = StyleSheet.create({
   gwBig: {
     fontFamily: 'Archivo_800ExtraBold',
     fontSize: 58,
-    lineHeight: 56,
+    lineHeight: 60,
     letterSpacing: -1.74,
     color: '#fff',
-    marginTop: 2,
+  },
+  vsAvgPill: {
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+  vsAvgText: {
+    fontFamily: 'Archivo_700Bold',
+    fontSize: 13,
+    letterSpacing: -0.13,
   },
   divider: {
     height: 1,
@@ -133,6 +153,5 @@ const styles = StyleSheet.create({
     fontFamily: 'Archivo_800ExtraBold',
     fontSize: 22,
     color: '#fff',
-    marginTop: 4,
   },
 });

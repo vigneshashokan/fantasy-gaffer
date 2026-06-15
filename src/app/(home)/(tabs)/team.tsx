@@ -8,6 +8,7 @@ import type { PitchPlayer, Suggestion } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { TabHeader } from '@/components/ui/TabHeader';
 import { GameweekScreen } from '@/components/team/GameweekScreen';
 import { GwArrow } from '@/components/team/GwNav';
 
@@ -136,71 +137,76 @@ export default function TeamTab() {
     router.push({ pathname: '/(home)/player/[id]', params: { id: p.id } });
 
   return (
-    <View
-      style={{ flex: 1, backgroundColor: t.bg }}
-      onLayout={(e) => setAreaH(e.nativeEvent.layout.height)}
-    >
-      <FlatList
-        testID="gw-carousel"
-        ref={listRef}
-        data={gwList}
-        keyExtractor={(g) => String(g)}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        initialScrollIndex={initialIndex}
-        getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
-        onScrollToIndexFailed={(info) =>
-          listRef.current?.scrollToOffset({ offset: info.index * width, animated: false })
-        }
-        onMomentumScrollEnd={(e) => onSettle(e.nativeEvent.contentOffset.x)}
-        windowSize={3}
-        initialNumToRender={1}
-        maxToRenderPerBatch={1}
-        renderItem={({ item }) => (
-          <GameweekScreen
-            gw={item}
-            width={width}
-            height={pageH}
-            savedCaptain={savedCaptain}
-            pendingCaptain={pendingCaptain}
-            pendingSuggestions={pendingSuggestions}
-            onPickCaptain={setPendingCaptain}
-            onToggleSuggestion={toggleSuggestion}
-            onToggleAllSuggestions={toggleAllSuggestions}
-            onUndo={undo}
-            onConfirm={confirm}
-            onOpenPlayer={openPlayer}
-            onVerticalScroll={(y) => handlePageScroll(item, y)}
-          />
-        )}
-      />
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <TabHeader title={at.teamName} tk={tk} />
+      {/* Carousel area — measured (not the whole screen) so each page's height
+          excludes the team-name header and the fixed arrows sit below it. */}
+      <View
+        style={{ flex: 1 }}
+        onLayout={(e) => setAreaH(e.nativeEvent.layout.height)}
+      >
+        <FlatList
+          testID="gw-carousel"
+          ref={listRef}
+          data={gwList}
+          keyExtractor={(g) => String(g)}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          initialScrollIndex={initialIndex}
+          getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
+          onScrollToIndexFailed={(info) =>
+            listRef.current?.scrollToOffset({ offset: info.index * width, animated: false })
+          }
+          onMomentumScrollEnd={(e) => onSettle(e.nativeEvent.contentOffset.x)}
+          windowSize={3}
+          initialNumToRender={1}
+          maxToRenderPerBatch={1}
+          renderItem={({ item }) => (
+            <GameweekScreen
+              gw={item}
+              width={width}
+              height={pageH}
+              savedCaptain={savedCaptain}
+              pendingCaptain={pendingCaptain}
+              pendingSuggestions={pendingSuggestions}
+              onPickCaptain={setPendingCaptain}
+              onToggleSuggestion={toggleSuggestion}
+              onToggleAllSuggestions={toggleAllSuggestions}
+              onUndo={undo}
+              onConfirm={confirm}
+              onOpenPlayer={openPlayer}
+              onVerticalScroll={(y) => handlePageScroll(item, y)}
+            />
+          )}
+        />
 
-      {/* Fixed paging arrows — pinned at the top edges while the gameweek
-          content (incl. the "Gameweek N" pill) swipes beneath them. They fade
-          out once the active gameweek is scrolled past the header. */}
-      <Animated.View
-        style={[styles.arrow, styles.arrowLeft, { opacity: arrowOpacity }]}
-        pointerEvents={arrowsVisible ? 'auto' : 'none'}
-      >
-        <GwArrow
-          dir="l"
-          onPress={() => scrollToGw(currentGw - 1)}
-          disabled={currentGw <= MIN_GW}
-          tk={tk}
-        />
-      </Animated.View>
-      <Animated.View
-        style={[styles.arrow, styles.arrowRight, { opacity: arrowOpacity }]}
-        pointerEvents={arrowsVisible ? 'auto' : 'none'}
-      >
-        <GwArrow
-          dir="r"
-          onPress={() => scrollToGw(currentGw + 1)}
-          disabled={currentGw >= maxGw}
-          tk={tk}
-        />
-      </Animated.View>
+        {/* Fixed paging arrows — pinned at the top edges while the gameweek
+            content (incl. the "Gameweek N" pill) swipes beneath them. They fade
+            out once the active gameweek is scrolled past the header. */}
+        <Animated.View
+          style={[styles.arrow, styles.arrowLeft, { opacity: arrowOpacity }]}
+          pointerEvents={arrowsVisible ? 'auto' : 'none'}
+        >
+          <GwArrow
+            dir="l"
+            onPress={() => scrollToGw(currentGw - 1)}
+            disabled={currentGw <= MIN_GW}
+            tk={tk}
+          />
+        </Animated.View>
+        <Animated.View
+          style={[styles.arrow, styles.arrowRight, { opacity: arrowOpacity }]}
+          pointerEvents={arrowsVisible ? 'auto' : 'none'}
+        >
+          <GwArrow
+            dir="r"
+            onPress={() => scrollToGw(currentGw + 1)}
+            disabled={currentGw >= maxGw}
+            tk={tk}
+          />
+        </Animated.View>
+      </View>
     </View>
   );
 }

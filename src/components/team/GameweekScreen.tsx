@@ -126,7 +126,7 @@ export function GameweekScreen({
         )}
 
         <HeroCard
-          teamName={at.teamName}
+          tk={tk}
           totalPoints={at.totalPoints}
           gwPts={at.gwPts}
           avgPoints={at.avgPoints}

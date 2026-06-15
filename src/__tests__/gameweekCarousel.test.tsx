@@ -30,7 +30,7 @@ jest.mock('@/api/squad', () => ({
 import TeamTab from '@/app/(home)/(tabs)/team';
 
 const liveTeam = (liveGw: number) => ({
-  data: { liveGw, liveGwFinished: false, captainApplied: '' },
+  data: { liveGw, liveGwFinished: false, captainApplied: '', teamName: 'Apex Pitch FC' },
   isPending: false, isError: false, error: null, noTeam: false,
 });
 
@@ -47,6 +47,12 @@ describe('TeamTab carousel shell', () => {
     const { getByTestId, getAllByText } = renderWithProviders(<TeamTab />);
     expect(getByTestId('gw-carousel')).toBeTruthy();
     expect(getAllByText(/^Page \d+$/).length).toBeGreaterThan(0);
+  });
+
+  it('shows the team name as the header', () => {
+    mockTeam = liveTeam(30);
+    const { getByText } = renderWithProviders(<TeamTab />);
+    expect(getByText('Apex Pitch FC')).toBeTruthy();
   });
 
   it('renders both fixed paging arrows, enabled mid-season', () => {

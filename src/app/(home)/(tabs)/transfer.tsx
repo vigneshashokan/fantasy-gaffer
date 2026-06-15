@@ -6,11 +6,13 @@ import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { TransferPitchPlayer } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
-import { useSeasonState } from '@/api/fixtures';
+import { useSeasonState, currentSeasonLabel } from '@/api/fixtures';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { TabHeader } from '@/components/ui/TabHeader';
 import { TransferInfoCard } from '@/components/transfer/TransferInfoCard';
 import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
+import { SeasonCompleteBanner } from '@/components/ui/SeasonCompleteBanner';
 import { TransferPitch } from '@/components/transfer/TransferPitch';
 import { TransferSuggestionsCard } from '@/components/transfer/TransferSuggestionsCard';
 import { ApplyAllCard } from '@/components/team/ApplyAllCard';
@@ -50,6 +52,7 @@ export default function TransferTab() {
   }
   const tr = at.transfer;
   const seasonOver = seasonState?.kind === 'complete';
+  const seasonLabel = currentSeasonLabel();
 
   const heroFrom = t.primary;
   const heroTo = dark ? '#0C1018' : '#5B0F63';
@@ -75,6 +78,7 @@ export default function TransferTab() {
 
   return (
     <View style={{ flex: 1, backgroundColor: tk.bg }}>
+      <TabHeader title="Transfer" tk={tk} />
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={[
@@ -84,9 +88,12 @@ export default function TransferTab() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.topGroup}>
-          {!seasonOver && <DeadlineBanner nextGw={tr.nextGw} deadline={tr.deadline} tk={tk} />}
+          {seasonOver ? (
+            <SeasonCompleteBanner seasonLabel={seasonLabel} tk={tk} />
+          ) : (
+            <DeadlineBanner nextGw={tr.nextGw} deadline={tr.deadline} tk={tk} />
+          )}
           <TransferInfoCard
-            teamName={at.teamName}
             nextGw={tr.nextGw}
             squadValue={tr.squadValue}
             freeTransfers={tr.freeTransfers}

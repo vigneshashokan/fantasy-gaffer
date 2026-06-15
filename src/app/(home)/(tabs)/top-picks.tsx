@@ -22,6 +22,8 @@ import {
 } from '@/api/fixtures';
 import { useSquad } from '@/api/squad';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { TabHeader } from '@/components/ui/TabHeader';
+import { SeasonCompleteBanner } from '@/components/ui/SeasonCompleteBanner';
 import { Icon } from '@/components/ui/Icon';
 import { SegmentedControl } from '@/components/picks/SegmentedControl';
 import { PicksCard } from '@/components/picks/PicksCard';
@@ -41,6 +43,7 @@ export default function TopPicksTab() {
   const gw = currentGw?.gw;
   const { data: seasonState }                       = useSeasonState();
   const seasonLabel = currentSeasonLabel();
+  const seasonOver = seasonState?.kind === 'complete';
   const { data: topPicks, isPending: picksPending } = useTopPicks();
   const { data: fixtures }                          = useFixturesByGw(gw ?? 0);
   const { data: squad }                             = useSquad();
@@ -50,7 +53,10 @@ export default function TopPicksTab() {
   );
 
   const goTo = (i: number) => {
-    setActive(i);
+    // Don't set `active` here. The animated scroll drives `active` via
+    // onScroll; jumping it to the target first makes the highlight flash the
+    // target, snap back to the origin (onScroll's first frame), then sweep —
+    // a flicker. Letting onScroll own `active` makes a tap animate like a swipe.
     scrollerRef.current?.scrollTo({ x: i * width, animated: true });
   };
 
@@ -76,17 +82,24 @@ export default function TopPicksTab() {
 
   return (
     <View style={{ flex: 1, backgroundColor: tk.bg }}>
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={[styles.title, { color: tk.text }]}>Top Picks</Text>
-          <StatusPill state={seasonState} seasonLabel={seasonLabel} tk={tk} />
+      <TabHeader
+        title="Top Picks"
+        tk={tk}
+        trailing={
+          seasonOver ? undefined : (
+            <StatusPill state={seasonState} seasonLabel={seasonLabel} tk={tk} />
+          )
+        }
+        subtitle={
+          seasonOver ? undefined : 'Top Picks will refresh once the current game week is done.'
+        }
+      />
+
+      {seasonOver && (
+        <View style={styles.bannerWrap}>
+          <SeasonCompleteBanner seasonLabel={seasonLabel} tk={tk} />
         </View>
-        <Text style={[styles.subtitle, { color: tk.variant }]}>
-          {seasonState?.kind === 'complete'
-            ? 'The season has ended — picks resume next campaign.'
-            : 'Top Picks will refresh once the current game week is done.'}
-        </Text>
-      </View>
+      )}
 
       <View style={styles.controlWrap}>
         <SegmentedControl
@@ -164,22 +177,9 @@ function StatusPill({
 }
 
 const styles = StyleSheet.create({
-  header: {
+  bannerWrap: {
     paddingHorizontal: 16,
-    paddingTop: 18,
     paddingBottom: 14,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-    marginBottom: 5,
-  },
-  title: {
-    fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 24,
-    letterSpacing: -0.48,
-    lineHeight: 32,
   },
   livePill: {
     flexDirection: 'row',
@@ -198,11 +198,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Archivo_700Bold',
     fontSize: 10,
     letterSpacing: 0.7,
-  },
-  subtitle: {
-    fontFamily: 'Archivo_400Regular',
-    fontSize: 13.5,
-    lineHeight: 19,
   },
   controlWrap: {
     paddingHorizontal: 16,

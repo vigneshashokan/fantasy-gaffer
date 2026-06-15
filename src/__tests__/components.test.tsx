@@ -50,6 +50,7 @@ import { PickRow } from '@/components/picks/PickRow';
 import { PicksCard } from '@/components/picks/PicksCard';
 import { TransferInfoCard } from '@/components/transfer/TransferInfoCard';
 import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
+import { SeasonCompleteBanner } from '@/components/ui/SeasonCompleteBanner';
 import { ChipsRow } from '@/components/transfer/ChipsRow';
 import { TransferPitch } from '@/components/transfer/TransferPitch';
 import { TransferSuggestionsCard } from '@/components/transfer/TransferSuggestionsCard';
@@ -339,10 +340,12 @@ describe('ApexPitch', () => {
 
 // ── HeroCard ──────────────────────────────────────────────────
 describe('HeroCard', () => {
-  it('renders team name and points', () => {
-    const { getByText } = render(
+  const tk = apexTokens(true, 'classic');
+
+  it('shows centered GW points with the vs-avg pill and the stat row, no chip section', () => {
+    const { getByText, queryByText } = render(
       <HeroCard
-        teamName="Apex Pitch FC"
+        tk={tk}
         totalPoints={1452}
         gwPts={64}
         avgPoints={52}
@@ -351,9 +354,15 @@ describe('HeroCard', () => {
         gradTo="#5B0F63"
       />
     );
-    expect(getByText('Apex Pitch FC')).toBeTruthy();
-    expect(getByText('1,452')).toBeTruthy();
-    expect(getByText('64')).toBeTruthy();
+    expect(getByText('64')).toBeTruthy();            // GW PTS
+    expect(getByText('↑ +12 vs avg')).toBeTruthy();  // 64 - 52
+    expect(getByText('52')).toBeTruthy();            // avg
+    expect(getByText('118')).toBeTruthy();           // highest
+    expect(getByText('1,452')).toBeTruthy();         // total
+    // chip section moved out of the hero card (shown in the banner below)
+    expect(queryByText('None')).toBeNull();
+    expect(queryByText('Chip Played')).toBeNull();
+    expect(queryByText('Apex Pitch FC')).toBeNull(); // team name removed
   });
 });
 
@@ -446,10 +455,9 @@ describe('PickRow', () => {
 
 // ── TransferInfoCard ──────────────────────────────────────────
 describe('TransferInfoCard', () => {
-  it('shows team name, GW, squad value', () => {
-    const { getByText } = render(
+  it('shows the gameweek title and three stats, no team name', () => {
+    const { getByText, queryByText } = render(
       <TransferInfoCard
-        teamName="Apex Pitch FC"
         nextGw={25}
         squadValue={102.5}
         freeTransfers={1}
@@ -458,10 +466,14 @@ describe('TransferInfoCard', () => {
         gradTo="#5B0F63"
       />
     );
-    expect(getByText('Apex Pitch FC')).toBeTruthy();
     expect(getByText('Gameweek 25')).toBeTruthy();
-    expect(getByText('£102.5m')).toBeTruthy();
+    expect(getByText('Free Transfers')).toBeTruthy();
+    expect(getByText('1')).toBeTruthy();
+    expect(getByText('In the Bank')).toBeTruthy();
     expect(getByText('£2.4m')).toBeTruthy();
+    expect(getByText('Squad Value')).toBeTruthy();
+    expect(getByText('£102.5m')).toBeTruthy();
+    expect(queryByText('Apex Pitch FC')).toBeNull();
   });
 });
 
@@ -473,6 +485,17 @@ describe('DeadlineBanner', () => {
       <DeadlineBanner nextGw={25} deadline="Sat 11:00AM PST" tk={tk} />
     );
     expect(getByText('Deadline for Gameweek 25: Sat 11:00AM PST')).toBeTruthy();
+  });
+});
+
+// ── SeasonCompleteBanner ──────────────────────────────────────
+describe('SeasonCompleteBanner', () => {
+  it('renders the season-completed message with the season label', () => {
+    const tk = apexTokens(false, 'classic');
+    const { getByText } = render(
+      <SeasonCompleteBanner seasonLabel="2025/26" tk={tk} />
+    );
+    expect(getByText('2025/26 Season completed')).toBeTruthy();
   });
 });
 

@@ -122,7 +122,7 @@ export function AccountMenu({
 const styles = StyleSheet.create({
   card: {
     position: 'absolute',
-    top: 96,
+    bottom: 92,
     right: 16,
     width: 244,
     borderRadius: 16,
