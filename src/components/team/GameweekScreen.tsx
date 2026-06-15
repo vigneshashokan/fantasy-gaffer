@@ -12,15 +12,12 @@ import { HeroCard } from '@/components/team/HeroCard';
 import { ApexDugout } from '@/components/team/ApexDugout';
 import { CaptainPickCard } from '@/components/team/CaptainPickCard';
 import { SuggestionsCard } from '@/components/team/SuggestionsCard';
-import { GwNavBar } from '@/components/team/GwNavBar';
+import { GwPill } from '@/components/team/GwNav';
 import { ApplyAllCard } from '@/components/team/ApplyAllCard';
 import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
 import { ChipsRow } from '@/components/transfer/ChipsRow';
 
 type GwState = 'live' | 'upcoming' | 'past';
-
-const MIN_GW = 1;
-const SEASON_FINAL_GW = 38;
 
 interface GameweekScreenProps {
   gw: number;
@@ -34,8 +31,6 @@ interface GameweekScreenProps {
   onToggleAllSuggestions: (next: boolean, suggestions: Suggestion[]) => void;
   onUndo: () => void;
   onConfirm: () => void;
-  onPrev: () => void;
-  onNext: () => void;
   onOpenPlayer: (p: PitchPlayer) => void;
 }
 
@@ -51,8 +46,6 @@ export function GameweekScreen({
   onToggleAllSuggestions,
   onUndo,
   onConfirm,
-  onPrev,
-  onNext,
   onOpenPlayer,
 }: GameweekScreenProps) {
   const { paletteKey, dark, pitchStyle } = useThemeStore();
@@ -84,7 +77,6 @@ export function GameweekScreen({
 
   const LIVE_GW = at.liveGw;
   const LIVE_GW_FINISHED = at.liveGwFinished;
-  const MAX_GW = Math.min(SEASON_FINAL_GW, LIVE_GW + 1);
 
   const gwState: GwState =
     gw === LIVE_GW ? (LIVE_GW_FINISHED ? 'past' : 'live') : gw > LIVE_GW ? 'upcoming' : 'past';
@@ -109,15 +101,7 @@ export function GameweekScreen({
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <GwNavBar
-          gw={gw}
-          state={gwState}
-          onPrev={onPrev}
-          onNext={onNext}
-          disablePrev={gw <= MIN_GW}
-          disableNext={gw >= MAX_GW}
-          tk={tk}
-        />
+        <GwPill gw={gw} state={gwState} tk={tk} />
 
         {isUpcoming && (
           <View style={{ marginBottom: 16 }}>

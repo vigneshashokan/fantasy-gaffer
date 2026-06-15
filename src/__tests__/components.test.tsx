@@ -44,7 +44,7 @@ import { HeroCard } from '@/components/team/HeroCard';
 import { ApexDugout } from '@/components/team/ApexDugout';
 import { CaptainPickCard } from '@/components/team/CaptainPickCard';
 import { SuggestionsCard } from '@/components/team/SuggestionsCard';
-import { GwNavBar } from '@/components/team/GwNavBar';
+import { GwPill } from '@/components/team/GwNav';
 import { SegmentedControl } from '@/components/picks/SegmentedControl';
 import { PickRow } from '@/components/picks/PickRow';
 import { PicksCard } from '@/components/picks/PicksCard';
@@ -405,11 +405,11 @@ describe('SuggestionsCard', () => {
   });
 });
 
-// ── GwNavBar ──────────────────────────────────────────────────
-describe('GwNavBar', () => {
+// ── GwPill ────────────────────────────────────────────────────
+describe('GwPill', () => {
   it('renders live gameweek', () => {
     const tk = apexTokens(false, 'classic');
-    const { getByText } = render(<GwNavBar gw={24} state="live" tk={tk} />);
+    const { getByText } = render(<GwPill gw={24} state="live" tk={tk} />);
     expect(getByText('Gameweek 24')).toBeTruthy();
   });
 });

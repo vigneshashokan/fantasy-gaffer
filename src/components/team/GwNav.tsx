@@ -3,25 +3,16 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { ApexTokens } from '@/constants/apexTokens';
 
-interface GwNavBarProps {
+interface GwPillProps {
   gw: number;
   state?: 'live' | 'upcoming' | 'past';
-  onPrev?: () => void;
-  onNext?: () => void;
-  disablePrev?: boolean;
-  disableNext?: boolean;
   tk: ApexTokens;
 }
 
-export function GwNavBar({
-  gw,
-  state = 'live',
-  onPrev,
-  onNext,
-  disablePrev,
-  disableNext,
-  tk,
-}: GwNavBarProps) {
+// The "Gameweek N" status pill. Lives inside each carousel page so it swipes
+// with the gameweek content; the prev/next arrows are rendered separately
+// (GwArrow) as fixed overlays by the carousel shell.
+export function GwPill({ gw, state = 'live', tk }: GwPillProps) {
   const pillColors = (() => {
     if (state === 'live')
       return { bg: tk.greenSoft, fg: tk.green, dotBg: tk.green };
@@ -32,14 +23,8 @@ export function GwNavBar({
   })();
 
   return (
-    <View style={styles.container}>
-      <NavBtn dir="l" disabled={!!disablePrev} onPress={onPrev} tk={tk} />
-      <View
-        style={[
-          styles.pill,
-          { backgroundColor: pillColors.bg },
-        ]}
-      >
+    <View style={styles.pillRow}>
+      <View style={[styles.pill, { backgroundColor: pillColors.bg }]}>
         {pillColors.dotBg && (
           <View style={[styles.dot, { backgroundColor: pillColors.dotBg }]} />
         )}
@@ -47,30 +32,30 @@ export function GwNavBar({
           Gameweek {gw}
         </Text>
       </View>
-      <NavBtn dir="r" disabled={!!disableNext} onPress={onNext} tk={tk} />
     </View>
   );
 }
 
-function NavBtn({
-  dir,
-  onPress,
-  disabled,
-  tk,
-}: {
+interface GwArrowProps {
   dir: 'l' | 'r';
   onPress?: () => void;
-  disabled: boolean;
+  disabled?: boolean;
   tk: ApexTokens;
-}) {
+}
+
+// A single fixed gameweek-paging chevron. The carousel shell positions two of
+// these as absolute overlays pinned at the screen edges so they stay put while
+// the gameweek content swipes beneath them.
+export function GwArrow({ dir, onPress, disabled, tk }: GwArrowProps) {
   return (
     <Pressable
       testID={dir === 'l' ? 'gw-prev' : 'gw-next'}
-      disabled={disabled}
+      disabled={!!disabled}
       onPress={onPress}
       style={[
         styles.btn,
         {
+          backgroundColor: tk.card,
           borderColor: tk.dark ? 'rgba(255,255,255,0.22)' : '#C4C8D2',
           opacity: disabled ? 0.35 : 1,
         },
@@ -82,11 +67,10 @@ function NavBtn({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  pillRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
     paddingVertical: 4,
     paddingBottom: 16,
   },

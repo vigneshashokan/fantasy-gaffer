@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, FlatList, useWindowDimensions } from 'react-native';
+import { View, Text, FlatList, StyleSheet, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
@@ -9,6 +9,7 @@ import { useApexTeam } from '@/api/squad';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { GameweekScreen } from '@/components/team/GameweekScreen';
+import { GwArrow } from '@/components/team/GwNav';
 
 const MIN_GW = 1;
 const SEASON_FINAL_GW = 38;
@@ -21,6 +22,9 @@ export default function TeamTab() {
 
   const { width, height: winH } = useWindowDimensions();
   const [areaH, setAreaH] = useState(0);
+  // The gameweek currently snapped into view; drives the fixed arrows' targets
+  // and disabled state. Null until the first settle — falls back to the live gw.
+  const [activeGw, setActiveGw] = useState<number | null>(null);
   const listRef = useRef<FlatList<number>>(null);
 
   // Live team — drives the gating states and the page-list bounds.
@@ -73,11 +77,18 @@ export default function TeamTab() {
   const gwList = Array.from({ length: maxGw - MIN_GW + 1 }, (_, i) => MIN_GW + i);
   const initialIndex = liveGw - MIN_GW;
   const pageH = areaH || winH;
+  const currentGw = activeGw ?? liveGw;
 
   const scrollToGw = (target: number) => {
     const index = target - MIN_GW;
     if (index < 0 || index >= gwList.length) return;
     listRef.current?.scrollToIndex({ index, animated: true });
+  };
+
+  const onSettle = (offsetX: number) => {
+    if (!width) return;
+    const landed = gwList[Math.round(offsetX / width)];
+    if (landed != null) setActiveGw(landed);
   };
 
   const toggleSuggestion = (id: string) =>
@@ -117,6 +128,7 @@ export default function TeamTab() {
         onScrollToIndexFailed={(info) =>
           listRef.current?.scrollToOffset({ offset: info.index * width, animated: false })
         }
+        onMomentumScrollEnd={(e) => onSettle(e.nativeEvent.contentOffset.x)}
         windowSize={3}
         initialNumToRender={1}
         maxToRenderPerBatch={1}
@@ -133,12 +145,42 @@ export default function TeamTab() {
             onToggleAllSuggestions={toggleAllSuggestions}
             onUndo={undo}
             onConfirm={confirm}
-            onPrev={() => scrollToGw(item - 1)}
-            onNext={() => scrollToGw(item + 1)}
             onOpenPlayer={openPlayer}
           />
         )}
       />
+
+      {/* Fixed paging arrows — pinned at the top edges while the gameweek
+          content (incl. the "Gameweek N" pill) swipes beneath them. */}
+      <View style={[styles.arrow, styles.arrowLeft]}>
+        <GwArrow
+          dir="l"
+          onPress={() => scrollToGw(currentGw - 1)}
+          disabled={currentGw <= MIN_GW}
+          tk={tk}
+        />
+      </View>
+      <View style={[styles.arrow, styles.arrowRight]}>
+        <GwArrow
+          dir="r"
+          onPress={() => scrollToGw(currentGw + 1)}
+          disabled={currentGw >= maxGw}
+          tk={tk}
+        />
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  arrow: {
+    position: 'absolute',
+    top: 18,
+  },
+  arrowLeft: {
+    left: 16,
+  },
+  arrowRight: {
+    right: 16,
+  },
+});

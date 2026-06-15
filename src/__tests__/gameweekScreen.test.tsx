@@ -1,5 +1,4 @@
 import React from 'react';
-import { fireEvent } from '@testing-library/react-native';
 import { renderWithProviders } from './utils/renderWithProviders';
 
 jest.mock('@/store/themeStore', () => ({
@@ -42,32 +41,20 @@ const baseProps = {
   width: 320, height: 640,
   savedCaptain: '', pendingCaptain: '', pendingSuggestions: {},
   onPickCaptain: jest.fn(), onToggleSuggestion: jest.fn(), onToggleAllSuggestions: jest.fn(),
-  onUndo: jest.fn(), onConfirm: jest.fn(),
-  onPrev: jest.fn(), onNext: jest.fn(), onOpenPlayer: jest.fn(),
+  onUndo: jest.fn(), onConfirm: jest.fn(), onOpenPlayer: jest.fn(),
 };
 
 describe('GameweekScreen', () => {
   beforeEach(() => { mockLiveGw = 30; mockLiveFinished = false; });
 
-  it('shows the gameweek label for the given gw', () => {
+  it('shows the gameweek label (pill) for the given gw', () => {
     const { getByText } = renderWithProviders(<GameweekScreen {...baseProps} gw={30} />);
     expect(getByText('Gameweek 30')).toBeTruthy();
   });
 
-  it('disables prev on gw 1 and fires onNext when next is tapped', () => {
-    const onNext = jest.fn();
-    const { getByTestId } = renderWithProviders(
-      <GameweekScreen {...baseProps} gw={1} onNext={onNext} />,
-    );
-    expect(getByTestId('gw-prev').props.accessibilityState?.disabled).toBe(true);
-    fireEvent.press(getByTestId('gw-next'));
-    expect(onNext).toHaveBeenCalled();
-  });
-
-  it('disables next at the max gameweek (live + 1)', () => {
-    // liveGw 30 -> maxGw 31
-    const { getByTestId } = renderWithProviders(<GameweekScreen {...baseProps} gw={31} />);
-    expect(getByTestId('gw-next').props.accessibilityState?.disabled).toBe(true);
-    expect(getByTestId('gw-prev').props.accessibilityState?.disabled).toBe(false);
+  it('does not render the paging arrows — those are fixed overlays in the shell', () => {
+    const { queryByTestId } = renderWithProviders(<GameweekScreen {...baseProps} gw={30} />);
+    expect(queryByTestId('gw-prev')).toBeNull();
+    expect(queryByTestId('gw-next')).toBeNull();
   });
 });

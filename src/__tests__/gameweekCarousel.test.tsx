@@ -49,6 +49,27 @@ describe('TeamTab carousel shell', () => {
     expect(getAllByText(/^Page \d+$/).length).toBeGreaterThan(0);
   });
 
+  it('renders both fixed paging arrows, enabled mid-season', () => {
+    mockTeam = liveTeam(30); // active gw defaults to 30, maxGw 31
+    const { getByTestId } = renderWithProviders(<TeamTab />);
+    expect(getByTestId('gw-prev').props.accessibilityState?.disabled).toBe(false);
+    expect(getByTestId('gw-next').props.accessibilityState?.disabled).toBe(false);
+  });
+
+  it('disables the prev arrow on gameweek 1', () => {
+    mockTeam = liveTeam(1); // active gw defaults to 1 = MIN_GW
+    const { getByTestId } = renderWithProviders(<TeamTab />);
+    expect(getByTestId('gw-prev').props.accessibilityState?.disabled).toBe(true);
+    expect(getByTestId('gw-next').props.accessibilityState?.disabled).toBe(false);
+  });
+
+  it('disables the next arrow at the final gameweek', () => {
+    mockTeam = liveTeam(38); // active gw 38, maxGw = min(38, 39) = 38
+    const { getByTestId } = renderWithProviders(<TeamTab />);
+    expect(getByTestId('gw-next').props.accessibilityState?.disabled).toBe(true);
+    expect(getByTestId('gw-prev').props.accessibilityState?.disabled).toBe(false);
+  });
+
   it('shows the loading skeleton (no carousel) while the live team loads', () => {
     mockTeam = { data: undefined, isPending: true, isError: false, error: null, noTeam: false };
     const { queryByTestId } = renderWithProviders(<TeamTab />);
