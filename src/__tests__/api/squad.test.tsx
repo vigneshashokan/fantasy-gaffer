@@ -1,7 +1,7 @@
 // src/__tests__/api/squad.test.tsx
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { squadFromPicks, useSquad } from '@/api/squad';
+import { squadFromPicks, useSquad, transferChipsFromHistory } from '@/api/squad';
 import { makeTestQueryClient } from '../utils/renderWithProviders';
 import type { Player } from '@/types/fpl';
 
@@ -58,6 +58,25 @@ describe('squadFromPicks', () => {
     expect(haaland?.multiplier).toBe(2);
     expect(saka?.multiplier).toBe(1);
     expect(sub?.multiplier).toBe(0);
+  });
+});
+
+describe('transferChipsFromHistory', () => {
+  it('marks a played chip used and records the gameweek it was played', () => {
+    const chips = transferChipsFromHistory({ chips: [{ name: 'bboost', event: 38 }] });
+    const bb = chips.find((c) => c.name === 'Bench Boost');
+    expect(bb?.state).toBe('used');
+    expect(bb?.playedGw).toBe(38);
+    // chips that weren't played stay idle with no gameweek
+    const wc = chips.find((c) => c.name === 'Wildcard');
+    expect(wc?.state).toBe('idle');
+    expect(wc?.playedGw).toBeUndefined();
+  });
+
+  it('leaves every chip idle when none were played', () => {
+    const chips = transferChipsFromHistory({ chips: [] });
+    expect(chips.length).toBeGreaterThan(0);
+    expect(chips.every((c) => c.state === 'idle' && c.playedGw === undefined)).toBe(true);
   });
 });
 

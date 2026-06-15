@@ -19,7 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useCurrentGameweek, useEventLive, useEventStats, useFixturesByGw } from './fixtures';
 import { fplGet } from './fpl-client';
-import { gwPointsFromHistory, useManager, useManagerHistory } from './manager';
+import { chipsFromHistory, gwPointsFromHistory, useManager, useManagerHistory } from './manager';
 import { usePlayers } from './players';
 import { useProfile } from './profile';
 import { queryKeys } from './queryKeys';
@@ -161,6 +161,21 @@ function ptsFor(p: SquadPlayer, liveById: Map<number, number> | undefined): numb
   return m > 0 ? raw * m : raw;
 }
 
+// Map the played-chip history onto the full chip catalogue. Reuses the
+// manager catalogue so chip display names live in one place. A played chip
+// becomes `used` with its `playedGw`; the rest stay `idle`. Consumed by the
+// HeroCard / chip banner (find by gameweek) and the "Play a Chip" row.
+export function transferChipsFromHistory(
+  history: { chips: { name: string; event: number }[] },
+): TransferChip[] {
+  return chipsFromHistory(history).map((c): TransferChip => ({
+    name: c.name,
+    state: c.available ? 'idle' : 'used',
+    status: c.available ? 'Available' : 'Used',
+    playedGw: c.playedGW,
+  }));
+}
+
 function buildApexTeam(
   squad: { starters: SquadPlayer[]; bench: SquadPlayer[] },
   manager: { name: string; gw: number; gwPoints: number; totalPoints: number; rank: number },
@@ -203,7 +218,7 @@ function buildApexTeam(
       deadline: '',
       captain: parseCaptain(squad.starters.find((p) => p.capt)?.name ?? ''),
       transferSuggestions: [] as TransferSuggestion[],
-      chips: [] as TransferChip[],
+      chips: transferChipsFromHistory(history),
       pitch: groupTransferPitch(squad.starters, squad.bench),
     },
   };
