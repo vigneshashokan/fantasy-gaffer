@@ -57,9 +57,9 @@ export default function TransferTab() {
   const heroFrom = t.primary;
   const heroTo = dark ? '#0C1018' : '#5B0F63';
 
-  const openPlayer = (p: TransferPitchPlayer) => {
+  const openTargets = (p: TransferPitchPlayer) => {
     router.push({
-      pathname: '/(home)/player/[id]',
+      pathname: '/(home)/transfer-targets/[id]',
       params: { id: p.id },
     });
   };
@@ -107,7 +107,7 @@ export default function TransferTab() {
           <TransferPitch
             rows={tr.pitch}
             pitchStyle={pitchStyle}
-            onPlayerPress={openPlayer}
+            onPlayerPress={openTargets}
           />
           <Text style={[styles.hint, { color: tk.faint }]}>
             Tap on any player to see transfer targets

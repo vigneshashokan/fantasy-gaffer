@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
-import type { TopPickPlayer, Fixture, ClubCode } from '@/types/fpl';
-import { jerseyForClub } from '@/constants/jerseys';
 import { ApexTokens } from '@/constants/apexTokens';
+import { jerseyForClub } from '@/constants/jerseys';
+import type { ClubCode, Fixture, TopPickPlayer } from '@/types/fpl';
 import { xPtsOf, xpColor } from '@/utils/xpts';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 interface PickRowProps {
   p: TopPickPlayer;
@@ -14,26 +14,41 @@ interface PickRowProps {
   dark: boolean;
   fixtures: Partial<Record<ClubCode, Fixture>>;
   squadNames: Set<string>;
+  selectable?: boolean;
+  selectedId?: string | null;
+  onSelect?: (id: string) => void;
 }
 
-export function PickRow({ p, zebra, last, tk, dark, fixtures, squadNames }: PickRowProps) {
+export function PickRow({
+  p, zebra, last, tk, dark, fixtures, squadNames,
+  selectable = false, selectedId = null, onSelect,
+}: PickRowProps) {
   const router = useRouter();
   const fx = fixtures[p.club] ?? { opp: '—' as unknown as ClubCode, h: true };
   const owned = squadNames.has(p.name);
+  const selected = selectedId === p.id;
+  // On the transfer screen a non-owned row IS the "select for transfer" target;
+  // stats move onto the jersey (tap the kit). Everywhere else — and for owned
+  // rows, which can't be transferred in — the whole row opens stats.
+  const selectableActive = selectable && !owned;
   const xp = xPtsOf(p);
   const xpC = xpColor(xp, dark);
-  const accentBar = owned
-    ? (dark ? '#DDD6FE' : '#C4B5FD')
-    : (dark ? '#A78BFA' : '#7C3AED');
+  const accentBar = selected
+    ? tk.green
+    : owned
+      ? (dark ? '#DDD6FE' : '#C4B5FD')
+      : (dark ? '#A78BFA' : '#7C3AED');
   const jersey = jerseyForClub(p.club);
+  const openStats = () =>
+    router.push({ pathname: '/(home)/player/[id]', params: { id: p.id } });
 
   return (
     <Pressable
-      onPress={() => router.push({ pathname: '/(home)/player/[id]', params: { id: p.id } })}
+      onPress={selectableActive ? () => onSelect?.(p.id) : openStats}
       style={[
         styles.row,
         {
-          backgroundColor: zebra ? tk.zebra : 'transparent',
+          backgroundColor: selected ? tk.greenSoft : zebra ? tk.zebra : 'transparent',
           borderBottomColor: tk.line,
           borderBottomWidth: last ? 0 : 1,
           opacity: owned ? 0.5 : 1,
@@ -43,9 +58,24 @@ export function PickRow({ p, zebra, last, tk, dark, fixtures, squadNames }: Pick
       <View style={[styles.accentBar, { backgroundColor: accentBar }]} />
       {/* Player cell */}
       <View style={styles.playerCell}>
-        {jersey && (
-          <Image source={jersey} style={styles.jersey} resizeMode="contain" />
-        )}
+        {jersey &&
+          (selectableActive ? (
+            <Pressable
+              testID={`stats-${p.id}`}
+              onPress={openStats}
+              hitSlop={10}
+              style={[styles.jerseyBtn, { borderColor: tk.line }]}
+            >
+              <Image source={jersey} style={styles.jersey} resizeMode="contain" />
+              <View style={styles.iWrap} pointerEvents="none">
+                <View style={styles.iBadge}>
+                  <Text style={styles.iText}>i</Text>
+                </View>
+              </View>
+            </Pressable>
+          ) : (
+            <Image source={jersey} style={styles.jersey} resizeMode="contain" />
+          ))}
         <View style={{ flexShrink: 1, minWidth: 0 }}>
           {owned && (
             <View
@@ -90,7 +120,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 13,
-    paddingLeft: 11,
+    paddingLeft: 6,
     paddingRight: 10,
     gap: 6,
   },
@@ -155,5 +185,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: -0.32,
     textAlign: 'center',
+  },
+  jerseyBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  iWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: -7,
+    alignItems: 'center',
+  },
+  iBadge: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(15,20,31,0.92)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
+  },
+  iText: {
+    fontFamily: 'Archivo_700Bold',
+    fontStyle: 'italic',
+    fontSize: 10.5,
+    lineHeight: 12,
+    color: '#fff',
   },
 });

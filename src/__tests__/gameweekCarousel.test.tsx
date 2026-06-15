@@ -27,6 +27,13 @@ jest.mock('@/api/squad', () => ({
   useApexTeam: () => mockTeam,
 }));
 
+let mockSeason: { data: { kind: string; gw?: number } | undefined } = { data: undefined };
+jest.mock('@/api/fixtures', () => ({
+  __esModule: true,
+  useSeasonState: () => mockSeason,
+  currentSeasonLabel: () => '2025/26',
+}));
+
 import TeamTab from '@/app/(home)/(tabs)/team';
 
 const liveTeam = (liveGw: number) => ({
@@ -35,6 +42,10 @@ const liveTeam = (liveGw: number) => ({
 });
 
 describe('TeamTab carousel shell', () => {
+  beforeEach(() => {
+    mockSeason = { data: undefined };
+  });
+
   it('shows the link-team CTA when there is no team', () => {
     mockTeam = { data: null, isPending: false, isError: false, error: null, noTeam: true };
     const { getByText, queryByTestId } = renderWithProviders(<TeamTab />);
@@ -80,5 +91,19 @@ describe('TeamTab carousel shell', () => {
     mockTeam = { data: undefined, isPending: true, isError: false, error: null, noTeam: false };
     const { queryByTestId } = renderWithProviders(<TeamTab />);
     expect(queryByTestId('gw-carousel')).toBeNull();
+  });
+
+  it('shows the season-complete banner when the season is over', () => {
+    mockTeam = liveTeam(38);
+    mockSeason = { data: { kind: 'complete' } };
+    const { getByText } = renderWithProviders(<TeamTab />);
+    expect(getByText('2025/26 Season completed')).toBeTruthy();
+  });
+
+  it('hides the season-complete banner mid-season', () => {
+    mockTeam = liveTeam(30);
+    mockSeason = { data: { kind: 'live', gw: 30 } };
+    const { queryByText } = renderWithProviders(<TeamTab />);
+    expect(queryByText('2025/26 Season completed')).toBeNull();
   });
 });

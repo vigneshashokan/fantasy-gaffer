@@ -6,9 +6,11 @@ import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { PitchPlayer, Suggestion } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
+import { useSeasonState, currentSeasonLabel } from '@/api/fixtures';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { TabHeader } from '@/components/ui/TabHeader';
+import { SeasonCompleteBanner } from '@/components/ui/SeasonCompleteBanner';
 import { GameweekScreen } from '@/components/team/GameweekScreen';
 import { GwArrow } from '@/components/team/GwNav';
 
@@ -47,6 +49,7 @@ export default function TeamTab() {
 
   // Live team — drives the gating states and the page-list bounds.
   const { data: at, isPending, noTeam, isError } = useApexTeam();
+  const { data: seasonState } = useSeasonState();
 
   const [savedCaptain, setSavedCaptain] = useState('');
   const [pendingCaptain, setPendingCaptain] = useState('');
@@ -96,6 +99,8 @@ export default function TeamTab() {
   const initialIndex = liveGw - MIN_GW;
   const pageH = areaH || winH;
   const currentGw = activeGw ?? liveGw;
+  const seasonOver = seasonState?.kind === 'complete';
+  const seasonLabel = currentSeasonLabel();
 
   const scrollToGw = (target: number) => {
     const index = target - MIN_GW;
@@ -139,6 +144,11 @@ export default function TeamTab() {
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <TabHeader title={at.teamName} tk={tk} />
+      {seasonOver && (
+        <View style={styles.bannerWrap}>
+          <SeasonCompleteBanner seasonLabel={seasonLabel} tk={tk} />
+        </View>
+      )}
       {/* Carousel area — measured (not the whole screen) so each page's height
           excludes the team-name header and the fixed arrows sit below it. */}
       <View
@@ -212,6 +222,11 @@ export default function TeamTab() {
 }
 
 const styles = StyleSheet.create({
+  bannerWrap: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
+  },
   arrow: {
     position: 'absolute',
     top: 18,

@@ -20,6 +20,7 @@ export default function HomeStackLayout() {
       <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
       <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
       <Stack.Screen name="player/[id]" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="transfer-targets/[id]" />
     </Stack>
   );
 }
