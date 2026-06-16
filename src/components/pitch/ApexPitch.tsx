@@ -136,14 +136,17 @@ function ApexPitchPlayerCard({
     </>
   );
 
+  // minWidth (not a fixed width) keeps short cards on the slot grid while
+  // letting a long name grow the card — and the pill inside it — so the name
+  // stays enclosed instead of bleeding out of a slot-width pill.
   if (!onPress) {
-    return <View style={[styles.playerContainer, { width: slotW }]}>{body}</View>;
+    return <View style={[styles.playerContainer, { minWidth: slotW }]}>{body}</View>;
   }
   return (
     <Pressable
       style={({ pressed }) => [
         styles.playerContainer,
-        { width: slotW },
+        { minWidth: slotW },
         pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] },
       ]}
       onPress={() => onPress(p)}
