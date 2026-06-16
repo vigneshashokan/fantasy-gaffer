@@ -6,6 +6,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { fplGet } from './fpl-client';
+import { liveStatsById, type LivePlayerStat, type RawLiveElement } from './liveStats';
 import { queryKeys } from './queryKeys';
 import type { ClubCode, Fixture } from '@/types/fpl';
 
@@ -120,27 +121,16 @@ export function useEventStats(gw: number) {
   };
 }
 
-interface LiveElement {
-  id: number;
-  stats: { total_points: number };
-}
-
 interface LiveResponse {
-  elements: LiveElement[];
-}
-
-export function livePointsById(elements: LiveElement[]): Map<number, number> {
-  const out = new Map<number, number>();
-  for (const e of elements) out.set(e.id, e.stats.total_points);
-  return out;
+  elements: RawLiveElement[];
 }
 
 export function useEventLive(gw: number) {
-  return useQuery({
+  return useQuery<Map<number, LivePlayerStat>>({
     queryKey: queryKeys.eventLive(gw),
     queryFn: async () => {
       const data = await fplGet<LiveResponse>(`/event/${gw}/live/`);
-      return livePointsById(data.elements);
+      return liveStatsById(data.elements);
     },
     staleTime: 60 * 1000,
     gcTime: 30 * 60 * 1000,

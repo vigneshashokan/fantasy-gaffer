@@ -72,7 +72,9 @@ export interface PitchPlayer {
   club?: ClubCode;
   capt?: boolean;
   vice?: boolean;
-  ball?: boolean;
+  goals?: number;
+  assists?: number;
+  bonus?: number;
   sub?: number;
   subIn?: number;
   cards?: Array<'yellow' | 'red'>;

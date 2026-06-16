@@ -5,7 +5,6 @@ import {
   fixturesFromRows,
   currentGwFromEvents,
   eventStatsFromEvents,
-  livePointsById,
   useCurrentGameweek,
   useEventLive,
   useEventStats,
@@ -150,24 +149,12 @@ describe('useEventStats', () => {
   });
 });
 
-describe('livePointsById', () => {
-  it('builds a Map of element id → total_points', () => {
-    const result = livePointsById([
-      { id: 401, stats: { total_points: 14 } },
-      { id: 233, stats: { total_points: 9 } },
-    ]);
-    expect(result.get(401)).toBe(14);
-    expect(result.get(233)).toBe(9);
-    expect(result.size).toBe(2);
-  });
-});
-
 describe('useEventLive', () => {
-  it('fetches /event/{gw}/live/ and returns a Map of points', async () => {
+  it('fetches /event/{gw}/live/ and returns a Map of LivePlayerStat', async () => {
     (fplGet as jest.Mock).mockResolvedValueOnce({
       elements: [
-        { id: 401, stats: { total_points: 14 } },
-        { id: 233, stats: { total_points: 9 } },
+        { id: 401, stats: { total_points: 14, minutes: 90, starts: 1, goals_scored: 1, assists: 0, yellow_cards: 0, red_cards: 0, bonus: 3 } },
+        { id: 233, stats: { total_points: 9, minutes: 72, starts: 1, goals_scored: 0, assists: 1, yellow_cards: 1, red_cards: 0, bonus: 0 } },
       ],
     });
     const client = makeTestQueryClient();
@@ -177,8 +164,8 @@ describe('useEventLive', () => {
     const { result } = renderHook(() => useEventLive(38), { wrapper });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
     expect(fplGet).toHaveBeenCalledWith('/event/38/live/');
-    expect(result.current.data?.get(401)).toBe(14);
-    expect(result.current.data?.get(233)).toBe(9);
+    expect(result.current.data?.get(401)?.points).toBe(14);
+    expect(result.current.data?.get(233)?.assists).toBe(1);
   });
 
   it('stays idle when gw is 0', () => {

@@ -18,6 +18,7 @@ import type {
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useCurrentGameweek, useEventLive, useEventStats, useFixturesByGw } from './fixtures';
+import { pitchEventFields, type LivePlayerStat } from './liveStats';
 import { fplGet } from './fpl-client';
 import { chipsFromHistory, gwPointsFromHistory, useManager, useManagerHistory } from './manager';
 import { usePlayers } from './players';
@@ -153,12 +154,12 @@ export function useApexTeam(targetGw?: number) {
 // Captain shows multiplied points (×2 / ×3 TC) matching the FPL UI; bench
 // players (multiplier 0) show their raw total_points so users can see what
 // the dugout scored.
-function ptsFor(p: SquadPlayer, liveById: Map<number, number> | undefined): number | null {
+function ptsFor(p: SquadPlayer, liveById: Map<number, LivePlayerStat> | undefined): number | null {
   if (!liveById) return null;
-  const raw = liveById.get(Number(p.id));
-  if (raw == null) return null;
+  const stat = liveById.get(Number(p.id));
+  if (stat == null) return null;
   const m = p.multiplier ?? 0;
-  return m > 0 ? raw * m : raw;
+  return m > 0 ? stat.points * m : stat.points;
 }
 
 // Map the played-chip history onto the full chip catalogue. Reuses the
@@ -183,7 +184,7 @@ function buildApexTeam(
   liveCurrent: { gw: number; finished: boolean; dataChecked: boolean },
   history: { current?: Array<{ event: number; points: number; total_points: number; rank: number }>; chips: Array<{ name: string; event: number }> },
   _fixturesByClub: Partial<Record<ClubCode, { opp: ClubCode; h: boolean }>> | undefined,
-  liveById: Map<number, number> | undefined,
+  liveById: Map<number, LivePlayerStat> | undefined,
 ) {
   const gw = eventStats.gw;
   // For the live GW, manager.summary_event_points is the freshest value; for
@@ -203,10 +204,14 @@ function buildApexTeam(
     gwDataChecked: eventStats.dataChecked,
     avgPoints: eventStats.avgPoints,
     highestPoints: eventStats.highestPoints,
-    pitch: groupByPosition(squad.starters, liveById),
-    bench: squad.bench.map((p): PitchPlayer => ({
-      id: p.id, name: p.name, pts: ptsFor(p, liveById), gk: p.pos === 'GKP', club: p.club,
-    })),
+    pitch: groupByPosition(squad.starters, liveById, eventStats.finished),
+    bench: squad.bench.map((p): PitchPlayer => {
+      const stat = liveById?.get(Number(p.id));
+      return {
+        id: p.id, name: p.name, pts: ptsFor(p, liveById), gk: p.pos === 'GKP', club: p.club,
+        ...(stat ? pitchEventFields(stat, eventStats.finished) : {}),
+      };
+    }),
     captainPicks: [] as CaptainPick[],
     captainApplied: squad.starters.find((p) => p.capt)?.name ?? '',
     suggestions: [] as Suggestion[],
@@ -226,15 +231,21 @@ function buildApexTeam(
 
 function groupByPosition(
   starters: SquadPlayer[],
-  liveById: Map<number, number> | undefined,
+  liveById: Map<number, LivePlayerStat> | undefined,
+  gwFinished: boolean,
 ): PitchPlayer[][] {
   const order: Position[] = ['FWD', 'MID', 'DEF', 'GKP'];
   return order.map((pos) =>
     starters
       .filter((p) => p.pos === pos)
-      .map((p): PitchPlayer => ({
-        id: p.id, name: p.name, pts: ptsFor(p, liveById), capt: p.capt, vice: p.vice, gk: pos === 'GKP', club: p.club,
-      })),
+      .map((p): PitchPlayer => {
+        const stat = liveById?.get(Number(p.id));
+        return {
+          id: p.id, name: p.name, pts: ptsFor(p, liveById), capt: p.capt, vice: p.vice,
+          gk: pos === 'GKP', club: p.club,
+          ...(stat ? pitchEventFields(stat, gwFinished) : {}),
+        };
+      }),
   );
 }
 
