@@ -62,13 +62,18 @@ function StatStack({
 }
 
 export function CardIcons({ cards }: { cards: Array<'yellow' | 'red'> }) {
+  // Last card (red) anchors flush to the top-right corner with the highest
+  // zIndex; earlier cards (yellow) peek out leftward from behind it.
   return (
     <View style={styles.cards}>
       {cards.map((c, i) => (
         <View
           key={i}
           testID={`card-${c}`}
-          style={[styles.card, { backgroundColor: CARD_COLORS[c], right: i * 7, zIndex: i }]}
+          style={[
+            styles.card,
+            { backgroundColor: CARD_COLORS[c], right: (cards.length - 1 - i) * 7, zIndex: i },
+          ]}
         />
       ))}
     </View>
