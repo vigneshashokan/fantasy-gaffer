@@ -85,10 +85,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
-  chipC: { backgroundColor: '#7B09E5' },
-  chipV: { backgroundColor: '#C4B5FD' },
-  chipCText: { fontFamily: 'Archivo_800ExtraBold', fontSize: 10, color: '#fff' },
-  chipVText: { fontFamily: 'Archivo_800ExtraBold', fontSize: 10, color: '#3D1A78' },
+  // Inverse of the points disc (purple fill / white number): a white disc with
+  // a purple letter, so the captain/vice badge reads as distinct from the score.
+  chipC: { backgroundColor: '#FFFFFF' },
+  chipV: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#C4B5FD' },
+  chipCText: { fontFamily: 'Archivo_800ExtraBold', fontSize: 10, color: '#7B09E5' },
+  chipVText: { fontFamily: 'Archivo_800ExtraBold', fontSize: 10, color: '#7B09E5' },
   num: {
     width: 18,
     height: 18,
