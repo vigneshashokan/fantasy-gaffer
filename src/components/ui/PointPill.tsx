@@ -1,6 +1,5 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 
 interface PointPillProps {
   pts?: number | null;
@@ -20,24 +19,14 @@ export function PointPill({
 }: PointPillProps) {
   const played = pts != null;
   const hasBonus = !upcoming && played && (bonus ?? 0) >= 1;
-  const numBg = hasBonus ? 'transparent' : played ? '#7B09E5' : 'rgba(255,255,255,0.22)';
+  const numBg = played ? '#7B09E5' : 'rgba(255,255,255,0.22)';
   return (
     <View style={[styles.container, { maxWidth }]}>
       {!upcoming && (
         <View style={[styles.num, { backgroundColor: numBg }]}>
-          {hasBonus && (
-            <Svg width={22} height={22} viewBox="0 0 32 30" style={styles.star} testID="bonus-star">
-              <Path
-                d="M16 2l4.2 8.6 9.5 1.4-6.9 6.7 1.6 9.5L16 23.7 7.5 28.2l1.6-9.5L2.2 12l9.5-1.4z"
-                fill="#FFC400"
-              />
-            </Svg>
-          )}
-          {/* Rendered after the star so the number paints on top (RN stacks
-              later siblings above earlier ones). */}
-          <Text style={[styles.numText, hasBonus && styles.numTextBonus]}>
-            {played ? String(pts) : '–'}
-          </Text>
+          {/* Gold ring + glow flags bonus while leaving the number readable. */}
+          {hasBonus && <View style={styles.bonusRing} pointerEvents="none" testID="bonus-star" />}
+          <Text style={styles.numText}>{played ? String(pts) : '–'}</Text>
         </View>
       )}
       <Text
@@ -64,26 +53,35 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.10)',
   },
   num: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
   },
-  // Star is slightly larger than the 18×18 disc, so it bleeds a couple px past
-  // the edge by design (overflow is visible in RN by default).
-  star: {
+  // Gold ring (inner edge hugs the 14×14 disc) plus a soft gold glow, so bonus
+  // reads as a golden halo around the points without obscuring the number.
+  bonusRing: {
     position: 'absolute',
     top: -2,
     left: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: '#FFC400',
+    shadowColor: '#FFC400',
+    shadowOpacity: 0.9,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
   },
   numText: {
     fontFamily: 'JetBrainsMono_700Bold',
-    fontSize: 10.5,
+    fontSize: 13,
     color: '#fff',
   },
-  numTextBonus: { color: '#3a2a00' },
   name: {
     fontFamily: 'Archivo_500Medium',
     fontSize: 12,
