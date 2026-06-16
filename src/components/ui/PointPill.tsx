@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
   // reads as a golden halo around the points without obscuring the number.
   // Bonus: a solid gold disc with a dark number and a soft gold glow so it pops
   // off the dark pill (same disc shape as a normal score, just golden).
-  // Bonus: gold ring (inner edge hugs the 14×14 disc) plus a soft gold glow, so
-  // it reads as a golden halo around the points without obscuring the number.
+  // Bonus: a plain gold ring whose inner edge hugs the 14×14 disc, flagging
+  // bonus without obscuring the number (no glow).
   bonusRing: {
     position: 'absolute',
     top: -2,
@@ -75,11 +75,6 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     borderWidth: 2,
     borderColor: '#FFC400',
-    shadowColor: '#FFC400',
-    shadowOpacity: 0.9,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 6,
   },
   numText: {
     fontFamily: 'JetBrainsMono_700Bold',
