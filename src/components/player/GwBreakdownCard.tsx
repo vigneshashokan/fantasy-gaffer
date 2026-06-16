@@ -25,8 +25,8 @@ export function GwBreakdownCard({ breakdown, codeByTeamId, tk }: GwBreakdownCard
   }
   return (
     <View style={styles.wrap}>
-      {breakdown.fixtures.map((fx) => (
-        <FixtureBlock key={`${fx.opponentTeamId}-${fx.isHome ? 'H' : 'A'}`} round={breakdown.round} fx={fx} codeByTeamId={codeByTeamId} tk={tk} />
+      {breakdown.fixtures.map((fx, idx) => (
+        <FixtureBlock key={`${idx}-${fx.opponentTeamId}-${fx.isHome ? 'H' : 'A'}`} round={breakdown.round} fx={fx} codeByTeamId={codeByTeamId} tk={tk} />
       ))}
     </View>
   );
@@ -42,8 +42,14 @@ function FixtureBlock({
 }) {
   const opp = codeByTeamId[fx.opponentTeamId] ?? '—';
   const venue = fx.isHome ? 'H' : 'A';
+  // Score is shown player's-team-first (the header names the opponent + venue),
+  // so swap to away-first when the player's team played away.
   const score =
-    fx.teamHScore != null && fx.teamAScore != null ? ` ${fx.teamHScore}–${fx.teamAScore}` : '';
+    fx.teamHScore != null && fx.teamAScore != null
+      ? fx.isHome
+        ? ` ${fx.teamHScore}–${fx.teamAScore}`
+        : ` ${fx.teamAScore}–${fx.teamHScore}`
+      : '';
   return (
     <View style={[styles.card, { backgroundColor: tk.card, borderColor: tk.cardBorder }]}>
       <View style={styles.header}>

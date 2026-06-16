@@ -144,6 +144,27 @@ describe('Player detail screen', () => {
     expect(getByText("Hasn't played yet")).toBeTruthy();
   });
 
+  it('renders the scoreline player-team-first for an away gameweek', () => {
+    mockParams = { id: '401', gw: '5' };
+    mockSummary = {
+      isPending: false,
+      isError: false,
+      refetch: jest.fn(),
+      data: {
+        history: [{
+          round: 5, total_points: 2, minutes: 90, goals_scored: 0, assists: 0,
+          clean_sheets: 0, goals_conceded: 2, own_goals: 0, penalties_saved: 0,
+          penalties_missed: 0, yellow_cards: 0, red_cards: 0, saves: 0, bonus: 0,
+          was_home: false, opponent_team: 1, team_h_score: 2, team_a_score: 1,
+        }],
+        fixtures: [{ event: 7, is_home: false, team_h: 1, team_a: 13, difficulty: 3 }],
+      },
+    };
+    const { getByText } = renderWithProviders(<PlayerDetail />);
+    // Player's team is away (1–2 from their perspective), opponent ARS at home.
+    expect(getByText(/ARS \(A\) 1–2/)).toBeTruthy();
+  });
+
   it('shows a single error banner (no duplicate) in gw mode when the summary fails', () => {
     mockParams = { id: '401', gw: '5' };
     mockSummary = { isPending: false, isError: true, refetch: jest.fn(), data: undefined };
