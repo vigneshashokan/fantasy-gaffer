@@ -9,10 +9,11 @@ import {
 import { ApexPitchMarks } from './ApexPitchMarks';
 import { AvatarDisc } from '@/components/ui/AvatarDisc';
 import { PointPill } from '@/components/ui/PointPill';
-import { CaptBadge, ViceBadge } from '@/components/ui/CaptBadge';
 import {
   SubPill,
   SubInPill,
+  GoalsBadge,
+  AssistsBadge,
   CardIcons,
 } from '@/components/ui/PitchBadges';
 import type { PitchPlayer } from '@/types/fpl';
@@ -115,9 +116,9 @@ function ApexPitchPlayerCard({
     <>
       <View style={[styles.avatarWrapper, { width: wrapperSize, height: wrapperSize }]}>
         <AvatarDisc size={avatarSize} player={p} />
-        {p.capt && <CaptBadge />}
-        {p.vice && <ViceBadge />}
         {!upcoming && p.cards && p.cards.length > 0 && <CardIcons cards={p.cards} />}
+        {!upcoming && p.goals != null && p.goals > 0 && <GoalsBadge count={p.goals} />}
+        {!upcoming && p.assists != null && p.assists > 0 && <AssistsBadge count={p.assists} />}
         {!upcoming && p.sub != null && <SubPill min={p.sub} />}
         {!upcoming && p.subIn != null && <SubInPill min={p.subIn} />}
       </View>
@@ -126,6 +127,9 @@ function ApexPitchPlayerCard({
         name={p.name}
         upcoming={upcoming}
         maxWidth={pillMaxW}
+        capt={p.capt}
+        vice={p.vice}
+        bonus={p.bonus}
       />
     </>
   );
