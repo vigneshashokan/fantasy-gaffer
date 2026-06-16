@@ -13,7 +13,6 @@ import { CaptBadge, ViceBadge } from '@/components/ui/CaptBadge';
 import {
   SubPill,
   SubInPill,
-  BallBadge,
   CardIcons,
 } from '@/components/ui/PitchBadges';
 import type { PitchPlayer } from '@/types/fpl';
@@ -119,7 +118,6 @@ function ApexPitchPlayerCard({
         {p.capt && <CaptBadge />}
         {p.vice && <ViceBadge />}
         {!upcoming && p.cards && p.cards.length > 0 && <CardIcons cards={p.cards} />}
-        {!upcoming && p.ball && <BallBadge />}
         {!upcoming && p.sub != null && <SubPill min={p.sub} />}
         {!upcoming && p.subIn != null && <SubInPill min={p.subIn} />}
       </View>
