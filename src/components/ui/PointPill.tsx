@@ -24,7 +24,7 @@ export function PointPill({
     <View style={[styles.container, { maxWidth }]}>
       {!upcoming && (
         <View
-          style={[styles.num, { backgroundColor: numBg }, hasBonus && styles.numBonusGlow]}
+          style={[styles.num, { backgroundColor: numBg }, hasBonus && styles.numBonus]}
           testID={hasBonus ? 'bonus-star' : undefined}
         >
           <Text style={[styles.numText, hasBonus && styles.numTextBonus]}>
@@ -67,12 +67,11 @@ const styles = StyleSheet.create({
   // reads as a golden halo around the points without obscuring the number.
   // Bonus: a solid gold disc with a dark number and a soft gold glow so it pops
   // off the dark pill (same disc shape as a normal score, just golden).
-  numBonusGlow: {
-    shadowColor: '#FFC400',
-    shadowOpacity: 0.9,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 6,
+  // Bonus: gold disc with a deeper amber border for a crisp coin/medal edge
+  // (no glow), so it stands out against the dark pill.
+  numBonus: {
+    borderWidth: 1.5,
+    borderColor: '#B8860B',
   },
   numTextBonus: { color: '#3a2a00' },
   numText: {
