@@ -31,5 +31,5 @@ Override the DB with `DATABASE_URL` (default
 ## Tests
 
 ```bash
-cd model && source .venv/bin/activate && pytest -q
+cd model && source .venv/bin/activate && PYTHONPATH=. pytest -q
 ```

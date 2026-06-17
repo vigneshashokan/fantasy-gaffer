@@ -39,6 +39,7 @@ def load_team_strengths(fetch=requests.get) -> dict[int, dict]:
 
 
 def load_history(database_url: str | None = None, season: str = "2025/26") -> pd.DataFrame:
+    # Optional DATABASE_URL env var overrides the default local Supabase stack URL.
     url = database_url or os.environ.get("DATABASE_URL", DEFAULT_DATABASE_URL)
     cols = ", ".join(_HISTORY_COLUMNS)
     with psycopg.connect(url) as conn:

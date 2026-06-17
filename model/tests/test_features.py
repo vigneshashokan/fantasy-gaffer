@@ -9,7 +9,7 @@ from features import (
     build_feature_row,
     build_samples,
 )
-from feature_spec import FEATURE_COLUMNS
+from feature_spec import DECAY_ALPHA, FEATURE_COLUMNS
 
 STRENGTHS = {
     5: {"strength_defence_home": 1200, "strength_defence_away": 1300,
@@ -44,6 +44,13 @@ def test_exp_decay_mean_weights_recent_more():
     assert exp_decay_mean([]) == 0.0
 
 
+def test_opponent_strengths_missing_key_returns_zeros():
+    # Opponent id not in strengths map -> both scaled values are 0.0.
+    d, a = opponent_strengths(True, 99, STRENGTHS)
+    assert d == 0.0
+    assert a == 0.0
+
+
 def test_opponent_strengths_home_uses_opponent_away_strength_scaled():
     # player at home -> opponent is away -> use opponent's *away* strengths
     d, a = opponent_strengths(True, 5, STRENGTHS)
@@ -68,8 +75,8 @@ def test_build_feature_row_uses_only_prior_rows_and_target_fixture_facts():
     assert feat["was_home"] == 1.0
     assert feat["value_scaled"] == pytest.approx(57 / 10.0)
     assert feat["opp_strength_def"] == pytest.approx(1300 / 1000.0)
-    # form_total_points = exp-decay over [8, 2] (most recent first)
-    assert feat["form_total_points"] == pytest.approx((8 * 1 + 2 * 0.85) / 1.85)
+    # form_total_points = exp-decay over [8, 2] (most recent first, default DECAY_ALPHA)
+    assert feat["form_total_points"] == pytest.approx((8 * 1 + 2 * DECAY_ALPHA) / (1 + DECAY_ALPHA))
 
 
 def test_build_samples_skips_gw1_and_sets_target():

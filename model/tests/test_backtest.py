@@ -50,3 +50,5 @@ def test_evaluate_returns_gate_fields():
                 "coverage_ok", "passes_gate"]:
         assert key in m
     assert isinstance(m["passes_gate"], bool)
+    # passes_gate must be the logical AND of the three component booleans.
+    assert m["passes_gate"] == (m["beats_form_mae"] and m["beats_form_captaincy"] and m["coverage_ok"])

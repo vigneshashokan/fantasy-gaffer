@@ -10,6 +10,13 @@ def test_feature_columns_cover_all_form_stats_plus_fixture_and_control():
     assert len(FEATURE_COLUMNS) == len(set(FEATURE_COLUMNS))
 
 
+def test_feature_columns_exact_order():
+    # Order is load-bearing for Plan 3's dot product — pin it explicitly.
+    assert FEATURE_COLUMNS == [f"form_{s}" for s in FORM_STATS] + [
+        "xmin", "opp_strength_def", "opp_strength_att", "was_home", "value_scaled"
+    ]
+
+
 def test_positions_and_quantiles():
     assert POSITIONS == ["GKP", "DEF", "MID", "FWD"]
     assert QUANTILES == [0.25, 0.50, 0.75]

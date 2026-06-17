@@ -17,6 +17,14 @@ Per-position linear quantile regression (GKP/DEF/MID/FWD × q 0.25/0.50/0.75),
 target = a player-fixture's actual total_points. Coefficients are a dot product
 (`model/artifacts/xpts-v1.json`) so Deno serving reproduces them with near-zero skew.
 
+Note: `expected_goal_involvements ≈ expected_goals + expected_assists` makes the three
+`form_expected_goal_involvements`/`form_expected_goals`/`form_expected_assists` features
+near-collinear, which produces large compensating coefficients (e.g. ±888) in the artifact
+and a statsmodels `IterationLimitWarning`. This does **not** affect predictions — the
+collinear terms cancel and outputs are identical — it is a coefficient-identifiability
+artifact. The v2 lever is to drop the redundant `form_expected_goal_involvements` feature
+or add regularization.
+
 ## Validation
 Walk-forward over 2025/26 (GW 8→38): for each GW *t*, train on `gw < t`, predict *t*,
 accumulate out-of-sample. Evaluated among players with recent starts share ≥ 0.5

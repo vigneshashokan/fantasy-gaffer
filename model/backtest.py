@@ -7,15 +7,13 @@ import pandas as pd
 
 from baselines import baseline_form, baseline_last_gw, baseline_ppg
 from feature_spec import MODEL_VERSION
-from features import build_feature_row
+from features import build_feature_row, build_samples
 from metrics import captaincy_points, interval_coverage, mae, within_position_spearman
 from train import fit_models, predict
 
 
 def walk_forward(history: pd.DataFrame, team_strengths: dict,
                  start_gw: int = 8, end_gw: int = 38) -> pd.DataFrame:
-    from features import build_samples
-
     out_rows: list[dict] = []
     for t in range(start_gw, end_gw + 1):
         train_samples = build_samples(history[history["gw"] < t], team_strengths)

@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 from baselines import baseline_last_gw, baseline_ppg, baseline_form
+from feature_spec import DECAY_ALPHA
 
 
 def _prior(points_by_gw):
@@ -26,4 +27,4 @@ def test_last_gw_and_ppg():
 
 def test_form_weights_recent_more():
     prior = _prior([(1, 0), (2, 10)])  # recent gw2=10
-    assert baseline_form(prior) == pytest.approx((10 * 1 + 0 * 0.85) / 1.85)
+    assert baseline_form(prior) == pytest.approx((10 * 1 + 0 * DECAY_ALPHA) / (1 + DECAY_ALPHA))
