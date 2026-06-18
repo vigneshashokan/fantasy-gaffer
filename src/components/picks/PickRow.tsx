@@ -1,7 +1,7 @@
 import { ApexTokens } from '@/constants/apexTokens';
 import { jerseyForClub } from '@/constants/jerseys';
 import type { ClubCode, Fixture, TopPickPlayer } from '@/types/fpl';
-import { xPtsOf, xpColor } from '@/utils/xpts';
+import { xpColor } from '@/utils/xpts';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -31,7 +31,7 @@ export function PickRow({
   // stats move onto the jersey (tap the kit). Everywhere else — and for owned
   // rows, which can't be transferred in — the whole row opens stats.
   const selectableActive = selectable && !owned;
-  const xp = xPtsOf(p);
+  const xp = p.xp ?? p.gw;
   const xpC = xpColor(xp, dark);
   const accentBar = selected
     ? tk.green
@@ -104,7 +104,7 @@ export function PickRow({
         <Text style={[styles.stat, { color: tk.formText }]}>{p.f.toFixed(1)}</Text>
       </View>
       <View style={styles.xpCell}>
-        <Text style={[styles.statBold, { color: xpC }]}>{Math.round(xp)}</Text>
+        <Text style={[styles.statBold, { color: xpC }]}>{xp.toFixed(1)}</Text>
       </View>
     </Pressable>
   );
