@@ -9,6 +9,7 @@ export const queryKeys = {
   bootstrap:      ['bootstrap'] as const,
   eventLive:      (gw: number) => ['eventLive', gw] as const,
   fixtures:       (gw: number) => ['fixtures', gw] as const,
+  projections:    (gw: number) => ['projections', gw] as const,
   profile:        (userId: string) => ['profile', userId] as const,
   notificationPrefs: (userId: string) => ['notificationPrefs', userId] as const,
   manager:        (teamId: number) => ['manager', teamId] as const,
