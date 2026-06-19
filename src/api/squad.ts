@@ -26,6 +26,7 @@ import { useProfile } from './profile';
 import { queryKeys } from './queryKeys';
 import { useProjections, type ProjectionStat } from './projections';
 import { computeAdvice } from '@/utils/gafferAdvice';
+import { computeTransferAdvice } from '@/utils/transferAdvice';
 
 interface PicksResponse {
   picks: Array<{
@@ -97,7 +98,10 @@ export function useApexTeam(targetGw?: number) {
   const historyQ = useManagerHistory();
   const fixturesQ = useFixturesByGw(gw);
   const liveQ = useEventLive(gw);
-  const projQ = useProjections(liveGw);
+  const playersQ = usePlayers();
+  const projQ0 = useProjections(liveGw);
+  const projQ1 = useProjections(liveGw > 0 ? Math.min(38, liveGw + 1) : 0);
+  const projQ2 = useProjections(liveGw > 0 ? Math.min(38, liveGw + 2) : 0);
 
   const isPending =
     profile.isPending ||
@@ -139,7 +143,8 @@ export function useApexTeam(targetGw?: number) {
       historyQ.data,
       fixturesQ.data,
       liveQ.data,
-      projQ.data,
+      [projQ0.data ?? new Map(), projQ1.data ?? new Map(), projQ2.data ?? new Map()],
+      playersQ.data ?? [],
     );
   }, [
     noTeam,
@@ -150,7 +155,10 @@ export function useApexTeam(targetGw?: number) {
     historyQ.data,
     fixturesQ.data,
     liveQ.data,
-    projQ.data,
+    projQ0.data,
+    projQ1.data,
+    projQ2.data,
+    playersQ.data,
   ]);
 
   return { data, isPending, isError, error, noTeam };
@@ -184,13 +192,14 @@ export function transferChipsFromHistory(
 
 function buildApexTeam(
   squad: { starters: SquadPlayer[]; bench: SquadPlayer[] },
-  manager: { name: string; gw: number; gwPoints: number; totalPoints: number; rank: number },
+  manager: { name: string; gw: number; gwPoints: number; totalPoints: number; rank: number; bank: number },
   eventStats: { gw: number; avgPoints: number; highestPoints: number; finished: boolean; dataChecked: boolean },
   liveCurrent: { gw: number; finished: boolean; dataChecked: boolean },
   history: { current?: Array<{ event: number; points: number; total_points: number; rank: number }>; chips: Array<{ name: string; event: number }> },
   fixturesByClub: Partial<Record<ClubCode, { opp: ClubCode; h: boolean }>> | undefined,
   liveById: Map<number, LivePlayerStat> | undefined,
-  proj: Map<string, ProjectionStat> | undefined,
+  projMaps: Map<string, ProjectionStat>[],
+  allPlayers: Player[],
 ) {
   const gw = eventStats.gw;
   // For the live GW, manager.summary_event_points is the freshest value; for
@@ -200,7 +209,15 @@ function buildApexTeam(
     : gwPointsFromHistory(history, gw);
   const advice = computeAdvice({
     squad,
-    proj: proj ?? new Map(),
+    proj: projMaps[0] ?? new Map(),
+    fixturesByClub,
+  });
+  const bank = manager.bank ?? 0;
+  const transferSuggestions = computeTransferAdvice({
+    squad,
+    allPlayers,
+    projMaps,
+    bank,
     fixturesByClub,
   });
   return {
@@ -229,11 +246,11 @@ function buildApexTeam(
     transfer: {
       freeTransfers: 1,
       squadValue: sumPrice([...squad.starters, ...squad.bench]),
-      inBank: 0,
+      inBank: bank,
       nextGw: Math.min(38, liveCurrent.gw + 1),
       deadline: '',
       captain: parseCaptain(squad.starters.find((p) => p.capt)?.name ?? ''),
-      transferSuggestions: [] as TransferSuggestion[],
+      transferSuggestions,
       chips: transferChipsFromHistory(history),
       pitch: groupTransferPitch(squad.starters, squad.bench),
     },

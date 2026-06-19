@@ -190,3 +190,32 @@ describe('useApexTeam advice wiring', () => {
     expect(Array.isArray(team.suggestions)).toBe(true);
   });
 });
+
+describe('useApexTeam transfer wiring', () => {
+  it('fills transferSuggestions from the engine and threads bank', async () => {
+    const candidate: Player = { id: '99', name: 'Upgrade', pos: 'DEF', club: 'BHA', p: 4.5, f: 5, tp: 50, own: 10, gw: 2, status: 'a', news: '', chanceNext: null, ict: 80, bps: 130 };
+    (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 99 }, isPending: false, isError: false, error: null });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false }, isPending: false, isError: false, error: null, isSuccess: true });
+    (useEventStats as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 50, highestPoints: 99, finished: false, dataChecked: false } });
+    (useEventLive as jest.Mock).mockReturnValue({ data: undefined });
+    (useFixturesByGw as jest.Mock).mockReturnValue({ data: { BHA: { opp: 'LIV', h: true } } });
+    (usePlayers as jest.Mock).mockReturnValue({ data: [...ADVICE_PLAYERS, candidate], isSuccess: true });
+    (useManager as jest.Mock).mockReturnValue({ data: { name: 'Test FC', gw: 24, gwPoints: 50, totalPoints: 1200, rank: 1000, bank: 2.0 }, isPending: false, isError: false, error: null });
+    (useManagerHistory as jest.Mock).mockReturnValue({ data: { current: [], chips: [] }, isPending: false, isError: false, error: null });
+    (useProjections as jest.Mock).mockReturnValue({ data: new Map([['99', { p25: 4, p50: 5, p75: 6 }]]) });
+    (fplGet as jest.Mock).mockResolvedValueOnce(ADVICE_PICKS);
+
+    const client = makeTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useApexTeam(), { wrapper });
+    await waitFor(() => expect(result.current.data).toBeTruthy());
+
+    const tr = result.current.data!.transfer;
+    expect(tr.inBank).toBe(2.0);
+    expect(tr.transferSuggestions.length).toBe(1); // only one non-owned candidate (a DEF)
+    expect(tr.transferSuggestions[0].in).toBe('Upgrade');
+    expect(tr.transferSuggestions[0].out).toBe('D5'); // weakest owned DEF (id 7, ep_next 1.5)
+  });
+});

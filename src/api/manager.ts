@@ -17,6 +17,7 @@ interface FplEntry {
   summary_event_points: number;
   summary_overall_points: number;
   summary_overall_rank: number;
+  last_deadline_bank: number;
 }
 
 interface FplHistoryCurrent {
@@ -38,6 +39,7 @@ export function managerFromEntry(entry: FplEntry): TeamInfo {
     gwPoints: entry.summary_event_points,
     totalPoints: entry.summary_overall_points,
     rank: entry.summary_overall_rank,
+    bank: (entry.last_deadline_bank ?? 0) / 10,
   };
 }
 

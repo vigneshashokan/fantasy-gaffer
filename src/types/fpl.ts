@@ -136,6 +136,7 @@ export interface TeamInfo {
   gwPoints: number;
   totalPoints: number;
   rank: number;
+  bank: number;
 }
 
 export interface Profile {

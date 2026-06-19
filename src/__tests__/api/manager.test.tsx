@@ -30,6 +30,7 @@ const ENTRY_FIXTURE = {
   summary_event_points: 64,
   summary_overall_points: 1452,
   summary_overall_rank: 142_831,
+  last_deadline_bank: 0,
 };
 
 const HISTORY_FIXTURE = {
@@ -52,7 +53,26 @@ describe('managerFromEntry', () => {
       gwPoints: 64,
       totalPoints: 1452,
       rank: 142_831,
+      bank: 0,
     });
+  });
+});
+
+describe('managerFromEntry bank', () => {
+  it('maps last_deadline_bank (tenths) to bank in £m', () => {
+    const info = managerFromEntry({
+      id: 1, name: 'T', current_event: 24, summary_event_points: 50,
+      summary_overall_points: 1200, summary_overall_rank: 1000, last_deadline_bank: 5,
+    });
+    expect(info.bank).toBe(0.5);
+  });
+
+  it('defaults bank to 0 when the field is absent', () => {
+    const info = managerFromEntry({
+      id: 1, name: 'T', current_event: 24, summary_event_points: 50,
+      summary_overall_points: 1200, summary_overall_rank: 1000,
+    } as never);
+    expect(info.bank).toBe(0);
   });
 });
 
