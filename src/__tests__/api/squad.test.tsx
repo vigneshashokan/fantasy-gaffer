@@ -8,7 +8,7 @@ import type { Player } from '@/types/fpl';
 
 jest.mock('@/api/fpl-client', () => ({ fplGet: jest.fn() }));
 jest.mock('@/api/profile',    () => ({ useProfile: jest.fn() }));
-jest.mock('@/api/fixtures',   () => ({ useCurrentGameweek: jest.fn(), useEventStats: jest.fn(), useEventLive: jest.fn(), useFixturesByGw: jest.fn() }));
+jest.mock('@/api/fixtures',   () => ({ useCurrentGameweek: jest.fn(), useEventStats: jest.fn(), useEventLive: jest.fn(), useFixturesByGw: jest.fn(), useAllFixtures: jest.fn() }));
 jest.mock('@/api/players',    () => ({ usePlayers: jest.fn() }));
 jest.mock('@/api/projections', () => ({ useProjections: jest.fn() }));
 jest.mock('@/api/manager', () => ({
@@ -19,13 +19,14 @@ jest.mock('@/api/manager', () => ({
 
 import { fplGet } from '@/api/fpl-client';
 import { useProfile } from '@/api/profile';
-import { useCurrentGameweek, useEventStats, useEventLive, useFixturesByGw } from '@/api/fixtures';
+import { useCurrentGameweek, useEventStats, useEventLive, useFixturesByGw, useAllFixtures } from '@/api/fixtures';
 import { usePlayers } from '@/api/players';
 import { useProjections } from '@/api/projections';
 import { useManager, useManagerHistory } from '@/api/manager';
 
 beforeEach(() => {
   jest.clearAllMocks();
+  (useAllFixtures as jest.Mock).mockReturnValue({ data: undefined });
 });
 
 const PICKS_FIXTURE = {
@@ -217,5 +218,37 @@ describe('useApexTeam transfer wiring', () => {
     expect(tr.transferSuggestions.length).toBe(1); // only one non-owned candidate (a DEF)
     expect(tr.transferSuggestions[0].in).toBe('Upgrade');
     expect(tr.transferSuggestions[0].out).toBe('D5'); // weakest owned DEF (id 7, ep_next 1.5)
+  });
+});
+
+describe('useApexTeam chip wiring', () => {
+  it('attaches a Bench Boost tip from a scheduled double gameweek', async () => {
+    // ADVICE_PLAYERS clubs incl. MCI (D2 id4, M3 id10, F1 id13). Give MCI a double in GW25.
+    const seasonFixtures = new Map<number, Record<string, { count: number; fdrs: number[] }>>([
+      [24, { MCI: { count: 1, fdrs: [3] } }],
+      [25, { MCI: { count: 2, fdrs: [2, 3] } }],
+    ]);
+    (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 99 }, isPending: false, isError: false, error: null });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false }, isPending: false, isError: false, error: null, isSuccess: true });
+    (useEventStats as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 50, highestPoints: 99, finished: false, dataChecked: false } });
+    (useEventLive as jest.Mock).mockReturnValue({ data: undefined });
+    (useFixturesByGw as jest.Mock).mockReturnValue({ data: {} });
+    (useAllFixtures as jest.Mock).mockReturnValue({ data: seasonFixtures });
+    (usePlayers as jest.Mock).mockReturnValue({ data: ADVICE_PLAYERS, isSuccess: true });
+    (useManager as jest.Mock).mockReturnValue({ data: { name: 'Test FC', gw: 24, gwPoints: 50, totalPoints: 1200, rank: 1000, bank: 0 }, isPending: false, isError: false, error: null });
+    (useManagerHistory as jest.Mock).mockReturnValue({ data: { current: [], chips: [] }, isPending: false, isError: false, error: null });
+    (useProjections as jest.Mock).mockReturnValue({ data: new Map() });
+    (fplGet as jest.Mock).mockResolvedValueOnce(ADVICE_PICKS);
+
+    const client = makeTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useApexTeam(), { wrapper });
+    await waitFor(() => expect(result.current.data).toBeTruthy());
+
+    const bb = result.current.data!.transfer.chips.find((c) => c.name === 'Bench Boost');
+    expect(bb?.tip?.title).toBe('Hold for GW25'); // MCI doubles in GW25
+    expect(bb?.tip?.lines[0]).toContain('play twice in GW25');
   });
 });

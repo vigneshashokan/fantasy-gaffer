@@ -179,3 +179,58 @@ export function useFixturesByGw(gw: number) {
     enabled: Number.isFinite(gw) && gw > 0,
   });
 }
+
+export interface ClubGwFixtures {
+  count: number;
+  fdrs: number[];
+}
+// gw → club → { fixture count (0 blank, 1, 2 double), FDR per fixture }
+export type SeasonFixtures = Map<number, Partial<Record<ClubCode, ClubGwFixtures>>>;
+
+interface AllFixtureRow {
+  event: number | null;
+  team_h: number;
+  team_a: number;
+  team_h_difficulty: number;
+  team_a_difficulty: number;
+}
+
+export function seasonFixturesFromRows(
+  rows: AllFixtureRow[],
+  clubByTeamId: Record<number, string>,
+): SeasonFixtures {
+  const out: SeasonFixtures = new Map();
+  for (const r of rows) {
+    if (r.event == null) continue;
+    const gwMap = out.get(r.event) ?? {};
+    const add = (code: string | undefined, fdr: number) => {
+      if (!code) return;
+      const club = code as ClubCode;
+      const cur = gwMap[club] ?? { count: 0, fdrs: [] };
+      gwMap[club] = { count: cur.count + 1, fdrs: [...cur.fdrs, fdr] };
+    };
+    add(clubByTeamId[r.team_h], r.team_h_difficulty);
+    add(clubByTeamId[r.team_a], r.team_a_difficulty);
+    out.set(r.event, gwMap);
+  }
+  return out;
+}
+
+export function useAllFixtures() {
+  return useQuery({
+    queryKey: queryKeys.allFixtures,
+    queryFn: async () => {
+      const [fxRes, clubsRes] = await Promise.all([
+        supabase.from('fixtures').select('event, team_h, team_a, team_h_difficulty, team_a_difficulty'),
+        supabase.from('clubs').select('id, short_name'),
+      ]);
+      if (fxRes.error)    throw fxRes.error;
+      if (clubsRes.error) throw clubsRes.error;
+      const clubByTeamId: Record<number, string> = {};
+      for (const c of clubsRes.data ?? []) clubByTeamId[c.id] = c.short_name;
+      return seasonFixturesFromRows((fxRes.data ?? []) as AllFixtureRow[], clubByTeamId);
+    },
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+  });
+}

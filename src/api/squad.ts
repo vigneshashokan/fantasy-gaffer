@@ -17,7 +17,7 @@ import type {
 } from '@/types/fpl';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { useCurrentGameweek, useEventLive, useEventStats, useFixturesByGw } from './fixtures';
+import { useCurrentGameweek, useEventLive, useEventStats, useFixturesByGw, useAllFixtures, type SeasonFixtures } from './fixtures';
 import { pitchEventFields, type LivePlayerStat } from './liveStats';
 import { fplGet } from './fpl-client';
 import { chipsFromHistory, gwPointsFromHistory, useManager, useManagerHistory } from './manager';
@@ -27,6 +27,7 @@ import { queryKeys } from './queryKeys';
 import { useProjections, type ProjectionStat } from './projections';
 import { computeAdvice } from '@/utils/gafferAdvice';
 import { computeTransferAdvice } from '@/utils/transferAdvice';
+import { computeChipAdvice, attachChipTips } from '@/utils/chipAdvice';
 
 interface PicksResponse {
   picks: Array<{
@@ -102,6 +103,7 @@ export function useApexTeam(targetGw?: number) {
   const projQ0 = useProjections(liveGw);
   const projQ1 = useProjections(liveGw > 0 ? Math.min(38, liveGw + 1) : 0);
   const projQ2 = useProjections(liveGw > 0 ? Math.min(38, liveGw + 2) : 0);
+  const allFixturesQ = useAllFixtures();
 
   const isPending =
     profile.isPending ||
@@ -145,6 +147,7 @@ export function useApexTeam(targetGw?: number) {
       liveQ.data,
       [projQ0.data ?? new Map(), projQ1.data ?? new Map(), projQ2.data ?? new Map()],
       playersQ.data ?? [],
+      allFixturesQ.data,
     );
   }, [
     noTeam,
@@ -159,6 +162,7 @@ export function useApexTeam(targetGw?: number) {
     projQ1.data,
     projQ2.data,
     playersQ.data,
+    allFixturesQ.data,
   ]);
 
   return { data, isPending, isError, error, noTeam };
@@ -200,6 +204,7 @@ function buildApexTeam(
   liveById: Map<number, LivePlayerStat> | undefined,
   projMaps: Map<string, ProjectionStat>[],
   allPlayers: Player[],
+  seasonFixtures: SeasonFixtures | undefined,
 ) {
   const gw = eventStats.gw;
   // For the live GW, manager.summary_event_points is the freshest value; for
@@ -219,6 +224,12 @@ function buildApexTeam(
     projMaps,
     bank,
     fixturesByClub,
+  });
+  const chipAdvice = computeChipAdvice({
+    squad,
+    upcomingGw: liveCurrent.gw,
+    seasonFixtures: seasonFixtures ?? new Map(),
+    projMaps,
   });
   return {
     teamName: manager.name,
@@ -251,7 +262,7 @@ function buildApexTeam(
       deadline: '',
       captain: parseCaptain(squad.starters.find((p) => p.capt)?.name ?? ''),
       transferSuggestions,
-      chips: transferChipsFromHistory(history),
+      chips: attachChipTips(transferChipsFromHistory(history), chipAdvice),
       pitch: groupTransferPitch(squad.starters, squad.bench),
     },
   };
