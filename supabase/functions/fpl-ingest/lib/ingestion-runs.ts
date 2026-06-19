@@ -30,7 +30,7 @@ export function serializeError(err: unknown): string {
 
 export async function startRun(
   supabase: SupabaseClient,
-  source: 'bootstrap' | 'fixtures',
+  source: 'bootstrap' | 'fixtures' | 'history',
 ): Promise<string> {
   const { data, error } = await supabase
     .from('ingestion_runs')

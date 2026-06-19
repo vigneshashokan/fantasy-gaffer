@@ -19,3 +19,11 @@ export function isPLSeasonActive(d: Date): boolean {
 export function isInTransferWindow(d: Date): boolean {
   return TRANSFER_WINDOWS.some((w) => d >= w.start && d < w.end);
 }
+
+// PL seasons span Aug–May; before August the current season started the prior
+// calendar year. UTC-based (this runs in a UTC cron). E.g. 2026-09 → "2026/27".
+export function currentSeasonLabel(now: Date = new Date()): string {
+  const y = now.getUTCFullYear();
+  const start = now.getUTCMonth() >= 7 ? y : y - 1; // month 7 = August (0-indexed)
+  return `${start}/${String((start + 1) % 100).padStart(2, '0')}`;
+}

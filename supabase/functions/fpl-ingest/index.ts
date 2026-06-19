@@ -4,11 +4,12 @@ import { createAdminClient } from './lib/supabase-admin.ts';
 import { errorRun, serializeError, startRun } from './lib/ingestion-runs.ts';
 import { ingestBootstrap } from './sources/bootstrap.ts';
 import { ingestFixtures } from './sources/fixtures.ts';
+import { ingestHistory } from './sources/history.ts';
 
-type Source = 'bootstrap' | 'fixtures';
+type Source = 'bootstrap' | 'fixtures' | 'history';
 
 const isSource = (s: string | null): s is Source =>
-  s === 'bootstrap' || s === 'fixtures';
+  s === 'bootstrap' || s === 'fixtures' || s === 'history';
 
 export interface Deps {
   supabase: SupabaseClient;
@@ -31,7 +32,7 @@ export async function handler(req: Request, depsOverride?: Deps): Promise<Respon
 
   if (!isSource(source)) {
     return Response.json(
-      { error: 'missing or invalid ?source= (expected bootstrap|fixtures)' },
+      { error: 'missing or invalid ?source= (expected bootstrap|fixtures|history)' },
       { status: 400 },
     );
   }
@@ -42,8 +43,10 @@ export async function handler(req: Request, depsOverride?: Deps): Promise<Respon
   try {
     if (source === 'bootstrap') {
       await ingestBootstrap(runId, deps, { force });
-    } else {
+    } else if (source === 'fixtures') {
       await ingestFixtures(runId, deps);
+    } else {
+      await ingestHistory(runId, deps);
     }
     return Response.json({ ok: true, runId, source }, { status: 200 });
   } catch (err) {

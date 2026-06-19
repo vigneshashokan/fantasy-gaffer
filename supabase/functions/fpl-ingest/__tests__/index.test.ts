@@ -261,3 +261,45 @@ Deno.test('source=fixtures with matching prior hash skips upsert', async () => {
   assertEquals(payload.status, 'skipped');
   assertEquals(payload.skip_reason, 'no content change');
 });
+
+// --- history route -------------------------------------------------------
+
+function makeHistoryRouteDeps(): { deps: Deps; calls: CallLog[] } {
+  const calls: CallLog[] = [];
+  // deno-lint-ignore no-explicit-any
+  const supabase: any = {
+    from(table: string) {
+      return {
+        insert(payload: unknown) {
+          calls.push({ table, op: 'insert', payload });
+          return { select() { return { single() { return Promise.resolve({ data: { id: 'run-1' }, error: null }); } }; } };
+        },
+        update(payload: unknown) {
+          return { eq(_c: string, val: string) { calls.push({ table, op: 'update', payload, matchId: val }); return Promise.resolve({ data: null, error: null }); } };
+        },
+        select(_cols: string) {
+          return { eq() { calls.push({ table, op: 'select' }); return Promise.resolve({ data: [], error: null }); } };
+        },
+        upsert(payload: unknown) { calls.push({ table, op: 'upsert', payload }); return Promise.resolve({ data: null, error: null }); },
+      };
+    },
+  };
+  // bootstrap returns no events → no missing GW → ingestHistory takes the skip path.
+  const fetchStub: typeof fetch = () =>
+    Promise.resolve(new Response(JSON.stringify({ events: [], elements: [] }), { status: 200 }));
+  return { deps: { supabase, fetch: fetchStub, now: () => new Date('2026-09-15T03:30:00Z') }, calls };
+}
+
+Deno.test('source=history dispatches to ingestHistory and closes the run', async () => {
+  const { deps, calls } = makeHistoryRouteDeps();
+  const res = await handler(
+    new Request('http://localhost/functions/v1/fpl-ingest?source=history'),
+    deps,
+  );
+  assertEquals(res.status, 200);
+  const tables = calls.map((c) => `${c.op}:${c.table}`);
+  assertEquals(tables.includes('insert:ingestion_runs'), true);   // startRun
+  assertEquals(tables.includes('update:ingestion_runs'), true);   // skipRun
+  const closing = calls.find((c) => c.op === 'update' && c.table === 'ingestion_runs')!;
+  assertEquals((closing.payload as Record<string, unknown>).status, 'skipped');
+});

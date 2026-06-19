@@ -1,5 +1,5 @@
 import { assertEquals } from '@std/assert';
-import { isInTransferWindow, isPLSeasonActive } from '../lib/calendar.ts';
+import { currentSeasonLabel, isInTransferWindow, isPLSeasonActive } from '../lib/calendar.ts';
 
 Deno.test('isPLSeasonActive: true on the start boundary', () => {
   assertEquals(isPLSeasonActive(new Date('2026-08-15T00:00:00Z')), true);
@@ -53,4 +53,14 @@ Deno.test('isInTransferWindow: false the day before summer opens', () => {
 
 Deno.test('isInTransferWindow: false the day after winter closes', () => {
   assertEquals(isInTransferWindow(new Date('2027-02-02T00:00:00Z')), false);
+});
+
+Deno.test('currentSeasonLabel: August onward belongs to the season starting that year', () => {
+  assertEquals(currentSeasonLabel(new Date('2026-08-15T00:00:00Z')), '2026/27');
+  assertEquals(currentSeasonLabel(new Date('2026-12-01T00:00:00Z')), '2026/27');
+});
+
+Deno.test('currentSeasonLabel: before August belongs to the prior-year season', () => {
+  assertEquals(currentSeasonLabel(new Date('2027-01-10T00:00:00Z')), '2026/27');
+  assertEquals(currentSeasonLabel(new Date('2027-05-20T00:00:00Z')), '2026/27');
 });
