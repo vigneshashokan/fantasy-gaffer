@@ -101,3 +101,19 @@ export function normalizeHistory(
     value: r.value,
   }));
 }
+
+export interface HistoryEvent {
+  id: number;
+  finished: boolean;
+  data_checked: boolean;
+}
+
+// Current-season GWs that are finished AND bonus-settled, minus those already
+// captured. Ascending. Drives the self-healing capture loop.
+export function selectMissingGws(events: HistoryEvent[], presentGws: number[]): number[] {
+  const present = new Set(presentGws);
+  return events
+    .filter((e) => e.finished && e.data_checked && !present.has(e.id))
+    .map((e) => e.id)
+    .sort((a, b) => a - b);
+}
