@@ -9,9 +9,11 @@ const config: ExpoConfig = {
   scheme: 'fplgafferreactnativeapp',
   userInterfaceStyle: 'automatic',
   ios: {
+    bundleIdentifier: 'com.fantasygaffer.app',
     icon: './assets/logos/logo-mark.png',
   },
   android: {
+    package: 'com.fantasygaffer.app',
     adaptiveIcon: {
       backgroundColor: '#37003C',
       foregroundImage: './assets/logos/logo-mark-light.png',
