@@ -61,6 +61,7 @@ describe('computeTransferAdvice', () => {
     expect(out[0].gain).toBe('+15.0 pts');
     expect(out[0].id).toBe('xfer-weak-up');
     expect(out[0].detail).toContain('vs LIV (H)');
+    expect(out[0].detail).toContain('Costs £0.5m');
   });
 
   it('rejects a candidate priced above out.p + bank', () => {
@@ -115,5 +116,16 @@ describe('computeTransferAdvice', () => {
       projMaps: maps3({ d: 3, mg: 3.2 }), bank: 2, // 9.6 − 9 = 0.6 < MIN_TRANSFER_GAIN (1.0)
     });
     expect(out).toEqual([]);
+  });
+
+  it('uses the projection fallback in detail when there is no price swing, flag, or fixture', () => {
+    const owned = [pl('d', { pos: 'DEF', club: 'AVL', p: 5 })];
+    const cand = pl('c', { pos: 'DEF', club: 'BHA', p: 5, name: 'Same' });
+    const out = computeTransferAdvice({
+      squad: squad(owned), allPlayers: [...owned, cand],
+      projMaps: maps3({ d: 1, c: 5 }), bank: 0, // same price; no fixturesByClub passed
+    });
+    expect(out.length).toBe(1);
+    expect(out[0].detail).toBe('Better 3-GW projection');
   });
 });
