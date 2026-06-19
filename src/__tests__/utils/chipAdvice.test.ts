@@ -1,5 +1,5 @@
-import { benchBoostTip, freeHitTip, wildcardTip, tripleCaptainTip } from '@/utils/chipAdvice';
-import type { Player } from '@/types/fpl';
+import { benchBoostTip, freeHitTip, wildcardTip, tripleCaptainTip, computeChipAdvice, attachChipTips } from '@/utils/chipAdvice';
+import type { Player, TransferChip } from '@/types/fpl';
 import type { SeasonFixtures } from '@/api/fixtures';
 import type { ProjectionStat } from '@/api/projections';
 
@@ -120,5 +120,38 @@ describe('tripleCaptainTip', () => {
     expect(tripleCaptainTip(owned, sf({ 10: single }), 10, [pmap({}), pmap({}), pmap({})])).toEqual({
       title: 'Hold', lines: ['No standout fixture yet'],
     });
+  });
+});
+
+describe('computeChipAdvice', () => {
+  it('produces a tip for each of the four chips', () => {
+    const single = { MCI: { count: 1, fdrs: [3] }, ARS: { count: 1, fdrs: [3] } };
+    const advice = computeChipAdvice({
+      squad: { starters: [pl('star', 'MCI', { name: 'Star' })], bench: [pl('x', 'ARS')] },
+      upcomingGw: 10,
+      seasonFixtures: sf({ 10: single, 11: single }),
+      projMaps: [pmap({ star: 6 }), pmap({}), pmap({})],
+    });
+    expect(Object.keys(advice).sort()).toEqual(['Bench Boost', 'Free Hit', 'Triple Captain', 'Wildcard']);
+    expect(advice['Bench Boost'].title).toBe('Hold'); // no double scheduled
+    expect(advice['Triple Captain'].lines[0]).toContain('Star'); // best asset
+  });
+});
+
+describe('attachChipTips', () => {
+  it('attaches tips to idle chips by name and leaves used chips untouched', () => {
+    const advice = {
+      Wildcard: { title: 'Hold', lines: ['x'] },
+      'Free Hit': { title: 'Hold', lines: ['x'] },
+      'Bench Boost': { title: 'Use this GW', lines: ['y'] },
+      'Triple Captain': { title: 'Hold', lines: ['x'] },
+    };
+    const chips: TransferChip[] = [
+      { name: 'Bench Boost', state: 'idle', status: 'Available' },
+      { name: 'Wildcard', state: 'used', status: 'Used', playedGw: 8 },
+    ];
+    const out = attachChipTips(chips, advice);
+    expect(out[0].tip).toEqual({ title: 'Use this GW', lines: ['y'] }); // idle → tip
+    expect(out[1].tip).toBeUndefined(); // used → no tip
   });
 });

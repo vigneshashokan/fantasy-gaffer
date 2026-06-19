@@ -157,3 +157,41 @@ export function tripleCaptainTip(
   }
   return { title: 'Hold', lines: ['No standout fixture yet'] };
 }
+
+export interface ChipAdviceInput {
+  squad: { starters: SquadPlayer[]; bench: SquadPlayer[] };
+  upcomingGw: number;
+  seasonFixtures: SeasonFixtures;
+  projMaps: Map<string, ProjectionStat>[];
+}
+
+export interface ChipAdvice {
+  Wildcard: ChipTip;
+  'Free Hit': ChipTip;
+  'Bench Boost': ChipTip;
+  'Triple Captain': ChipTip;
+}
+
+export function computeChipAdvice({
+  squad,
+  upcomingGw,
+  seasonFixtures,
+  projMaps,
+}: ChipAdviceInput): ChipAdvice {
+  const owned = [...squad.starters, ...squad.bench];
+  return {
+    Wildcard: wildcardTip(owned, seasonFixtures, upcomingGw),
+    'Free Hit': freeHitTip(owned, seasonFixtures, upcomingGw),
+    'Bench Boost': benchBoostTip(squad, seasonFixtures, upcomingGw, projMaps),
+    'Triple Captain': tripleCaptainTip(owned, seasonFixtures, upcomingGw, projMaps),
+  };
+}
+
+// Merge tips onto idle chips by display name; used chips keep tip undefined.
+export function attachChipTips(chips: TransferChip[], advice: ChipAdvice): TransferChip[] {
+  return chips.map((c) => {
+    if (c.state === 'used') return c;
+    const tip = advice[c.name as keyof ChipAdvice];
+    return tip ? { ...c, tip } : c;
+  });
+}
