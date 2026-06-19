@@ -7,7 +7,7 @@
 
 import type { SquadPlayer } from '@/api/squad';
 import type { ProjectionStat } from '@/api/projections';
-import type { CaptainPick, ClubCode } from '@/types/fpl';
+import type { CaptainPick, ClubCode, Suggestion } from '@/types/fpl';
 
 const HARD_OUT: ReadonlySet<string> = new Set(['i', 's', 'u', 'n']);
 
@@ -143,4 +143,50 @@ export function captainPicksFrom(
       xp: round1(score),
       note: captainNote(p, proj, fixturesByClub),
     }));
+}
+
+function subReason(p: SquadPlayer): string {
+  switch (p.status) {
+    case 'i': return 'Injured';
+    case 's': return 'Suspended';
+    case 'u':
+    case 'n': return 'Unavailable';
+    default:
+      if (p.chanceNext != null && p.chanceNext < 100) return `Doubtful ${p.chanceNext}%`;
+      return 'Better projection';
+  }
+}
+
+// The diff between the user's current starters and the optimal XI: each current
+// starter not in the optimal XI is paired (weakest-out with strongest-in) with a
+// promoted bench player, surfaced as a "Bench X for Y" suggestion with the gain.
+export function subSuggestions(
+  squad: { starters: SquadPlayer[]; bench: SquadPlayer[] },
+  optimalStarterIds: string[],
+  proj: Map<string, ProjectionStat>,
+): Suggestion[] {
+  const optimalSet = new Set(optimalStarterIds);
+  const outgoing = squad.starters
+    .filter((p) => !optimalSet.has(p.id))
+    .sort((a, b) => adjusted(a, proj, 'p50') - adjusted(b, proj, 'p50')); // worst first
+  const incoming = squad.bench
+    .filter((p) => optimalSet.has(p.id))
+    .sort((a, b) => adjusted(b, proj, 'p50') - adjusted(a, proj, 'p50')); // best first
+
+  const n = Math.min(outgoing.length, incoming.length);
+  const pairs: { out: SquadPlayer; in: SquadPlayer; gain: number }[] = [];
+  for (let i = 0; i < n; i++) {
+    const gain = adjusted(incoming[i], proj, 'p50') - adjusted(outgoing[i], proj, 'p50');
+    if (gain > 0) pairs.push({ out: outgoing[i], in: incoming[i], gain });
+  }
+  pairs.sort((a, b) => b.gain - a.gain);
+
+  return pairs.map(({ out, in: inn, gain }) => ({
+    id: `sub-${out.id}-${inn.id}`,
+    type: 'sub' as const,
+    text: `Bench ${out.name} for ${inn.name}`,
+    detail: subReason(out),
+    gain: `+${round1(gain).toFixed(1)} pts`,
+    wasApplied: false,
+  }));
 }

@@ -1,4 +1,4 @@
-import { availabilityFactor, adjusted, optimalLineup, captainPicksFrom } from '@/utils/gafferAdvice';
+import { availabilityFactor, adjusted, optimalLineup, captainPicksFrom, subSuggestions } from '@/utils/gafferAdvice';
 import type { Player, ClubCode } from '@/types/fpl';
 import type { SquadPlayer } from '@/api/squad';
 import type { ProjectionStat } from '@/api/projections';
@@ -143,5 +143,63 @@ describe('captainPicksFrom', () => {
     const picks = captainPicksFrom(starters, new Map());
     expect(picks[0].xp).toBe(14); // 7 × 2
     expect(picks[0].note).toBe(''); // no projection, no fixture → empty note
+  });
+});
+
+describe('subSuggestions', () => {
+  it('suggests benching a current starter for a stronger bench player, with the gain', () => {
+    // Current XI starts weak d-low; bench holds a stronger MID that the optimal XI wants.
+    const starters = [
+      sp('g1', 'GKP'),
+      sp('d2', 'DEF'), sp('d3', 'DEF'), sp('d4', 'DEF'),
+      sp('m1', 'MID'), sp('m2', 'MID'), sp('m3', 'MID'), sp('d5', 'DEF'),
+      sp('f1', 'FWD'), sp('f2', 'FWD'), sp('f3', 'FWD'),
+    ];
+    const bench = [sp('g2', 'GKP'), sp('m4', 'MID'), sp('m5', 'MID'), sp('d1', 'DEF')];
+    const squad = { starters, bench };
+    const proj = projMap({
+      g1: 5, g2: 3, d1: 1, d2: 3, d3: 2.5, d4: 2, d5: 1.5,
+      m1: 9, m2: 8, m3: 7, m4: 6, m5: 5.5, f1: 10, f2: 9, f3: 8,
+    });
+    const { starterIds } = optimalLineup(squad, proj);
+    const sugg = subSuggestions(squad, starterIds, proj);
+    expect(sugg.length).toBeGreaterThan(0);
+    // d5 (weak DEF, p50 1.5) should be flagged out for a stronger bench MID.
+    const s = sugg[0];
+    expect(s.type).toBe('sub');
+    expect(s.text).toMatch(/^Bench /);
+    expect(s.gain).toMatch(/^\+\d/); // e.g. "+4.0 pts"
+    expect(s.wasApplied).toBe(false);
+  });
+
+  it('gives an availability reason when the benched player is unavailable', () => {
+    const starters = [
+      sp('g1', 'GKP'),
+      sp('d2', 'DEF'), sp('d3', 'DEF'), sp('d4', 'DEF'),
+      sp('m1', 'MID'), sp('m2', 'MID'), sp('m3', 'MID'),
+      sp('f1', 'FWD', { status: 'i' }), // injured starter
+      sp('f2', 'FWD'), sp('f3', 'FWD'), sp('d5', 'DEF'),
+    ];
+    const bench = [sp('g2', 'GKP'), sp('m4', 'MID'), sp('m5', 'MID'), sp('d1', 'DEF')];
+    const squad = { starters, bench };
+    const proj = projMap({
+      g1: 5, g2: 3, d1: 1, d2: 3, d3: 2.5, d4: 2, d5: 1.5,
+      m1: 9, m2: 8, m3: 7, m4: 6, m5: 5.5, f1: 10, f2: 9, f3: 8,
+    });
+    const { starterIds } = optimalLineup(squad, proj);
+    const sugg = subSuggestions(squad, starterIds, proj);
+    const injured = sugg.find((s) => s.text.includes('Pf1'));
+    expect(injured?.detail).toBe('Injured');
+  });
+
+  it('is empty when the current lineup already matches the optimal XI', () => {
+    const { squad, proj } = squad15();
+    const { starterIds } = optimalLineup(squad, proj);
+    const byId = new Map([...squad.starters, ...squad.bench].map((p) => [p.id, p]));
+    const optimalSquad = {
+      starters: starterIds.map((id) => byId.get(id)!),
+      bench: [...squad.starters, ...squad.bench].filter((p) => !starterIds.includes(p.id)),
+    };
+    expect(subSuggestions(optimalSquad, starterIds, proj)).toEqual([]);
   });
 });
