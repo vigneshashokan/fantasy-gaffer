@@ -3,6 +3,7 @@ import { renderHook, waitFor } from '@testing-library/react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import {
   fixturesFromRows,
+  seasonFixturesFromRows,
   currentGwFromEvents,
   eventStatsFromEvents,
   useCurrentGameweek,
@@ -58,6 +59,30 @@ describe('fixturesFromRows', () => {
     expect(result.LIV).toEqual({ opp: 'ARS', h: false });
     expect(result.MCI).toEqual({ opp: 'CHE', h: true });
     expect(result.CHE).toEqual({ opp: 'MCI', h: false });
+  });
+});
+
+describe('seasonFixturesFromRows', () => {
+  const clubBy: Record<number, string> = { 1: 'ARS', 2: 'LIV', 3: 'MCI' };
+
+  it('buckets per GW per club with count + side-correct FDR (double = 2)', () => {
+    const sf = seasonFixturesFromRows([
+      { event: 1, team_h: 1, team_a: 2, team_h_difficulty: 2, team_a_difficulty: 4 },
+      { event: 1, team_h: 3, team_a: 1, team_h_difficulty: 3, team_a_difficulty: 5 }, // ARS plays twice
+    ], clubBy);
+    expect(sf.get(1)?.ARS?.count).toBe(2);
+    expect(sf.get(1)?.ARS?.fdrs).toEqual([2, 5]); // home in fx1 (2), away in fx2 (5)
+    expect(sf.get(1)?.LIV?.count).toBe(1);
+    expect(sf.get(1)?.LIV?.fdrs).toEqual([4]);
+    expect(sf.get(1)?.MCI?.count).toBe(1);
+  });
+
+  it('skips fixtures with a null event', () => {
+    const sf = seasonFixturesFromRows(
+      [{ event: null, team_h: 1, team_a: 2, team_h_difficulty: 2, team_a_difficulty: 3 }],
+      clubBy,
+    );
+    expect(sf.size).toBe(0);
   });
 });
 
