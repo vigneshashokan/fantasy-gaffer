@@ -1,5 +1,5 @@
-import { availabilityFactor, adjusted, optimalLineup } from '@/utils/gafferAdvice';
-import type { Player } from '@/types/fpl';
+import { availabilityFactor, adjusted, optimalLineup, captainPicksFrom } from '@/utils/gafferAdvice';
+import type { Player, ClubCode } from '@/types/fpl';
 import type { SquadPlayer } from '@/api/squad';
 import type { ProjectionStat } from '@/api/projections';
 
@@ -105,9 +105,6 @@ describe('optimalLineup', () => {
     expect(benchIds.slice(1)).toEqual(['m5', 'd5', 'd1']);
   });
 });
-
-import { captainPicksFrom } from '@/utils/gafferAdvice';
-import type { ClubCode } from '@/types/fpl';
 
 describe('captainPicksFrom', () => {
   it('returns the top 3 starters ranked by adjusted p50 doubled', () => {

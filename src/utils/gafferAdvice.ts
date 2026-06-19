@@ -122,7 +122,7 @@ function captainNote(
   fixturesByClub?: Partial<Record<ClubCode, { opp: ClubCode; h: boolean }>>,
 ): string {
   const fx = fixtureLabel(p, fixturesByClub);
-  if (!proj.get(p.id)) return fx; // ep_next fallback — fixture only (may be empty)
+  if (!proj.has(p.id)) return fx; // ep_next fallback — fixture only (may be empty)
   const ceiling = adjusted(p, proj, 'p75');
   const spread = ceiling - adjusted(p, proj, 'p50');
   return [fx, `ceiling ${ceiling.toFixed(1)}`, tagFor(spread)].filter(Boolean).join(' · ');
