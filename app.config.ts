@@ -1,17 +1,23 @@
 import type { ExpoConfig } from 'expo/config';
 
 const config: ExpoConfig = {
-  name: 'FPL Gaffer',
-  slug: 'fpl-gaffer-react-native-app',
+  name: 'Fantasy Gaffer',
+  slug: 'fantasy-gaffer',
+  owner: 'fantasygaffers-org',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/logos/logo-mark.png',
   scheme: 'fplgafferreactnativeapp',
   userInterfaceStyle: 'automatic',
   ios: {
+    bundleIdentifier: 'com.fantasygaffer.app',
     icon: './assets/logos/logo-mark.png',
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+    },
   },
   android: {
+    package: 'com.fantasygaffer.app',
     adaptiveIcon: {
       backgroundColor: '#37003C',
       foregroundImage: './assets/logos/logo-mark-light.png',
@@ -48,6 +54,7 @@ const config: ExpoConfig = {
     reactCompiler: true,
   },
   extra: {
+    eas: { projectId: 'c0fe66cb-f0e7-4f6a-a0fb-2c927022a5af' },
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
   },

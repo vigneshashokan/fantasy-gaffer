@@ -713,7 +713,7 @@ describe('Settings components', () => {
 
   it('PlusCard renders promo copy', () => {
     const { getByText } = render(<PlusCard gradFrom="#37003C" gradTo="#5B0F63" />);
-    expect(getByText('FPL Gaffer')).toBeTruthy();
+    expect(getByText('Fantasy Gaffer')).toBeTruthy();
     expect(getByText('Go Premium')).toBeTruthy();
   });
 

@@ -90,9 +90,9 @@ describe('promptBiometric', () => {
 
   it('passes promptMessage and fallback label to authenticateAsync', async () => {
     mockAuthenticate.mockResolvedValueOnce({ success: true });
-    await promptBiometric('Unlock FPL Gaffer with Face ID');
+    await promptBiometric('Unlock Fantasy Gaffer with Face ID');
     expect(mockAuthenticate).toHaveBeenCalledWith({
-      promptMessage: 'Unlock FPL Gaffer with Face ID',
+      promptMessage: 'Unlock Fantasy Gaffer with Face ID',
       fallbackLabel: 'Use password',
       disableDeviceFallback: true,
     });

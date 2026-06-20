@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > The `@AGENTS.md` import above is load-bearing: **read https://docs.expo.dev/versions/v56.0.0/ before writing any Expo code.** APIs in this SDK band changed meaningfully (`expo-router` v6, `expo-glass-effect`, `expo-symbols`, `@expo/ui` beta) — don't write from memory.
 
-FPL Gaffer is an Expo / React Native (SDK 54, RN 0.81, React 19) app backed by Supabase, wrapping the public Fantasy Premier League API.
+Fantasy Gaffer is an Expo / React Native (SDK 54, RN 0.81, React 19) app backed by Supabase, wrapping the public Fantasy Premier League API.
 
 ## Commands
 
@@ -114,6 +114,30 @@ The advisory "what should I do" layer on top of the model — the founder's own 
 - **Per-GW capture (PR #104, `supabase/functions/fpl-ingest/sources/history.ts`):** `?source=history` route + a **daily 03:30 UTC** `fpl-ingest-history` cron. **Self-healing:** each run captures any `finished && data_checked` GW of the current season missing from `player_gw_history`, from **`event/{gw}/live/`** (one call), joined against the `fixtures` table (opponent/home) + bootstrap (position/team/`now_cost`); idempotent upsert. Approximations: **DGW → one aggregate row** (live gives GW-aggregate stats, no per-fixture xG); **`value` = current `now_cost`** (live has no per-GW price). `currentSeasonLabel()` is in `lib/calendar.ts`. `ingestion_runs.source` CHECK was widened to allow `'history'`.
 
 - **Test gotchas (decision layer):** suites rendering a screen that calls `useApexTeam` mock `@/api/squad` **wholesale** (so they're unaffected by added composition deps). `src/__tests__/api/squad.test.tsx` loads the *real* `squad.ts`, so it must `jest.mock` the chain: `@/api/projections`, `@/api/manager` (use `...jest.requireActual` to keep `chipsFromHistory`/`gwPointsFromHistory`), and `useAllFixtures` (return `{ data: undefined }`, not a bare `jest.fn()` — `useApexTeam` reads `.data`). `ChipAdvice` keys MUST equal the `CHIP_CATALOG` display names (`'Wildcard'|'Free Hit'|'Bench Boost'|'Triple Captain'`) or `attachChipTips` silently won't attach.
+
+## Brand & identity (Fantasy Gaffer) — read before touching names, config, deep links, or accounts
+
+Rebranded **FPL Gaffer → "Fantasy Gaffer"** on 2026-06-19. Key invariants:
+
+- **Multi-league = ONE app, league as a *dimension*** (not separate apps/repos). The product will extend beyond FPL to other football fantasy games; the shared core (auth, UI, model *pipeline*, decision-layer *patterns*) is reused, only per-league data/model/rules differ — and that cost is identical whether you ship one app or N. Build **cheap seams, not a framework, and not yet**: add a `competition` notion to `players`/`fixtures`/`projections` when next touching the schema; ship FPL-only first; defer the league switcher + 2nd model to post-PMF.
+- **"FPL" ≠ the brand — it's the data source/game. Rename ONLY brand-name occurrences** ("FPL Gaffer" → "Fantasy Gaffer"). **KEEP** every FPL-as-API reference: `src/api/fpl-client.ts`, the `fpl-ingest`/`fpl-project` edge functions (deployed *by name* — renaming 404s prod), `fplGet`, FPL endpoints, copy like "your FPL season". A blind `fpl`→`fantasy` replace breaks the app.
+- **Identifiers (set — don't churn):** bundle id / Android package **`com.fantasygaffer.app`**; Expo `slug` + `package.json` name + Supabase `project_id` = **`fantasy-gaffer`**; **GitHub repo = `fantasy-gaffer`** (old URL redirects). **The local folder stays `fpl-gaffer-react-native-app`** — it's the configured working dir; renaming it breaks tooling.
+- **The deep-link scheme is still `fplgafferreactnativeapp` — do NOT rename it casually.** It's registered in the **Supabase Auth redirect allowlist + Google OAuth console**; changing it breaks sign-in until both dashboards are updated (coordinated change, not code-only).
+- **Product identity = `admin@fantasy-gaffer.com`** (own-domain role address); brand domains `fantasy-gaffer.com` (primary) + `.app` registered. **Anchor sticky accounts there** — Apple Developer / App Store Connect, Play Console, RevenueCat (#40) — migrating those later is painful. EAS project: **`@fantasygaffers-org/fantasy-gaffer`** (org-owned; `owner` + `extra.eas.projectId` live in `app.config.ts`).
+- **Pending rebrand bits:** logo/splash art in `assets/logos/*` may still read "FPL Gaffer" (needs design); the scheme rename (above). Historical `docs/superpowers/**` left as-is (archival; issue URLs redirect).
+
+## Native builds & EAS (the app now has a real dev-client build path)
+
+- Was **Expo Go only**; as of Phase 4 seq-0 it builds a **dev client** via EAS. `eas.json` profiles: `development` / `development-simulator` (no Apple account) / `preview` / `production`. **Remote push, background-fetch, and other native modules need a dev build on SDK 54 — they don't run in Expo Go** (this is why a dev build gates the rest of Phase 4).
+- **Dynamic-config gotcha:** because config is `app.config.ts`, `eas init` **can't auto-write** `extra.eas.projectId` — it's added manually.
+- **Gotcha — the first native build exposes latent native incompatibilities Expo Go masks** (Expo Go ships its own prebuilt modules and never compiles app deps from source). Case in point: `@expo/ui` pinned `~0.2.0-beta.9` **resolved UP to a `0.2.0-canary` build** (under prerelease semver `canary` > `beta`) whose Swift referenced `ExpoSwiftUI` symbols absent from SDK 54's `expo-modules-core@3.0.30` → Xcode compile failed. It was unused, so it was removed. **Lesson: pin native beta/canary packages to an EXACT version; `expo install --check` does NOT catch a canary mismatch.**
+- `ios.infoPlist.ITSAppUsesNonExemptEncryption: false` is set (export-compliance; clears the TestFlight prompt + EAS warning).
+
+## Phase 4 (in progress) — monetization instrumentation + retention
+
+- **Order:** seq-0 EAS dev build (**DONE**) → **#42 PostHog analytics + flag scaffold** (keystone — live before launch) → #36 push → #38 overnight price refresh (+ #80 staleTime tuning) → #39 offline read-cache → **post-launch fast-follow: #37 live scoring** (flag-gated).
+- **Strategy:** instrument the now-free decision layer → find the "aha" feature → place the paywall from data. **PostHog** chosen (its flags + A/B absorb most of #43). The **paywall (#40 RevenueCat) is post-launch**, placed from #42 data — Phase 4 ships instrumentation + flag rails + retention, not the wall.
+- **Issue recalibrations applied (2026-06-19):** #42 event taxonomy rewritten to **advisory-engagement** events (write-back events like `transfer_made` are Phase 6, not now); **#39 split** — the offline *mutation queue* → Phase 6 (#24/#25), only the read-cache stays in Phase 4; **#37 → post-launch** fast-follow, flag-gated (heaviest + seasonal). A minimal EAS dev-build slice was pulled forward from #44 as seq-0.
 
 ## Docs worth reading before non-trivial work
 

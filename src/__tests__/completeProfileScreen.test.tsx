@@ -37,6 +37,6 @@ import CompleteProfile from '@/app/(onboarding)/complete-profile';
 describe('CompleteProfile screen — DOB helper text', () => {
   it('shows a COPPA-friendly explanation below the date-of-birth field', () => {
     const { getByText } = render(<CompleteProfile />);
-    getByText("We need this to confirm you're 13 or older to use FPL Gaffer.");
+    getByText("We need this to confirm you're 13 or older to use Fantasy Gaffer.");
   });
 });

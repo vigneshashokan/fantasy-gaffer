@@ -4,11 +4,11 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { ApexTokens } from '@/constants/apexTokens';
 
 const SOCIALS = [
-  { key: 'instagram', label: 'Instagram', handle: '@fplgaffer' },
-  { key: 'threads',   label: 'Threads',   handle: '@fplgaffer' },
-  { key: 'x',         label: 'X',         handle: '@fplgaffer' },
-  { key: 'tiktok',    label: 'TikTok',    handle: '@fplgaffer' },
-  { key: 'bluesky',   label: 'Bluesky',   handle: '@fplgaffer' },
+  { key: 'instagram', label: 'Instagram', handle: '@fantasygaffer' },
+  { key: 'threads',   label: 'Threads',   handle: '@fantasygaffer' },
+  { key: 'x',         label: 'X',         handle: '@fantasygaffer' },
+  { key: 'tiktok',    label: 'TikTok',    handle: '@fantasygaffer' },
+  { key: 'bluesky',   label: 'Bluesky',   handle: '@fantasygaffer' },
 ] as const;
 
 interface FollowUsRowProps {

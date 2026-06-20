@@ -108,7 +108,7 @@ describe('Settings screen — More actions', () => {
 
   it('invokes shareApp when the Share row is pressed', () => {
     const { getByText } = render(<Settings />);
-    fireEvent.press(getByText('Share FPL Gaffer'));
+    fireEvent.press(getByText('Share Fantasy Gaffer'));
     expect(shareApp).toHaveBeenCalled();
   });
 

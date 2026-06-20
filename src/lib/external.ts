@@ -13,13 +13,13 @@ import { APP_STORE_URL, TERMS_URL, FEEDBACK_EMAIL } from '@/constants/links';
 export async function shareApp(): Promise<void> {
   // User-cancel resolves normally (action === 'dismissedAction'); not an error.
   await Share.share({
-    message: `Check out FPL Gaffer — your FPL season, leveled up. ${APP_STORE_URL}`,
+    message: `Check out Fantasy Gaffer — your FPL season, leveled up. ${APP_STORE_URL}`,
     url: APP_STORE_URL, // iOS uses url; Android folds it into message.
   });
 }
 
 export async function sendFeedback(): Promise<{ ok: boolean }> {
-  const url = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('FPL Gaffer feedback')}`;
+  const url = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Fantasy Gaffer feedback')}`;
   const can = await Linking.canOpenURL(url);
   if (!can) return { ok: false }; // caller shows a fallback Alert
   await Linking.openURL(url);

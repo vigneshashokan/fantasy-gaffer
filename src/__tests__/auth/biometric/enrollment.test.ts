@@ -163,7 +163,7 @@ describe('attemptUnlock', () => {
     expect(mockPromptBiometric).not.toHaveBeenCalled();
   });
 
-  it('passes "Unlock FPL Gaffer with Face ID" as the prompt reason', async () => {
+  it('passes "Unlock Fantasy Gaffer with Face ID" as the prompt reason', async () => {
     mockLoadSession.mockResolvedValueOnce({
       access_token: 'a',
       refresh_token: 'r',
@@ -171,7 +171,7 @@ describe('attemptUnlock', () => {
     });
     mockPromptBiometric.mockResolvedValueOnce({ ok: false, error: 'cancel' });
     await attemptUnlock();
-    expect(mockPromptBiometric).toHaveBeenCalledWith('Unlock FPL Gaffer with Face ID');
+    expect(mockPromptBiometric).toHaveBeenCalledWith('Unlock Fantasy Gaffer with Face ID');
   });
 
   it('returns cancel without disabling when user cancels prompt', async () => {

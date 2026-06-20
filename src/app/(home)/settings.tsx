@@ -52,7 +52,7 @@ export default function SettingsModal() {
         <SectionCard title="More" tk={tk}>
           <SettingsRow
             icon={<ShareIcon color={tk.faint} />}
-            label="Share FPL Gaffer"
+            label="Share Fantasy Gaffer"
             onPress={() => {
               shareApp().catch(() => {});
             }}
@@ -83,7 +83,7 @@ export default function SettingsModal() {
         </SectionCard>
 
         <Text style={[styles.version, { color: tk.faint }]}>
-          FPL Gaffer · v1.0.0
+          Fantasy Gaffer · v1.0.0
         </Text>
 
         {__DEV__ && (

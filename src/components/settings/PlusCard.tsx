@@ -19,7 +19,7 @@ export function PlusCard({ gradFrom, gradTo }: PlusCardProps) {
       />
       <View style={styles.inner}>
         <View style={styles.titleRow}>
-          <Text style={styles.brand}>FPL Gaffer</Text>
+          <Text style={styles.brand}>Fantasy Gaffer</Text>
           <Text style={styles.plus}>+</Text>
         </View>
         <Text style={styles.copy}>

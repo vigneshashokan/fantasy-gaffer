@@ -43,7 +43,7 @@ These steps are out-of-band and require a logged-in human. Same pattern as #10's
 
 1. **Google Cloud Console** — open https://console.cloud.google.com and create or pick a project.
 2. **APIs & Services → Credentials → Create Credentials → OAuth client ID.**
-3. **Application type: Web application.** Name it "FPL Gaffer Supabase" (or similar).
+3. **Application type: Web application.** Name it "Fantasy Gaffer Supabase" (or similar).
 4. **Authorised redirect URIs:** add `https://<YOUR_PROJECT_REF>.supabase.co/auth/v1/callback`. The project ref comes from your Supabase project's Settings → General.
 5. Save → copy the **Client ID** and **Client Secret**.
 6. **(First time only)** Configure the OAuth consent screen:

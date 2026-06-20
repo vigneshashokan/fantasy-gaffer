@@ -56,7 +56,7 @@ export async function attemptUnlock(): Promise<Result> {
   const stored = await loadSession();
   if (!stored) return { ok: false, error: 'no_session' };
 
-  const prompt = await promptBiometric('Unlock FPL Gaffer with Face ID');
+  const prompt = await promptBiometric('Unlock Fantasy Gaffer with Face ID');
   if (!prompt.ok) {
     if (prompt.error === 'lockout') return { ok: false, error: 'lockout' };
     return { ok: false, error: 'cancel' };

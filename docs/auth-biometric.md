@@ -58,7 +58,7 @@ SignIn useEffect fires attemptUnlock() automatically
   ↓
 storage.loadSession() → { access_token, refresh_token }
   ↓ (no stored session → return no_session, skip prompt)
-capability.promptBiometric("Unlock FPL Gaffer with Face ID")
+capability.promptBiometric("Unlock Fantasy Gaffer with Face ID")
   ↓ confirm
 supabase.auth.setSession({ access_token, refresh_token })
   ↓ Supabase validates, rotates if needed
@@ -145,7 +145,7 @@ No external service required — this is fully on-device. But:
 **Checkbox is never visible**
 - `capability.isSupported()` returned false. Likely the simulator/device
   doesn't have biometric enrolled (Settings → Face ID). On a real device,
-  ensure the app has permission (Settings → FPL Gaffer → Face ID).
+  ensure the app has permission (Settings → Fantasy Gaffer → Face ID).
 
 ## Future work
 

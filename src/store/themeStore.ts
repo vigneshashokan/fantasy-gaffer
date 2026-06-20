@@ -23,7 +23,7 @@ export const useThemeStore = create<ThemeState>()(
       setPitchStyle: (style) => set({ pitchStyle: style }),
     }),
     {
-      name: 'fpl-gaffer/theme',
+      name: 'fantasy-gaffer/theme',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({
         paletteKey: s.paletteKey,
