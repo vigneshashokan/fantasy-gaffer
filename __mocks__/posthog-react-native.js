@@ -25,7 +25,8 @@ class PostHog {
 
 const PostHogProvider = ({ children }) => React.createElement(React.Fragment, null, children);
 const useFeatureFlag = () => undefined;
-const usePostHog = () => new PostHog();
+const _instance = new PostHog();
+const usePostHog = () => _instance;
 
 module.exports = {
   __esModule: true,
