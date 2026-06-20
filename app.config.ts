@@ -57,6 +57,8 @@ const config: ExpoConfig = {
     eas: { projectId: 'c0fe66cb-f0e7-4f6a-a0fb-2c927022a5af' },
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+    posthogKey: process.env.EXPO_PUBLIC_POSTHOG_KEY,
+    posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com',
   },
 };
 
