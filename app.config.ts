@@ -3,6 +3,7 @@ import type { ExpoConfig } from 'expo/config';
 const config: ExpoConfig = {
   name: 'Fantasy Gaffer',
   slug: 'fantasy-gaffer',
+  owner: 'fantasygaffers-org',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/logos/logo-mark.png',
@@ -50,6 +51,7 @@ const config: ExpoConfig = {
     reactCompiler: true,
   },
   extra: {
+    eas: { projectId: 'c0fe66cb-f0e7-4f6a-a0fb-2c927022a5af' },
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
   },
