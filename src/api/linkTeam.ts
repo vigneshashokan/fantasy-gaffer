@@ -16,6 +16,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
 import { queryKeys } from './queryKeys';
+import { track } from '@/lib/analytics';
 
 interface PostgrestErrorShape {
   message: string;
@@ -39,6 +40,7 @@ export function useLinkTeam() {
       if (error) throw error as PostgrestErrorShape;
     },
     onSuccess: () => {
+      track('squad_imported', { via: 'team_id' });
       if (!userId) return;
       qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
     },

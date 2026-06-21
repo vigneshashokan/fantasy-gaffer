@@ -16,6 +16,7 @@ import { PillBtn } from '@/components/ui/PillBtn';
 import { Field } from '@/components/forms/Field';
 import { signUpSchema } from '@/lib/auth/validation';
 import { signUpWithEmail } from '@/lib/auth/email';
+import { track } from '@/lib/analytics';
 
 type FieldErrors = Partial<Record<
   'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword' | 'form',
@@ -73,6 +74,9 @@ export default function SignUp() {
       const { firstName: fn, lastName: ln, email: em, password: pw } = parsed.data;
       const r = await signUpWithEmail({ firstName: fn, lastName: ln, email: em, password: pw });
       const normalisedEmail = parsed.data.email;
+      if (r.ok) {
+        track('sign_up', { provider: 'email' });
+      }
       if (r.ok || (!r.ok && r.error === 'user_already_exists')) {
         router.replace(
           `/(onboarding)/verify-pending?email=${encodeURIComponent(normalisedEmail)}`,
