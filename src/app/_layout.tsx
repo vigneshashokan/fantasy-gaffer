@@ -23,6 +23,7 @@ import { useEmailAuthDeepLinks } from '@/lib/auth/deepLink';
 import { AuthErrorBoundary } from '@/lib/auth/authErrorBoundary';
 import { AuthCacheClear } from '@/lib/auth/authCacheClear';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AnalyticsProvider, useScreenTracking } from '@/lib/analytics/provider';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -42,6 +43,7 @@ export default function RootLayout() {
   const [themeHydrated, setThemeHydrated] = useState(useThemeStore.persist.hasHydrated());
   const authHydrated = useAuthStore((s) => s.hydrated);
   useEmailAuthDeepLinks();
+  useScreenTracking();
 
   const queryClient = useMemo(
     () =>
@@ -70,12 +72,14 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthErrorBoundary />
-      <AuthCacheClear />
-      <SafeAreaProvider>
-        <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }} />
-      </SafeAreaProvider>
+      <AnalyticsProvider>
+        <AuthErrorBoundary />
+        <AuthCacheClear />
+        <SafeAreaProvider>
+          <StatusBar style="light" />
+          <Stack screenOptions={{ headerShown: false }} />
+        </SafeAreaProvider>
+      </AnalyticsProvider>
     </QueryClientProvider>
   );
 }
