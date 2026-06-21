@@ -63,4 +63,29 @@ describe('handleAuthChange', () => {
     expect(mockTrack).toHaveBeenCalledWith('sign_in', { provider: 'email' });
     expect(mockIdentify).toHaveBeenCalledTimes(2);
   });
+
+  it('fires sign_in when a different user logs in after sign-out', () => {
+    // Reset module dedup state and mocks.
+    handleAuthChange('SIGNED_OUT', null);
+    jest.clearAllMocks();
+
+    // User A signs in.
+    handleAuthChange('SIGNED_IN', {
+      user: { id: 'user-A', app_metadata: { provider: 'email' } },
+    } as never);
+    expect(mockTrack).toHaveBeenCalledWith('sign_in', { provider: 'email' });
+
+    // User A signs out.
+    handleAuthChange('SIGNED_OUT', null);
+
+    // User B signs in (different user).
+    handleAuthChange('SIGNED_IN', {
+      user: { id: 'user-B', app_metadata: { provider: 'google' } },
+    } as never);
+    expect(mockTrack).toHaveBeenCalledWith('sign_in', { provider: 'google' });
+
+    // Verify sign_in was tracked exactly twice (once for A, once for B).
+    const signInCalls = mockTrack.mock.calls.filter(call => call[0] === 'sign_in');
+    expect(signInCalls).toHaveLength(2);
+  });
 });
