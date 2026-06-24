@@ -29,4 +29,13 @@ describe('runPrimingEnable', () => {
     expect(mockUpsert).not.toHaveBeenCalled();
     expect(mockTrack).toHaveBeenCalledWith('push_permission_denied', {});
   });
+
+  it('on grant with no token: tracks granted, no upsert, no setToken', async () => {
+    mockRegister.mockResolvedValue({ status: 'granted', token: null });
+    const result = await runPrimingEnable('u-1');
+    expect(result).toBe('granted');
+    expect(mockTrack).toHaveBeenCalledWith('push_permission_granted', {});
+    expect(mockUpsert).not.toHaveBeenCalled();
+    expect(mockSetToken).not.toHaveBeenCalled();
+  });
 });

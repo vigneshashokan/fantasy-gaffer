@@ -7,9 +7,11 @@ import { track } from '@/lib/analytics';
 // Pure logic (no React) so it is unit-testable; called from PushOrchestrator.
 export async function runPrimingEnable(userId: string | undefined): Promise<'granted' | 'denied'> {
   const { status, token } = await registerForPushNotifications();
-  if (status === 'granted' && token && userId) {
-    usePushStore.getState().setToken(token);
-    await upsertPushToken(userId, token).catch(() => {});
+  if (status === 'granted') {
+    if (token && userId) {
+      usePushStore.getState().setToken(token);
+      await upsertPushToken(userId, token).catch(() => {});
+    }
     track('push_permission_granted', {});
     return 'granted';
   }
