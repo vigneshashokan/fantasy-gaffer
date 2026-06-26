@@ -119,13 +119,18 @@ export default function SettingsModal() {
             </Text>
             <Pressable
               onPress={async () => {
-                await sendTestNotification({
+                const r = await sendTestNotification({
                   title: 'Deadline approaching',
                   body: 'GW deadline in 1 hour — set your team.',
                   url: '/(home)/(tabs)/transfer',
                   type: 'deadline',
                 });
-                Alert.alert('Scheduled', 'Deadline test → Transfer tab in 4s');
+                Alert.alert(
+                  r.scheduled ? 'Scheduled' : 'Notifications not enabled',
+                  r.scheduled
+                    ? 'Deadline test → Transfer tab in 4s'
+                    : 'Allow when prompted, or enable for this app in iOS Settings → Notifications, then retry.',
+                );
               }}
               style={({ pressed }) => [
                 styles.devButton,
@@ -138,13 +143,18 @@ export default function SettingsModal() {
             </Pressable>
             <Pressable
               onPress={async () => {
-                await sendTestNotification({
+                const r = await sendTestNotification({
                   title: 'Team confirmed',
                   body: 'Your XI is locked in for the gameweek.',
                   url: '/(home)/(tabs)/team',
                   type: 'gw_confirm',
                 });
-                Alert.alert('Scheduled', 'GW-confirm test → Team tab in 4s');
+                Alert.alert(
+                  r.scheduled ? 'Scheduled' : 'Notifications not enabled',
+                  r.scheduled
+                    ? 'GW-confirm test → Team tab in 4s'
+                    : 'Allow when prompted, or enable for this app in iOS Settings → Notifications, then retry.',
+                );
               }}
               style={({ pressed }) => [
                 styles.devButton,
