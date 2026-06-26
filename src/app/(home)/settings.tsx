@@ -15,6 +15,7 @@ import { SettingsRow } from '@/components/settings/SettingsRow';
 import { FollowUsRow } from '@/components/settings/FollowUsRow';
 import { PrivacyCard } from '@/components/settings/PrivacyCard';
 import { supabase } from '@/lib/supabase';
+import { sendTestNotification } from '@/lib/notifications/sendTestNotification';
 import { shareApp, sendFeedback, openTerms } from '@/lib/external';
 import { FEEDBACK_EMAIL } from '@/constants/links';
 
@@ -109,6 +110,63 @@ export default function SettingsModal() {
             </Pressable>
           </SectionCard>
         )}
+
+        {__DEV__ && (
+          <SectionCard title="Notifications (dev)" tk={tk}>
+            <Text style={[styles.devHint, { color: tk.faint }]}>
+              Fires a local notification in 4s. Background the app to test a
+              background/cold-start tap, or tap the banner — either should deep-link.
+            </Text>
+            <Pressable
+              onPress={async () => {
+                const r = await sendTestNotification({
+                  title: 'Deadline approaching',
+                  body: 'GW deadline in 1 hour — set your team.',
+                  url: '/(home)/(tabs)/transfer',
+                  type: 'deadline',
+                });
+                Alert.alert(
+                  r.scheduled ? 'Scheduled' : 'Notifications not enabled',
+                  r.scheduled
+                    ? 'Deadline test → Transfer tab in 4s'
+                    : 'Allow when prompted, or enable for this app in iOS Settings → Notifications, then retry.',
+                );
+              }}
+              style={({ pressed }) => [
+                styles.devButton,
+                { backgroundColor: tk.headStrip, borderColor: tk.cardBorder, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Text style={[styles.devButtonText, { color: tk.text }]}>
+                Test deadline → Transfer tab
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={async () => {
+                const r = await sendTestNotification({
+                  title: 'Team confirmed',
+                  body: 'Your XI is locked in for the gameweek.',
+                  url: '/(home)/(tabs)/team',
+                  type: 'gw_confirm',
+                });
+                Alert.alert(
+                  r.scheduled ? 'Scheduled' : 'Notifications not enabled',
+                  r.scheduled
+                    ? 'GW-confirm test → Team tab in 4s'
+                    : 'Allow when prompted, or enable for this app in iOS Settings → Notifications, then retry.',
+                );
+              }}
+              style={({ pressed }) => [
+                styles.devButton,
+                { backgroundColor: tk.headStrip, borderColor: tk.cardBorder, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Text style={[styles.devButtonText, { color: tk.text }]}>
+                Test gw_confirm → Team tab
+              </Text>
+            </Pressable>
+          </SectionCard>
+        )}
       </ScrollView>
     </View>
   );
@@ -193,5 +251,13 @@ const styles = StyleSheet.create({
   devButtonText: {
     fontFamily: 'Archivo_700Bold',
     fontSize: 14,
+  },
+  devHint: {
+    fontFamily: 'Archivo_500Medium',
+    fontSize: 12,
+    lineHeight: 17,
+    marginHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 6,
   },
 });

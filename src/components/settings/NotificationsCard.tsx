@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Linking } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Toggle } from '@/components/ui/Toggle';
 import { ApexTokens } from '@/constants/apexTokens';
@@ -8,6 +8,8 @@ import {
   useUpdateNotificationPrefs,
   DEFAULT_PREFS,
 } from '@/api/notificationPrefs';
+import { usePushPermission } from '@/lib/notifications/usePushPermission';
+import { registerForPushNotifications } from '@/lib/notifications/register';
 
 const ITEMS = [
   { key: 'deadlines', label: 'Deadlines', sub: 'Gameweek deadline reminders' },
@@ -27,6 +29,16 @@ export function NotificationsCard({ tk }: NotificationsCardProps) {
   const { data, isPending } = useNotificationPrefs();
   const { mutate, isError } = useUpdateNotificationPrefs();
   const prefs = data ?? DEFAULT_PREFS;
+
+  const { status, canAskAgain, refresh } = usePushPermission();
+  const needsPermission = status !== 'granted';
+  const onPressPermission = () => {
+    if (canAskAgain) {
+      registerForPushNotifications().finally(refresh);
+    } else {
+      Linking.openSettings();
+    }
+  };
 
   const onCount = ITEMS.filter((it) => prefs[it.key]).length;
   const allOn = onCount === ITEMS.length;
@@ -69,6 +81,18 @@ export function NotificationsCard({ tk }: NotificationsCardProps) {
           <Text style={[styles.errSub, { color: tk.pink }]}>
             Couldn&apos;t save — try again
           </Text>
+        )}
+
+        {needsPermission && (
+          <Pressable
+            onPress={onPressPermission}
+            style={[styles.permRow, { borderTopColor: tk.line, backgroundColor: tk.headStrip }]}
+          >
+            <View style={styles.iconCell} />
+            <Text style={[styles.permText, { color: tk.green }]}>
+              {canAskAgain ? 'Turn on notifications' : 'Enable in Settings'}
+            </Text>
+          </Pressable>
         )}
 
         {open && (
@@ -214,5 +238,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Archivo_500Medium',
     fontSize: 11.5,
     marginTop: 1,
+  },
+  permRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 13,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+  },
+  permText: {
+    fontFamily: 'Archivo_700Bold',
+    fontSize: 13.5,
   },
 });

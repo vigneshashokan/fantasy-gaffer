@@ -16,6 +16,9 @@ export interface EventMap {
   suggestion_expanded: { type: DecisionType; rank: number };
   pick_row_opened: { player_id: string };
   transfer_target_opened: { player_id: string };
+  notification_opened: { type: string };
+  push_permission_granted: Record<string, never>;
+  push_permission_denied: Record<string, never>;
 
   // --- Deferred: NOT wired in this slice ---
   // Needs the paywall surface (#40, Phase 5):

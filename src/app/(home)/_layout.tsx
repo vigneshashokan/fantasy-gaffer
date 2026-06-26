@@ -2,6 +2,7 @@ import React from 'react';
 import { Stack, Redirect } from 'expo-router';
 import { useAuthStore } from '@/store/authStore';
 import { useProfileGate } from '@/lib/useProfileGate';
+import { PushOrchestrator } from '@/components/notifications/PushOrchestrator';
 
 export default function HomeStackLayout() {
   const session = useAuthStore((s) => s.session);
@@ -15,12 +16,15 @@ export default function HomeStackLayout() {
   if (status === 'missing') return <Redirect href="/(onboarding)/complete-profile" />;
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="player/[id]" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="transfer-targets/[id]" />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="player/[id]" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="transfer-targets/[id]" />
+      </Stack>
+      <PushOrchestrator />
+    </>
   );
 }

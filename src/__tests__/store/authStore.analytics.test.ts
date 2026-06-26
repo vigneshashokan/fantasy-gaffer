@@ -9,6 +9,10 @@ jest.mock('@/lib/analytics', () => ({
   track: (...a: unknown[]) => mockTrack(...a),
 }));
 
+// authStore now imports pushTokens + pushStore; stub both so the module-init import is safe.
+jest.mock('@/api/pushTokens', () => ({ __esModule: true, deletePushToken: jest.fn() }));
+jest.mock('@/store/pushStore', () => ({ __esModule: true, usePushStore: { getState: () => ({ token: null }) } }));
+
 // authStore subscribes to supabase at module init; stub the client so import is safe.
 jest.mock('@/lib/supabase', () => ({
   __esModule: true,

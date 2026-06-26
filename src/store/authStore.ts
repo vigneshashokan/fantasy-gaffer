@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { identify, reset, track } from '@/lib/analytics';
+import { deletePushToken } from '@/api/pushTokens';
+import { usePushStore } from '@/store/pushStore';
 
 interface AuthState {
   session: Session | null;
@@ -70,6 +72,16 @@ export const useAuthStore = create<AuthState>((set) => {
     session: null,
     hydrated: false,
     signOut: async () => {
+      // Delete this device's push token while still authenticated (RLS), so a
+      // signed-out user stops receiving pushes on this device. Best-effort.
+      const token = usePushStore.getState().token;
+      if (token) {
+        try {
+          await deletePushToken(token);
+        } catch {
+          /* swallow — proceed to sign out regardless */
+        }
+      }
       await supabase.auth.signOut();
     },
   };

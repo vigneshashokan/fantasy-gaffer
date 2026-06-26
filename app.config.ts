@@ -40,6 +40,12 @@ const config: ExpoConfig = {
       },
     ],
     'expo-font',
+    [
+      'expo-notifications',
+      {
+        color: '#37003C',
+      },
+    ],
     'expo-web-browser',
     '@react-native-community/datetimepicker',
     [
