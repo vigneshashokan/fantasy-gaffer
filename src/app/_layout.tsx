@@ -25,6 +25,7 @@ import { AuthCacheClear } from '@/lib/auth/authCacheClear';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AnalyticsProvider, useScreenTracking } from '@/lib/analytics/provider';
 import '@/lib/notifications/handler';
+import '@/lib/reactQueryFocus';
 import { useNotificationDeepLinks } from '@/lib/notifications/useNotificationDeepLinks';
 
 SplashScreen.preventAutoHideAsync();
@@ -54,7 +55,7 @@ export default function RootLayout() {
         defaultOptions: {
           queries: {
             retry: 2,
-            refetchOnWindowFocus: false,
+            refetchOnWindowFocus: true,
             refetchOnReconnect: true,
           },
         },
