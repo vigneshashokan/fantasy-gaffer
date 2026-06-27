@@ -65,7 +65,7 @@ export function chipsFromHistory(history: FplHistory): Chip[] {
   });
 }
 
-const FPL_STALE = 15 * 60 * 1000;
+const FPL_STALE = 5 * 60 * 1000;
 const FPL_GC    = 30 * 60 * 1000;
 
 export function useManager() {
