@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { identify, reset, track } from '@/lib/analytics';
+import { setSentryUser } from '@/lib/monitoring/sentry';
 import { deletePushToken } from '@/api/pushTokens';
 import { usePushStore } from '@/store/pushStore';
 
@@ -21,6 +22,7 @@ let lastSignInUserId: string | null = null;
 export function handleAuthChange(event: AuthChangeEvent, session: Session | null): void {
   if (event === 'SIGNED_IN' && session) {
     identify(session.user.id);
+    setSentryUser(session.user.id);
     if (session.user.id !== lastSignInUserId) {
       const provider = (session.user.app_metadata?.provider as string | undefined) ?? 'unknown';
       track('sign_in', { provider });
@@ -29,6 +31,7 @@ export function handleAuthChange(event: AuthChangeEvent, session: Session | null
   }
   if (event === 'SIGNED_OUT') {
     reset();
+    setSentryUser(null);
     lastSignInUserId = null;
   }
 }
