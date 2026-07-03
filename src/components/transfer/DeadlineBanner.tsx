@@ -11,7 +11,7 @@ interface DeadlineBannerProps {
 
 export function DeadlineBanner({ nextGw, deadline, tk }: DeadlineBannerProps) {
   return (
-    <View style={[styles.container, { backgroundColor: tk.deadlineBg }]}>
+    <View accessibilityLiveRegion="polite" style={[styles.container, { backgroundColor: tk.deadlineBg }]}>
       <Svg width={17} height={17} viewBox="0 0 24 24" fill="none">
         <Circle cx={12} cy={12} r={9} stroke={tk.deadlineFg} strokeWidth={2.2} />
         <Path

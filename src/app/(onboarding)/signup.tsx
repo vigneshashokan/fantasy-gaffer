@@ -17,6 +17,7 @@ import { Field } from '@/components/forms/Field';
 import { signUpSchema } from '@/lib/auth/validation';
 import { signUpWithEmail } from '@/lib/auth/email';
 import { track } from '@/lib/analytics';
+import { useA11yAnnounce } from '@/lib/a11y';
 
 type FieldErrors = Partial<Record<
   'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword' | 'form',
@@ -34,6 +35,7 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
+  useA11yAnnounce(errors.form || null);
 
   const clearForm = () => {
     setFirstName('');
@@ -194,7 +196,12 @@ export default function SignUp() {
         </View>
 
         {errors.form && (
-          <Text style={[styles.formError, { color: '#FF3B5C' }]}>{errors.form}</Text>
+          <Text
+            accessibilityLiveRegion="assertive"
+            style={[styles.formError, { color: '#FF3B5C' }]}
+          >
+            {errors.form}
+          </Text>
         )}
 
         <PillBtn

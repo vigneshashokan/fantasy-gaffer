@@ -7,6 +7,7 @@ import { useNetInfo } from '@react-native-community/netinfo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeStore } from '@/store/themeStore';
 import { apexTokens } from '@/constants/apexTokens';
+import { useA11yAnnounce } from '@/lib/a11y';
 
 export function OfflineBanner() {
   const { isConnected } = useNetInfo();
@@ -16,16 +17,18 @@ export function OfflineBanner() {
 
   // Only show when explicitly offline. `null` (unknown) is treated as online so
   // the banner never flashes on a cold start before NetInfo resolves.
-  if (isConnected !== false) return null;
+  const offline = isConnected === false;
+  const message = "You're offline — showing your last saved data";
+  useA11yAnnounce(offline ? message : null);
+  if (!offline) return null;
 
   return (
     <View
       testID="offline-banner"
+      accessibilityLiveRegion="polite"
       style={[styles.bar, { paddingTop: insets.top + 8, backgroundColor: tk.yellowSoft }]}
     >
-      <Text style={[styles.text, { color: tk.text }]}>
-        You&apos;re offline — showing your last saved data
-      </Text>
+      <Text style={[styles.text, { color: tk.text }]}>{message}</Text>
     </View>
   );
 }

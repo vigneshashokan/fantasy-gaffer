@@ -32,7 +32,9 @@ describe('OfflineBanner', () => {
     (useNetInfo as jest.Mock).mockReturnValue({ isConnected: false });
     const r = renderBanner();
     expect(r.getByText("You're offline — showing your last saved data")).toBeTruthy();
-    expect(r.getByTestId('offline-banner')).toBeTruthy();
+    const banner = r.getByTestId('offline-banner');
+    expect(banner).toBeTruthy();
+    expect(banner.props.accessibilityLiveRegion).toBe('polite');
   });
 
   it('renders nothing when connected', () => {

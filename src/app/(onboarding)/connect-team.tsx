@@ -28,6 +28,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useA11yAnnounce } from '@/lib/a11y';
 
 type Stage =
   | { kind: 'idle' }
@@ -65,6 +66,8 @@ export default function ConnectTeam() {
       }
     }
   }, [stage.kind, preview.isSuccess, preview.data]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useA11yAnnounce(stage.kind === 'link_error' ? stage.message : null);
 
   const validInput = /^\d{1,10}$/.test(teamIdStr);
 
@@ -204,7 +207,12 @@ export default function ConnectTeam() {
             <ConfirmPitch preview={stage.preview} />
 
             {stage.kind === 'link_error' && (
-              <Text style={styles.linkError}>{stage.message}</Text>
+              <Text
+                accessibilityLiveRegion="assertive"
+                style={styles.linkError}
+              >
+                {stage.message}
+              </Text>
             )}
 
             <View style={styles.actions}>

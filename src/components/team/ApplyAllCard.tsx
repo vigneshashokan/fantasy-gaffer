@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { ApexTokens } from '@/constants/apexTokens';
+import { useA11yAnnounce } from '@/lib/a11y';
 
 interface ApplyAllCardProps {
   count: number;
@@ -12,6 +13,7 @@ interface ApplyAllCardProps {
 
 export function ApplyAllCard({ count, onUndo, onConfirm, tk }: ApplyAllCardProps) {
   const [confirmed, setConfirmed] = useState(false);
+  useA11yAnnounce(confirmed ? 'Changes confirmed. Your team has been updated' : null);
 
   const handleConfirm = () => {
     setConfirmed(true);
@@ -23,6 +25,7 @@ export function ApplyAllCard({ count, onUndo, onConfirm, tk }: ApplyAllCardProps
 
   return (
     <View
+      accessibilityLiveRegion="polite"
       style={[
         styles.card,
         { backgroundColor: tk.card, borderColor: tk.green },

@@ -11,7 +11,7 @@ interface ConfirmTransferBarProps {
 
 export function ConfirmTransferBar({ outName, inName, onConfirm, tk }: ConfirmTransferBarProps) {
   return (
-    <View style={[styles.bar, { backgroundColor: tk.card, borderColor: tk.cardBorder }]}>
+    <View accessibilityLiveRegion="polite" style={[styles.bar, { backgroundColor: tk.card, borderColor: tk.cardBorder }]}>
       <View style={styles.swapRow}>
         <Text style={[styles.out, { color: tk.pink }]} numberOfLines={1}>{outName}</Text>
         <Text style={[styles.arrow, { color: tk.faint }]}> → </Text>
