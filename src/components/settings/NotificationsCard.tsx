@@ -113,6 +113,7 @@ export function NotificationsCard({ tk }: NotificationsCardProps) {
                 onColor={tk.green}
                 offColor={tk.track}
                 size="sm"
+                accessibilityLabel="All notifications"
               />
             </View>
             {ITEMS.map((it) => (
@@ -135,6 +136,7 @@ export function NotificationsCard({ tk }: NotificationsCardProps) {
                   onColor={tk.green}
                   offColor={tk.track}
                   size="sm"
+                  accessibilityLabel={it.label}
                 />
               </View>
             ))}

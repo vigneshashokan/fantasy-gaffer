@@ -41,6 +41,7 @@ export function ToggleRow({
         onChange={onChange}
         onColor={tk.green}
         offColor={tk.track}
+        accessibilityLabel={label}
       />
     </View>
   );

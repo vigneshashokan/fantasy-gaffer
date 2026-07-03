@@ -30,7 +30,13 @@ export function ScreenHeader({
       />
       <View style={styles.titleRow}>
         {onBack ? (
-          <Pressable onPress={onBack} hitSlop={12} style={styles.backBtn}>
+          <Pressable
+            onPress={onBack}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            style={styles.backBtn}
+          >
             <Icon name="chevL" color="#fff" size={22} />
           </Pressable>
         ) : (

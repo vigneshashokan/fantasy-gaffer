@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { MAX_FONT_SCALE } from '@/lib/a11y';
 
 type Variant = 'solid' | 'accent' | 'ghost' | 'outline';
 
@@ -39,12 +40,15 @@ export function PillBtn({
     ...(variant === 'ghost'   && { color: textColor }),
     ...(variant === 'outline' && { color: textColor }),
   };
+  const a11yLabel = typeof children === 'string' ? children : undefined;
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={a11yLabel}
       style={({ pressed }) => [containerStyle, pressed && styles.pressed]}
     >
-      <Text style={textStyle}>{children}</Text>
+      <Text style={textStyle} maxFontSizeMultiplier={MAX_FONT_SCALE}>{children}</Text>
     </Pressable>
   );
 }

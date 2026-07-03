@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, KeyboardTypeOptions, Pressable } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
+import { MAX_FONT_SCALE } from '@/lib/a11y';
 
 type IconName = 'mail' | 'lock' | 'person';
 
@@ -50,6 +51,8 @@ export function Field({
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
+        accessibilityLabel={placeholder}
+        maxFontSizeMultiplier={MAX_FONT_SCALE}
         placeholderTextColor={textMuted}
         secureTextEntry={hidden}
         keyboardType={keyboardType}

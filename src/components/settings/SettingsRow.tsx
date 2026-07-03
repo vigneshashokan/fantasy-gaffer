@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { ApexTokens } from '@/constants/apexTokens';
+import { MAX_FONT_SCALE } from '@/lib/a11y';
 
 interface SettingsRowProps {
   icon: React.ReactNode;
@@ -27,6 +28,8 @@ export function SettingsRow({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
       style={[
         styles.row,
         showDivider && { borderTopColor: tk.line, borderTopWidth: 1 },
@@ -34,9 +37,9 @@ export function SettingsRow({
     >
       <View style={styles.iconCell}>{icon}</View>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[styles.label, { color: tk.text }]}>{label}</Text>
+        <Text style={[styles.label, { color: tk.text }]} maxFontSizeMultiplier={MAX_FONT_SCALE}>{label}</Text>
         {sub && (
-          <Text style={[styles.sub, { color: tk.faint }]}>{sub}</Text>
+          <Text style={[styles.sub, { color: tk.faint }]} maxFontSizeMultiplier={MAX_FONT_SCALE}>{sub}</Text>
         )}
       </View>
       {trailing

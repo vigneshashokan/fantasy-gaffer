@@ -7,6 +7,7 @@ interface ToggleProps {
   onColor: string;
   offColor: string;
   size?: 'sm' | 'md';
+  accessibilityLabel?: string;
 }
 
 export function Toggle({
@@ -15,6 +16,7 @@ export function Toggle({
   onColor,
   offColor,
   size = 'md',
+  accessibilityLabel,
 }: ToggleProps) {
   const dims = size === 'sm'
     ? { w: 44, h: 26, knob: 21, gap: 2.5 }
@@ -24,6 +26,9 @@ export function Toggle({
     <Pressable
       onPress={() => onChange(!value)}
       hitSlop={6}
+      accessibilityRole="switch"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ checked: value }}
       style={[
         styles.track,
         {
