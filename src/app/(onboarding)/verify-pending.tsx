@@ -92,11 +92,12 @@ export default function VerifyPending() {
           onPress={() => router.replace('/(onboarding)/signin')}
           hitSlop={8}
           style={styles.linkWrap}
+          accessibilityRole="button"
         >
           <Text style={[styles.link, { color: t.accent }]}>Already verified? Sign in</Text>
         </Pressable>
 
-        <Pressable onPress={() => router.back()} hitSlop={8} style={styles.linkWrap}>
+        <Pressable onPress={() => router.back()} hitSlop={8} style={styles.linkWrap} accessibilityRole="button">
           <Text style={[styles.link, { color: t.textMuted }]}>Wrong email? Go back</Text>
         </Pressable>
       </ScrollView>

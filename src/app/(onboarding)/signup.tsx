@@ -216,6 +216,7 @@ export default function SignUp() {
         <Text style={[styles.legalHint, { color: t.textMuted }]}>
           By creating an account, you agree to our{' '}
           <Text
+            accessibilityRole="link"
             style={[styles.legalLink, { color: t.accent }]}
             onPress={() => router.push('/legal/terms')}
           >
@@ -223,6 +224,7 @@ export default function SignUp() {
           </Text>{' '}
           and{' '}
           <Text
+            accessibilityRole="link"
             style={[styles.legalLink, { color: t.accent }]}
             onPress={() => router.push('/legal/privacy')}
           >
@@ -235,7 +237,7 @@ export default function SignUp() {
           <Text style={[styles.footerHint, { color: t.textMuted }]}>
             Already have an account?{' '}
           </Text>
-          <Pressable onPress={goToSignIn} hitSlop={8}>
+          <Pressable onPress={goToSignIn} hitSlop={8} accessibilityRole="button">
             <Text style={[styles.footerLink, { color: t.accent }]}>Sign in</Text>
           </Pressable>
         </View>

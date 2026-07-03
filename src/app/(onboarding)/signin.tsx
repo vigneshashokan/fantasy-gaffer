@@ -296,6 +296,7 @@ export default function SignIn() {
           <Pressable
             onPress={() => router.push('/(onboarding)/forgot-password')}
             hitSlop={8}
+            accessibilityRole="button"
           >
             <Text style={[styles.forgot, { color: t.accent }]}>Forgot password?</Text>
           </Pressable>
@@ -314,7 +315,7 @@ export default function SignIn() {
           <Text style={[styles.signUpHint, { color: t.textMuted }]}>
             Don't have an account?{' '}
           </Text>
-          <Pressable onPress={goToSignUp} hitSlop={8}>
+          <Pressable onPress={goToSignUp} hitSlop={8} accessibilityRole="button">
             <Text style={[styles.signUpLink, { color: t.accent }]}>Sign up</Text>
           </Pressable>
         </View>
