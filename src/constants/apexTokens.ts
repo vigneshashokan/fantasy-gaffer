@@ -69,12 +69,12 @@ export function apexTokens(dark: boolean, palette: PaletteKey | string = 'classi
   }
   return {
     bg: '#FAF8FF', card: '#FFFFFF', cardBorder: '#E7E9F2',
-    shadow: '0 10px 28px rgba(2,6,23,0.10)', text: '#1A2236', variant: '#4F434D', faint: '#8B8694',
+    shadow: '0 10px 28px rgba(2,6,23,0.10)', text: '#1A2236', variant: '#4F434D', faint: '#746F7E',
     line: '#ECEEF6', zebra: 'rgba(91,76,160,0.035)', headStrip: '#F6F4FD',
     formText: '#3A4256',
-    green: '#00984E', greenSoft: 'rgba(0,152,78,0.10)',
-    pink: '#FF2882', pinkSoft: 'rgba(255,40,130,0.10)',
-    yellow: '#B8860B', yellowSoft: 'rgba(184,134,11,0.12)',
+    green: '#008343', greenSoft: 'rgba(0,152,78,0.10)',
+    pink: '#E0005E', pinkSoft: 'rgba(255,40,130,0.10)',
+    yellow: '#926B09', yellowSoft: 'rgba(184,134,11,0.12)',
     purple: B.purpleL, activeFill: B.active, track: '#EAEDFF', rowSel: 'rgba(0,152,78,0.07)',
     benchDisc: '#F1EEFA',
     infoCard: B.infoL, captCard: B.infoL, moneyText: B.moneyL,

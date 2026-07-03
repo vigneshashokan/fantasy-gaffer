@@ -13,7 +13,7 @@ describe('apexTokens', () => {
     const tk = apexTokens(false, 'classic');
     expect(tk.bg).toBe('#FAF8FF');
     expect(tk.card).toBe('#FFFFFF');
-    expect(tk.green).toBe('#00984E');
+    expect(tk.green).toBe('#008343');
     expect(tk.chipFill).toBe('#37003C');
   });
 
