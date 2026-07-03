@@ -1,7 +1,6 @@
 import { AccessibilityInfo } from 'react-native';
-import { render } from '@testing-library/react-native';
+import { render, act } from '@testing-library/react-native';
 import { Text } from 'react-native';
-import { act } from 'react-test-renderer';
 import {
   MAX_FONT_SCALE,
   announce,
