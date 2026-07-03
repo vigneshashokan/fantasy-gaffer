@@ -21,6 +21,7 @@ import {
   type SeasonPhase,
 } from '@/api/fixtures';
 import { useSquad } from '@/api/squad';
+import { useReducedMotion } from '@/lib/a11y';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { TabHeader } from '@/components/ui/TabHeader';
 import { SeasonCompleteBanner } from '@/components/ui/SeasonCompleteBanner';
@@ -38,6 +39,7 @@ export default function TopPicksTab() {
   const { width } = useWindowDimensions();
   const scrollerRef = useRef<ScrollView>(null);
   const [active, setActive] = useState(0);
+  const reduced = useReducedMotion();
 
   const { data: currentGw }                         = useCurrentGameweek();
   const gw = currentGw?.gw;
@@ -57,7 +59,7 @@ export default function TopPicksTab() {
     // onScroll; jumping it to the target first makes the highlight flash the
     // target, snap back to the origin (onScroll's first frame), then sweep —
     // a flicker. Letting onScroll own `active` makes a tap animate like a swipe.
-    scrollerRef.current?.scrollTo({ x: i * width, animated: true });
+    scrollerRef.current?.scrollTo({ x: i * width, animated: !reduced });
   };
 
   // Track active segment while the finger is moving, not just at the end —

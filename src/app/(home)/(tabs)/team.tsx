@@ -7,6 +7,7 @@ import { apexTokens } from '@/constants/apexTokens';
 import type { PitchPlayer, Suggestion } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
 import { useSeasonState, currentSeasonLabel } from '@/api/fixtures';
+import { useReducedMotion } from '@/lib/a11y';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { TabHeader } from '@/components/ui/TabHeader';
@@ -26,6 +27,7 @@ export default function TeamTab() {
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
+  const reduced = useReducedMotion();
   const { width, height: winH } = useWindowDimensions();
   const [areaH, setAreaH] = useState(0);
   // The gameweek currently snapped into view; drives the fixed arrows' targets
@@ -42,10 +44,10 @@ export default function TeamTab() {
   useEffect(() => {
     Animated.timing(arrowOpacity, {
       toValue: arrowsVisible ? 1 : 0,
-      duration: 160,
+      duration: reduced ? 0 : 160,
       useNativeDriver: true,
     }).start();
-  }, [arrowsVisible, arrowOpacity]);
+  }, [arrowsVisible, arrowOpacity, reduced]);
 
   // Live team — drives the gating states and the page-list bounds.
   const { data: at, isPending, noTeam, isError } = useApexTeam();
@@ -105,7 +107,7 @@ export default function TeamTab() {
   const scrollToGw = (target: number) => {
     const index = target - MIN_GW;
     if (index < 0 || index >= gwList.length) return;
-    listRef.current?.scrollToIndex({ index, animated: true });
+    listRef.current?.scrollToIndex({ index, animated: !reduced });
   };
 
   const onSettle = (offsetX: number) => {
