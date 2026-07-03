@@ -25,7 +25,7 @@ export function FollowUsRow({ tk, showDivider }: FollowUsRowProps) {
         showDivider && { borderTopColor: tk.line, borderTopWidth: 1 },
       ]}
     >
-      <Pressable onPress={() => setOpen((o) => !o)} style={styles.head} accessibilityRole="button">
+      <Pressable onPress={() => setOpen((o) => !o)} style={styles.head} accessibilityRole="button" accessibilityState={{ expanded: open }}>
         <View style={styles.iconCell}>
           <FollowIcon color={tk.faint} />
         </View>

@@ -76,4 +76,14 @@ describe('VerifyPending screen', () => {
     fireEvent.press(getByText('Wrong email? Go back'));
     expect(mockBack).toHaveBeenCalled();
   });
+
+  it('resend-error Text has accessibilityLiveRegion="assertive"', async () => {
+    mockResend.mockResolvedValueOnce({ ok: false, error: 'rate_limited' });
+    const { getByText, findByText } = render(<VerifyPending />);
+    await act(async () => {
+      fireEvent.press(getByText('Resend email'));
+    });
+    const errText = await findByText('Already sent — check your inbox or wait a minute');
+    expect(errText.props.accessibilityLiveRegion).toBe('assertive');
+  });
 });

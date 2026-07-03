@@ -104,6 +104,7 @@ export default function SignIn() {
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
   useA11yAnnounce(submitError);
+  useA11yAnnounce(googleError || null);
 
   const clearForm = () => {
     setEmail('');
@@ -226,7 +227,7 @@ export default function SignIn() {
           </View>
         )}
         {googleError && (
-          <Text style={[styles.error, { color: '#FF3B5C' }]}>{googleError}</Text>
+          <Text accessibilityLiveRegion="assertive" style={[styles.error, { color: '#FF3B5C' }]}>{googleError}</Text>
         )}
 
         <View style={styles.divider}>

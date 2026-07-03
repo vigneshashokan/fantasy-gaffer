@@ -108,6 +108,7 @@ export function DeleteAccount({ tk }: DeleteAccountProps) {
                 { backgroundColor: matches && !submitting ? tk.pink : tk.faint },
               ]}
               accessibilityRole="button"
+              accessibilityState={{ disabled: !matches || submitting }}
             >
               <Text style={styles.deleteText}>
                 {submitting ? 'Deleting…' : 'Delete'}

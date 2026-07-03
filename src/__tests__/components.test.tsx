@@ -669,6 +669,21 @@ describe('Profile components', () => {
     expect(getByText('Change password')).toBeTruthy();
   });
 
+  it('ChangePassword accordion header has accessibilityState.expanded false when closed, true when open', () => {
+    const { getByRole } = render(<ChangePassword tk={tk} />);
+    const headerBtn = getByRole('button', { name: 'Change password' });
+    expect(headerBtn.props.accessibilityState?.expanded).toBe(false);
+    fireEvent.press(headerBtn);
+    expect(headerBtn.props.accessibilityState?.expanded).toBe(true);
+  });
+
+  it('ChangePassword submit button has accessibilityState.disabled=true when fields are empty', () => {
+    const { getByText, getByRole } = render(<ChangePassword tk={tk} />);
+    fireEvent.press(getByText('Change password')); // expand
+    const submitBtn = getByRole('button', { name: 'Update password' });
+    expect(submitBtn.props.accessibilityState?.disabled).toBe(true);
+  });
+
   it('ChangePassword toggles password visibility with the eye button', () => {
     const { getByText, getByPlaceholderText, getAllByLabelText } = render(<ChangePassword tk={tk} />);
     fireEvent.press(getByText('Change password')); // expand
@@ -705,6 +720,13 @@ describe('Profile components', () => {
     const { getByText } = render(<DeleteAccount tk={tk} />);
     expect(getByText('Delete account')).toBeTruthy();
   });
+
+  it('DeleteAccount delete button has accessibilityState.disabled=true when email does not match', () => {
+    const { getByText, getByRole } = render(<DeleteAccount tk={tk} />);
+    fireEvent.press(getByText('Delete account'));
+    const deleteBtn = getByRole('button', { name: 'Delete' });
+    expect(deleteBtn.props.accessibilityState?.disabled).toBe(true);
+  });
 });
 
 // ── Settings components ───────────────────────────────────────
@@ -740,6 +762,14 @@ describe('Settings components', () => {
   it('FollowUsRow renders head', () => {
     const { getByText } = render(<FollowUsRow tk={tk} />);
     expect(getByText('Follow Us')).toBeTruthy();
+  });
+
+  it('FollowUsRow header has accessibilityState.expanded false initially, true after press', () => {
+    const { getByRole } = render(<FollowUsRow tk={tk} />);
+    const headerBtn = getByRole('button', { name: 'Follow Us' });
+    expect(headerBtn.props.accessibilityState?.expanded).toBe(false);
+    fireEvent.press(headerBtn);
+    expect(headerBtn.props.accessibilityState?.expanded).toBe(true);
   });
 });
 

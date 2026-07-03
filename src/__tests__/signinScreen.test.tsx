@@ -347,3 +347,28 @@ describe('SignIn screen — biometric auto-unlock', () => {
     expect(queryByText(/Too many attempts/i)).toBeNull();
   });
 });
+
+describe('SignIn screen — Google error a11y', () => {
+  beforeEach(() => {
+    mockSignIn.mockReset();
+    mockPush.mockReset();
+    mockSearchParams = {};
+    mockBiometricEnable.mockReset();
+    mockBiometricSupported.mockReset().mockResolvedValue(false);
+    mockConsumeJustSignedOut.mockReset();
+    mockAttemptUnlock.mockReset().mockResolvedValue({ ok: true, value: undefined });
+    mockBiometricEnabled = false;
+    mockBiometricHydrated = true;
+    mockBiometricJustSignedOut = false;
+  });
+
+  it('Google error Text has accessibilityLiveRegion="assertive"', async () => {
+    mockSignInGoogle.mockResolvedValueOnce({ ok: false, error: 'server_error' });
+    const { getByText, findByText } = render(<SignIn />);
+    await act(async () => {
+      fireEvent.press(getByText('Continue with Google'));
+    });
+    const errText = await findByText('Google sign-in failed. Please try again.');
+    expect(errText.props.accessibilityLiveRegion).toBe('assertive');
+  });
+});
