@@ -116,7 +116,14 @@ function AppGate({
       <SafeAreaProvider>
         <StatusBar style="light" />
         <OfflineBanner />
-        <Stack screenOptions={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false }}>
+          {/* Legal screens are reached from the Settings modal ((home) stack)
+              and the signup screen. As root-level cards they render BEHIND the
+              Settings native modal on iOS; present them as modals so they
+              appear above it. Other routes auto-register with defaults. */}
+          <Stack.Screen name="legal/privacy" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="legal/terms" options={{ presentation: 'modal' }} />
+        </Stack>
       </SafeAreaProvider>
     </AnalyticsProvider>
   );
