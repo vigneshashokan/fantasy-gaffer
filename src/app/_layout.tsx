@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack, useNavigationContainerRef } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
@@ -31,10 +31,11 @@ import '@/lib/notifications/handler';
 import '@/lib/reactQueryFocus';
 import '@/lib/query/onlineManager';
 import { useNotificationDeepLinks } from '@/lib/notifications/useNotificationDeepLinks';
+import { wrap, navigationIntegration } from '@/lib/monitoring/sentry';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+function RootLayout() {
   const [fontsLoaded] = useFonts({
     Archivo_400Regular,
     Archivo_500Medium,
@@ -49,6 +50,10 @@ export default function RootLayout() {
 
   const [themeHydrated, setThemeHydrated] = useState(useThemeStore.persist.hasHydrated());
   const authHydrated = useAuthStore((s) => s.hydrated);
+  const navRef = useNavigationContainerRef();
+  useEffect(() => {
+    if (navRef) navigationIntegration.registerNavigationContainer(navRef);
+  }, [navRef]);
   useEmailAuthDeepLinks();
   useScreenTracking();
   useNotificationDeepLinks();
@@ -116,3 +121,5 @@ function AppGate({
     </AnalyticsProvider>
   );
 }
+
+export default wrap(RootLayout);

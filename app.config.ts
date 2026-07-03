@@ -54,6 +54,13 @@ const config: ExpoConfig = {
         faceIDPermission: 'Allow $(PRODUCT_NAME) to use Face ID to sign you in.',
       },
     ],
+    [
+      '@sentry/react-native/expo',
+      {
+        organization: process.env.SENTRY_ORG,
+        project: process.env.SENTRY_PROJECT,
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,
@@ -65,6 +72,7 @@ const config: ExpoConfig = {
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     posthogKey: process.env.EXPO_PUBLIC_POSTHOG_KEY,
     posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com',
+    sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
   },
 };
 
