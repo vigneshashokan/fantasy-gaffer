@@ -7,8 +7,7 @@
 
 import { Share } from 'react-native';
 import * as Linking from 'expo-linking';
-import * as WebBrowser from 'expo-web-browser';
-import { APP_STORE_URL, TERMS_URL, FEEDBACK_EMAIL } from '@/constants/links';
+import { APP_STORE_URL, FEEDBACK_EMAIL } from '@/constants/links';
 
 export async function shareApp(): Promise<void> {
   // User-cancel resolves normally (action === 'dismissedAction'); not an error.
@@ -24,8 +23,4 @@ export async function sendFeedback(): Promise<{ ok: boolean }> {
   if (!can) return { ok: false }; // caller shows a fallback Alert
   await Linking.openURL(url);
   return { ok: true };
-}
-
-export async function openTerms(): Promise<void> {
-  await WebBrowser.openBrowserAsync(TERMS_URL);
 }

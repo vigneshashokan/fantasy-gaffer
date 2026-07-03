@@ -43,7 +43,6 @@ jest.mock('@/lib/external', () => ({
   __esModule: true,
   shareApp: jest.fn().mockResolvedValue(undefined),
   sendFeedback: jest.fn().mockResolvedValue({ ok: true }),
-  openTerms: jest.fn().mockResolvedValue(undefined),
 }));
 
 jest.mock('@/api/notificationPrefs', () => ({
@@ -55,13 +54,14 @@ jest.mock('@/api/notificationPrefs', () => ({
   useUpdateNotificationPrefs: () => ({ mutate: jest.fn(), isError: false }),
 }));
 
+const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   __esModule: true,
-  useRouter: () => ({ back: jest.fn() }),
+  useRouter: () => ({ back: jest.fn(), push: (p: string) => mockPush(p) }),
 }));
 
 import Settings from '@/app/(home)/settings';
-import { shareApp, sendFeedback, openTerms } from '@/lib/external';
+import { shareApp, sendFeedback } from '@/lib/external';
 
 describe('Settings screen — Face ID row', () => {
   beforeEach(() => {
@@ -102,7 +102,7 @@ describe('Settings screen — More actions', () => {
   beforeEach(() => {
     (shareApp as jest.Mock).mockClear();
     (sendFeedback as jest.Mock).mockClear();
-    (openTerms as jest.Mock).mockClear();
+    mockPush.mockClear();
     mockIsSupported.mockResolvedValue(false);
   });
 
@@ -118,9 +118,15 @@ describe('Settings screen — More actions', () => {
     expect(sendFeedback).toHaveBeenCalled();
   });
 
-  it('invokes openTerms when the Terms row is pressed', () => {
+  it('navigates to the in-app Terms screen when the Terms row is pressed', () => {
     const { getByText } = render(<Settings />);
-    fireEvent.press(getByText('Terms & Conditions'));
-    expect(openTerms).toHaveBeenCalled();
+    fireEvent.press(getByText('Terms of Service'));
+    expect(mockPush).toHaveBeenCalledWith('/legal/terms');
+  });
+
+  it('navigates to the in-app Privacy screen when the Privacy row is pressed', () => {
+    const { getByText } = render(<Settings />);
+    fireEvent.press(getByText('Privacy Policy'));
+    expect(mockPush).toHaveBeenCalledWith('/legal/privacy');
   });
 });
