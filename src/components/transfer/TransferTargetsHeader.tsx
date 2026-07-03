@@ -31,7 +31,7 @@ export function TransferTargetsHeader({ pos, nextGw, gradFrom, gradTo, onBack }:
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.row}>
-        <Pressable testID="tt-header-back" onPress={onBack} hitSlop={12} style={styles.backBtn}>
+        <Pressable testID="tt-header-back" onPress={onBack} hitSlop={12} style={styles.backBtn} accessibilityRole="button" accessibilityLabel="Back">
           <Icon name="chevL" color="#fff" size={22} />
         </Pressable>
         <View style={{ flex: 1, minWidth: 0 }}>

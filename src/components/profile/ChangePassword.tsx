@@ -50,6 +50,7 @@ export function ChangePassword({ tk }: ChangePasswordProps) {
           setError(null);
         }}
         style={styles.head}
+        accessibilityRole="button"
       >
         <Icon name="lock" color={tk.faint} size={17} />
         <Text style={[styles.headLabel, { color: tk.text }]}>Change password</Text>
@@ -97,6 +98,7 @@ export function ChangePassword({ tk }: ChangePasswordProps) {
                 backgroundColor: ready && !saving ? tk.activeFill : tk.track,
               },
             ]}
+            accessibilityRole="button"
           >
             <Text
               style={[

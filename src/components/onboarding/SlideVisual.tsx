@@ -15,7 +15,11 @@ const FRAME_H = 433;
 export function SlideVisual({ variant }: SlideVisualProps) {
   const rotate = variant === 'team' ? '2.5deg' : '-2.5deg';
   return (
-    <View style={[styles.shadow, { transform: [{ rotate }] }]}>
+    <View
+      style={[styles.shadow, { transform: [{ rotate }] }]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
       <View style={styles.frame}>
         <View style={styles.notch} />
         {variant === 'picks' && <PicksContent />}

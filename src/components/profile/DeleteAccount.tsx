@@ -42,6 +42,7 @@ export function DeleteAccount({ tk }: DeleteAccountProps) {
         <Pressable
           onPress={() => setConfirm(true)}
           style={[styles.openBtn, { borderColor: tk.pink }]}
+          accessibilityRole="button"
         >
           <BinIcon color={tk.pink} />
           <Text style={[styles.openText, { color: tk.pink }]}>Delete account</Text>
@@ -95,6 +96,7 @@ export function DeleteAccount({ tk }: DeleteAccountProps) {
                 styles.cancelBtn,
                 { backgroundColor: tk.card, borderColor: tk.cardBorder },
               ]}
+              accessibilityRole="button"
             >
               <Text style={[styles.cancelText, { color: tk.text }]}>Cancel</Text>
             </Pressable>
@@ -105,6 +107,7 @@ export function DeleteAccount({ tk }: DeleteAccountProps) {
                 styles.deleteBtn,
                 { backgroundColor: matches && !submitting ? tk.pink : tk.faint },
               ]}
+              accessibilityRole="button"
             >
               <Text style={styles.deleteText}>
                 {submitting ? 'Deleting…' : 'Delete'}

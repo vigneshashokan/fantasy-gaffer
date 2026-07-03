@@ -25,7 +25,7 @@ export function FollowUsRow({ tk, showDivider }: FollowUsRowProps) {
         showDivider && { borderTopColor: tk.line, borderTopWidth: 1 },
       ]}
     >
-      <Pressable onPress={() => setOpen((o) => !o)} style={styles.head}>
+      <Pressable onPress={() => setOpen((o) => !o)} style={styles.head} accessibilityRole="button">
         <View style={styles.iconCell}>
           <FollowIcon color={tk.faint} />
         </View>
@@ -42,6 +42,7 @@ export function FollowUsRow({ tk, showDivider }: FollowUsRowProps) {
               key={s.key}
               onPress={() => {}}
               style={[styles.social, { borderTopColor: tk.line }]}
+              accessibilityRole="button"
             >
               <View style={styles.iconCell}>
                 <SocialIcon kind={s.key} color={tk.text} />

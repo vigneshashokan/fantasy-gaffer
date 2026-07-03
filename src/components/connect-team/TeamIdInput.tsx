@@ -60,7 +60,7 @@ export function TeamIdInput({
       {error ? (
         <Text style={styles.error}>{error}</Text>
       ) : null}
-      <Pressable onPress={onHelpPress} hitSlop={8}>
+      <Pressable onPress={onHelpPress} hitSlop={8} accessibilityRole="button">
         <Text style={[styles.helpLink, { color: '#A78BFA' }]}>
           Where do I find my team ID?
         </Text>

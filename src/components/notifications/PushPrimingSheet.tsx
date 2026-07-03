@@ -34,10 +34,10 @@ export function PushPrimingSheet({ visible, onEnable, onLater, tk }: PushPriming
               </View>
             ))}
           </View>
-          <Pressable onPress={onEnable} style={[styles.enable, { backgroundColor: tk.activeFill }]}>
+          <Pressable onPress={onEnable} style={[styles.enable, { backgroundColor: tk.activeFill }]} accessibilityRole="button">
             <Text style={styles.enableText}>Enable notifications</Text>
           </Pressable>
-          <Pressable onPress={onLater} style={styles.later} hitSlop={8}>
+          <Pressable onPress={onLater} style={styles.later} hitSlop={8} accessibilityRole="button">
             <Text style={[styles.laterText, { color: tk.faint }]}>Maybe later</Text>
           </Pressable>
         </View>

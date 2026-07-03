@@ -54,9 +54,9 @@ export default function Landing() {
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      {/* glow blobs */}
-      <View style={styles.glowGreen} />
-      <View style={styles.glowPink} />
+      {/* glow blobs — purely decorative, hidden from accessibility tree */}
+      <View style={styles.glowGreen} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
+      <View style={styles.glowPink} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
 
       <View style={[styles.content, { paddingTop: Math.max(60, height * 0.08) }]}>
         <GafferLogo size={32} light variant="wordmark" style={{ alignSelf: 'center' }} />
