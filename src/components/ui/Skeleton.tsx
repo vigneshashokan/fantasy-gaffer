@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useThemeStore } from '@/store/themeStore';
 import { apexTokens } from '@/constants/apexTokens';
+import { useReducedMotion } from '@/lib/a11y';
 
 interface SkeletonProps {
   height?: number;
@@ -32,11 +33,13 @@ export function Skeleton({
 }: SkeletonProps) {
   const { paletteKey, dark } = useThemeStore();
   const tk = apexTokens(dark, paletteKey);
+  const reduced = useReducedMotion();
 
-  const opacity = useSharedValue(0.55);
+  const opacity = useSharedValue(0.7);
   useEffect(() => {
+    if (reduced) return; // static placeholder — no looping pulse
     opacity.value = withRepeat(withTiming(0.85, { duration: 900 }), -1, true);
-  }, [opacity]);
+  }, [opacity, reduced]);
 
   const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 

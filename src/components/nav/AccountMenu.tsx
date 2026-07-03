@@ -36,7 +36,12 @@ export function AccountMenu({
 
   return (
     <Modal transparent animationType="fade" onRequestClose={onClose} visible={visible}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+      <Pressable
+        style={StyleSheet.absoluteFill}
+        onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel="Close menu"
+      />
       <View
         style={[
           styles.card,
@@ -71,6 +76,9 @@ export function AccountMenu({
               <Pressable
                 key={mode}
                 onPress={() => setDark(mode === 'dark')}
+                accessibilityRole="button"
+                accessibilityLabel={mode === 'dark' ? 'Dark theme' : 'Light theme'}
+                accessibilityState={{ selected: active }}
                 style={[
                   styles.segment,
                   active && [
@@ -95,11 +103,11 @@ export function AccountMenu({
         </View>
 
         <View style={[styles.divider, { backgroundColor: t.line }]} />
-        <Pressable style={styles.row} onPress={onProfile}>
+        <Pressable style={styles.row} onPress={onProfile} accessibilityRole="button">
           <Icon name="person" color={t.text} size={18} />
           <Text style={[styles.rowText, { color: t.text }]}>Profile</Text>
         </Pressable>
-        <Pressable style={styles.row} onPress={onSettings}>
+        <Pressable style={styles.row} onPress={onSettings} accessibilityRole="button">
           <Icon name="gear" color={t.text} size={18} />
           <Text style={[styles.rowText, { color: t.text }]}>Settings</Text>
         </Pressable>
@@ -110,6 +118,7 @@ export function AccountMenu({
             await useAuthStore.getState().signOut();
             onSignOut();
           }}
+          accessibilityRole="button"
         >
           <Icon name="signOut" color="#FF3B5C" size={18} />
           <Text style={[styles.rowText, { color: '#FF3B5C' }]}>Sign out</Text>

@@ -57,6 +57,7 @@ export function PickRow({
           opacity: owned ? 0.5 : 1,
         },
       ]}
+      accessibilityRole="button"
     >
       <View style={[styles.accentBar, { backgroundColor: accentBar }]} />
       {/* Player cell */}
@@ -68,6 +69,8 @@ export function PickRow({
               onPress={openStats}
               hitSlop={10}
               style={[styles.jerseyBtn, { borderColor: tk.line }]}
+              accessibilityRole="button"
+              accessibilityLabel="View player stats"
             >
               <Image source={jersey} style={styles.jersey} resizeMode="contain" />
               <View style={styles.iWrap} pointerEvents="none">

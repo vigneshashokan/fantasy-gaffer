@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, Text, View, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
+import { MAX_FONT_SCALE } from '@/lib/a11y';
 
 interface SocialBtnProps {
   provider: 'google' | 'apple';
@@ -18,15 +19,18 @@ export function SocialBtn({ provider, onPress }: SocialBtnProps) {
     ...styles.label,
     color: isGoogle ? '#1a1a1a' : '#fff',
   };
+  const label = `Continue with ${isGoogle ? 'Google' : 'Apple'}`;
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
       style={({ pressed }) => [containerStyle, pressed && styles.pressed]}
     >
       <View style={styles.row}>
         <Icon name={provider} color={isGoogle ? '#1a1a1a' : '#fff'} size={22} />
-        <Text style={textStyle}>
-          Continue with {isGoogle ? 'Google' : 'Apple'}
+        <Text style={textStyle} maxFontSizeMultiplier={MAX_FONT_SCALE}>
+          {label}
         </Text>
       </View>
     </Pressable>

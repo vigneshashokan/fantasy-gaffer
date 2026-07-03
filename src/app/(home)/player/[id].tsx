@@ -44,7 +44,7 @@ export default function PlayerDetailModal() {
     return (
       <View style={[styles.empty, { backgroundColor: tk.bg }]}>
         <Text style={[styles.notFound, { color: tk.text }]}>Player not found</Text>
-        <Pressable onPress={() => router.back()} style={[styles.closeBtn, { backgroundColor: tk.green }]}>
+        <Pressable onPress={() => router.back()} style={[styles.closeBtn, { backgroundColor: tk.green }]} accessibilityRole="button">
           <Text style={styles.closeText}>Close</Text>
         </Pressable>
       </View>
@@ -56,7 +56,7 @@ export default function PlayerDetailModal() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: tk.bg }} contentContainerStyle={{ paddingBottom: 32 }}>
       <View style={styles.headerRow}>
-        <Pressable onPress={() => router.back()} hitSlop={12}>
+        <Pressable onPress={() => router.back()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Back">
           <Icon name="chevL" color={tk.text} size={24} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: tk.text }]}>Player</Text>
@@ -125,7 +125,7 @@ function SummaryError({ tk, onRetry }: { tk: ReturnType<typeof apexTokens>; onRe
   return (
     <View style={styles.errRow}>
       <Text style={[styles.errText, { color: tk.faint }]}>Couldn&apos;t load recent form &amp; fixtures.</Text>
-      <Pressable onPress={onRetry} hitSlop={8}>
+      <Pressable onPress={onRetry} hitSlop={8} accessibilityRole="button">
         <Text style={[styles.retry, { color: tk.green }]}>Retry</Text>
       </Pressable>
     </View>

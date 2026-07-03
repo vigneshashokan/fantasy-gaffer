@@ -54,9 +54,9 @@ export default function Landing() {
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      {/* glow blobs */}
-      <View style={styles.glowGreen} />
-      <View style={styles.glowPink} />
+      {/* glow blobs — purely decorative, hidden from accessibility tree */}
+      <View style={styles.glowGreen} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
+      <View style={styles.glowPink} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
 
       <View style={[styles.content, { paddingTop: Math.max(60, height * 0.08) }]}>
         <GafferLogo size={32} light variant="wordmark" style={{ alignSelf: 'center' }} />
@@ -73,7 +73,7 @@ export default function Landing() {
         </View>
 
         <View style={styles.controls}>
-          <Pressable onPress={goSignIn} hitSlop={8}>
+          <Pressable onPress={goSignIn} hitSlop={8} accessibilityRole="button">
             <Text style={styles.skip}>Skip intro</Text>
           </Pressable>
 
@@ -82,6 +82,9 @@ export default function Landing() {
               <Pressable
                 key={d}
                 onPress={() => setI(d)}
+                accessibilityRole="button"
+                accessibilityLabel={`Go to slide ${d + 1}`}
+                hitSlop={8}
                 style={[
                   styles.dot,
                   d === i ? styles.dotActive : styles.dotInactive,
@@ -90,7 +93,7 @@ export default function Landing() {
             ))}
           </View>
 
-          <Pressable onPress={next} style={[styles.cta, last && styles.ctaLast]}>
+          <Pressable onPress={next} style={[styles.cta, last && styles.ctaLast]} accessibilityRole="button" accessibilityLabel={last ? 'Sign in' : 'Next'}>
             <Text style={[styles.ctaText, last && styles.ctaTextLast]}>
               {last ? 'Sign in' : 'Next'}
             </Text>

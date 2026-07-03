@@ -109,6 +109,7 @@ export default function SettingsModal() {
                 styles.devButton,
                 { backgroundColor: tk.headStrip, borderColor: tk.cardBorder, opacity: pressed ? 0.7 : 1 },
               ]}
+              accessibilityRole="button"
             >
               <Text style={[styles.devButtonText, { color: tk.text }]}>Ping Edge Function</Text>
             </Pressable>
@@ -140,6 +141,7 @@ export default function SettingsModal() {
                 styles.devButton,
                 { backgroundColor: tk.headStrip, borderColor: tk.cardBorder, opacity: pressed ? 0.7 : 1 },
               ]}
+              accessibilityRole="button"
             >
               <Text style={[styles.devButtonText, { color: tk.text }]}>
                 Test deadline → Transfer tab
@@ -164,6 +166,7 @@ export default function SettingsModal() {
                 styles.devButton,
                 { backgroundColor: tk.headStrip, borderColor: tk.cardBorder, opacity: pressed ? 0.7 : 1 },
               ]}
+              accessibilityRole="button"
             >
               <Text style={[styles.devButtonText, { color: tk.text }]}>
                 Test gw_confirm → Team tab

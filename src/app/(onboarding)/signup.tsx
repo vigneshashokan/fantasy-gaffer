@@ -17,6 +17,7 @@ import { Field } from '@/components/forms/Field';
 import { signUpSchema } from '@/lib/auth/validation';
 import { signUpWithEmail } from '@/lib/auth/email';
 import { track } from '@/lib/analytics';
+import { useA11yAnnounce } from '@/lib/a11y';
 
 type FieldErrors = Partial<Record<
   'firstName' | 'lastName' | 'email' | 'password' | 'confirmPassword' | 'form',
@@ -34,6 +35,7 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
+  useA11yAnnounce(errors.form || null);
 
   const clearForm = () => {
     setFirstName('');
@@ -194,7 +196,12 @@ export default function SignUp() {
         </View>
 
         {errors.form && (
-          <Text style={[styles.formError, { color: '#FF3B5C' }]}>{errors.form}</Text>
+          <Text
+            accessibilityLiveRegion="assertive"
+            style={[styles.formError, { color: '#FF3B5C' }]}
+          >
+            {errors.form}
+          </Text>
         )}
 
         <PillBtn
@@ -209,6 +216,7 @@ export default function SignUp() {
         <Text style={[styles.legalHint, { color: t.textMuted }]}>
           By creating an account, you agree to our{' '}
           <Text
+            accessibilityRole="link"
             style={[styles.legalLink, { color: t.accent }]}
             onPress={() => router.push('/legal/terms')}
           >
@@ -216,6 +224,7 @@ export default function SignUp() {
           </Text>{' '}
           and{' '}
           <Text
+            accessibilityRole="link"
             style={[styles.legalLink, { color: t.accent }]}
             onPress={() => router.push('/legal/privacy')}
           >
@@ -228,7 +237,7 @@ export default function SignUp() {
           <Text style={[styles.footerHint, { color: t.textMuted }]}>
             Already have an account?{' '}
           </Text>
-          <Pressable onPress={goToSignIn} hitSlop={8}>
+          <Pressable onPress={goToSignIn} hitSlop={8} accessibilityRole="button">
             <Text style={[styles.footerLink, { color: t.accent }]}>Sign in</Text>
           </Pressable>
         </View>

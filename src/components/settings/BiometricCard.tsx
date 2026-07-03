@@ -51,6 +51,7 @@ export function BiometricCard({ tk }: BiometricCardProps) {
             onChange={(v) => (v ? enable() : disable())}
             onColor={tk.green}
             offColor={tk.track}
+            accessibilityLabel="Face ID login"
           />
         </View>
       </View>

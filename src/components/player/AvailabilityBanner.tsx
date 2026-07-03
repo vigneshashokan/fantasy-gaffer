@@ -18,7 +18,7 @@ export function AvailabilityBanner({ status, news, chanceNext, tk }: Availabilit
   const headline =
     chanceNext != null ? `${chanceNext}% to play` : state.severity === 'out' ? 'Unavailable' : 'Doubtful';
   return (
-    <View style={[styles.banner, { backgroundColor: bg }]}>
+    <View accessibilityLiveRegion="polite" style={[styles.banner, { backgroundColor: bg }]}>
       <Text style={[styles.headline, { color: fg }]}>{headline}</Text>
       {!!news && <Text style={[styles.news, { color: tk.text }]}>{news}</Text>}
     </View>

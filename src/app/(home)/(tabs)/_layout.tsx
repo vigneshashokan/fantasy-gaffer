@@ -10,6 +10,7 @@ import { useProfile } from '@/api/profile';
 import { initialsOf } from '@/lib/name';
 import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
+import { MAX_FONT_SCALE } from '@/lib/a11y';
 
 type TabName = 'top-picks' | 'team' | 'transfer';
 
@@ -54,6 +55,9 @@ export default function TabsLayout() {
                 return (
                   <Pressable
                     key={tab.name}
+                    accessibilityRole="tab"
+                    accessibilityLabel={tab.label}
+                    accessibilityState={{ selected: focused }}
                     style={styles.tab}
                     onPress={() => {
                       setActiveTab(tab.name);
@@ -74,6 +78,7 @@ export default function TabsLayout() {
                             : 'Archivo_600SemiBold',
                         },
                       ]}
+                      maxFontSizeMultiplier={MAX_FONT_SCALE}
                     >
                       {tab.label}
                     </Text>
@@ -83,12 +88,18 @@ export default function TabsLayout() {
 
               {/* Account opens the account menu popup rather than navigating to
                   a screen, so it carries no active indicator. */}
-              <Pressable style={styles.tab} onPress={() => setMenuOpen(true)}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Account"
+                style={styles.tab}
+                onPress={() => setMenuOpen(true)}
+              >
                 <View style={[styles.accountAvatar, { backgroundColor: t.primary }]}>
                   <Text style={styles.accountInitials}>{initials}</Text>
                 </View>
                 <Text
                   style={[styles.label, { color: t.textFaint, fontFamily: 'Archivo_600SemiBold' }]}
+                  maxFontSizeMultiplier={MAX_FONT_SCALE}
                 >
                   Account
                 </Text>

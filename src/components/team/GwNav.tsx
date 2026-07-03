@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { ApexTokens } from '@/constants/apexTokens';
+import { MAX_FONT_SCALE } from '@/lib/a11y';
 
 interface GwPillProps {
   gw: number;
@@ -28,7 +29,10 @@ export function GwPill({ gw, state = 'live', tk }: GwPillProps) {
         {pillColors.dotBg && (
           <View style={[styles.dot, { backgroundColor: pillColors.dotBg }]} />
         )}
-        <Text style={[styles.pillText, { color: pillColors.fg }]}>
+        <Text
+          style={[styles.pillText, { color: pillColors.fg }]}
+          maxFontSizeMultiplier={MAX_FONT_SCALE}
+        >
           Gameweek {gw}
         </Text>
       </View>
@@ -52,6 +56,10 @@ export function GwArrow({ dir, onPress, disabled, tk }: GwArrowProps) {
       testID={dir === 'l' ? 'gw-prev' : 'gw-next'}
       disabled={!!disabled}
       onPress={onPress}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={dir === 'l' ? 'Previous gameweek' : 'Next gameweek'}
+      accessibilityState={{ disabled: !!disabled }}
       style={[
         styles.btn,
         {

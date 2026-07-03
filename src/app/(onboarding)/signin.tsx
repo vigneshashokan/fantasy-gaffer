@@ -25,6 +25,7 @@ import { PillBtn } from '@/components/ui/PillBtn';
 import { Field } from '@/components/forms/Field';
 import { SocialBtn } from '@/components/forms/SocialBtn';
 import { Checkbox } from '@/components/forms/Checkbox';
+import { useA11yAnnounce } from '@/lib/a11y';
 
 const COMING_SOON = () =>
   Alert.alert('Coming soon', 'This sign-in option is in a future update.');
@@ -102,6 +103,8 @@ export default function SignIn() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
+  useA11yAnnounce(submitError);
+  useA11yAnnounce(googleError || null);
 
   const clearForm = () => {
     setEmail('');
@@ -224,7 +227,7 @@ export default function SignIn() {
           </View>
         )}
         {googleError && (
-          <Text style={[styles.error, { color: '#FF3B5C' }]}>{googleError}</Text>
+          <Text accessibilityLiveRegion="assertive" style={[styles.error, { color: '#FF3B5C' }]}>{googleError}</Text>
         )}
 
         <View style={styles.divider}>
@@ -282,13 +285,19 @@ export default function SignIn() {
         )}
 
         {submitError && (
-          <Text style={[styles.error, { color: '#FF3B5C' }]}>{submitError}</Text>
+          <Text
+            accessibilityLiveRegion="assertive"
+            style={[styles.error, { color: '#FF3B5C' }]}
+          >
+            {submitError}
+          </Text>
         )}
 
         <View style={styles.forgotWrap}>
           <Pressable
             onPress={() => router.push('/(onboarding)/forgot-password')}
             hitSlop={8}
+            accessibilityRole="button"
           >
             <Text style={[styles.forgot, { color: t.accent }]}>Forgot password?</Text>
           </Pressable>
@@ -307,7 +316,7 @@ export default function SignIn() {
           <Text style={[styles.signUpHint, { color: t.textMuted }]}>
             Don't have an account?{' '}
           </Text>
-          <Pressable onPress={goToSignUp} hitSlop={8}>
+          <Pressable onPress={goToSignUp} hitSlop={8} accessibilityRole="button">
             <Text style={[styles.signUpLink, { color: t.accent }]}>Sign up</Text>
           </Pressable>
         </View>

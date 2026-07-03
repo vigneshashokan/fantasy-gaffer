@@ -14,6 +14,7 @@ import { getTheme } from '@/constants/theme';
 import { GafferLogo } from '@/components/ui/GafferLogo';
 import { PillBtn } from '@/components/ui/PillBtn';
 import { resendVerification } from '@/lib/auth/email';
+import { useA11yAnnounce } from '@/lib/a11y';
 
 const RESEND_COOLDOWN_MS = 30_000;
 
@@ -26,6 +27,7 @@ export default function VerifyPending() {
   const [cooldown, setCooldown] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useA11yAnnounce(errorMsg || null);
 
   useEffect(() => {
     return () => {
@@ -85,18 +87,19 @@ export default function VerifyPending() {
         </PillBtn>
 
         {errorMsg && (
-          <Text style={[styles.error, { color: '#FF3B5C' }]}>{errorMsg}</Text>
+          <Text accessibilityLiveRegion="assertive" style={[styles.error, { color: '#FF3B5C' }]}>{errorMsg}</Text>
         )}
 
         <Pressable
           onPress={() => router.replace('/(onboarding)/signin')}
           hitSlop={8}
           style={styles.linkWrap}
+          accessibilityRole="button"
         >
           <Text style={[styles.link, { color: t.accent }]}>Already verified? Sign in</Text>
         </Pressable>
 
-        <Pressable onPress={() => router.back()} hitSlop={8} style={styles.linkWrap}>
+        <Pressable onPress={() => router.back()} hitSlop={8} style={styles.linkWrap} accessibilityRole="button">
           <Text style={[styles.link, { color: t.textMuted }]}>Wrong email? Go back</Text>
         </Pressable>
       </ScrollView>

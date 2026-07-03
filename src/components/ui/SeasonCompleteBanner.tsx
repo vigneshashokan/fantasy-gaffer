@@ -13,7 +13,7 @@ interface SeasonCompleteBannerProps {
 // above the gameweek card on the Transfer tab.
 export function SeasonCompleteBanner({ seasonLabel, tk }: SeasonCompleteBannerProps) {
   return (
-    <View style={[styles.container, { backgroundColor: tk.greenSoft }]}>
+    <View accessibilityLiveRegion="polite" style={[styles.container, { backgroundColor: tk.greenSoft }]}>
       <Icon name="check" color={tk.green} size={16} />
       <Text style={[styles.text, { color: tk.green }]}>{seasonLabel} Season completed</Text>
     </View>

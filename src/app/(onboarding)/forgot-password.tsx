@@ -16,6 +16,7 @@ import { PillBtn } from '@/components/ui/PillBtn';
 import { Field } from '@/components/forms/Field';
 import { emailSchema } from '@/lib/auth/validation';
 import { sendPasswordReset } from '@/lib/auth/email';
+import { useA11yAnnounce } from '@/lib/a11y';
 
 export default function ForgotPassword() {
   const { paletteKey, dark } = useThemeStore();
@@ -25,6 +26,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  useA11yAnnounce(emailError);
   const [sentEmail, setSentEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -110,7 +112,12 @@ export default function ForgotPassword() {
               textMuted={t.textMuted}
             />
             {emailError && (
-              <Text style={[styles.fieldError, { color: '#FF3B5C' }]}>{emailError}</Text>
+              <Text
+                accessibilityLiveRegion="assertive"
+                style={[styles.fieldError, { color: '#FF3B5C' }]}
+              >
+                {emailError}
+              </Text>
             )}
 
             <PillBtn
