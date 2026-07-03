@@ -1,5 +1,4 @@
 import type { ExpoConfig } from 'expo/config';
-import { PRIVACY_URL, TERMS_URL } from './src/constants/links';
 
 const config: ExpoConfig = {
   name: 'Fantasy Gaffer',
@@ -74,8 +73,11 @@ const config: ExpoConfig = {
     posthogKey: process.env.EXPO_PUBLIC_POSTHOG_KEY,
     posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com',
     sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-    privacyPolicyUrl: PRIVACY_URL,
-    termsUrl: TERMS_URL,
+    // Mirror of src/constants/links.ts (PRIVACY_URL / TERMS_URL). Inlined rather
+    // than imported: the @expo/config loader can't resolve a relative .ts import
+    // here. Keep these in sync with links.ts. Consumed by store submission (#45).
+    privacyPolicyUrl: 'https://fantasy-gaffer.com/privacy',
+    termsUrl: 'https://fantasy-gaffer.com/terms',
   },
 };
 
