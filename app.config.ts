@@ -1,4 +1,5 @@
 import type { ExpoConfig } from 'expo/config';
+import { PRIVACY_URL, TERMS_URL } from './src/constants/links';
 
 const config: ExpoConfig = {
   name: 'Fantasy Gaffer',
@@ -73,6 +74,8 @@ const config: ExpoConfig = {
     posthogKey: process.env.EXPO_PUBLIC_POSTHOG_KEY,
     posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com',
     sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+    privacyPolicyUrl: PRIVACY_URL,
+    termsUrl: TERMS_URL,
   },
 };
 

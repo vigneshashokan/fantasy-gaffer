@@ -206,6 +206,24 @@ export default function SignUp() {
           {submitting ? 'Creating account…' : 'Create account'}
         </PillBtn>
 
+        <Text style={[styles.legalHint, { color: t.textMuted }]}>
+          By creating an account, you agree to our{' '}
+          <Text
+            style={[styles.legalLink, { color: t.accent }]}
+            onPress={() => router.push('/legal/terms')}
+          >
+            Terms of Service
+          </Text>{' '}
+          and{' '}
+          <Text
+            style={[styles.legalLink, { color: t.accent }]}
+            onPress={() => router.push('/legal/privacy')}
+          >
+            Privacy Policy
+          </Text>
+          .
+        </Text>
+
         <View style={styles.footerWrap}>
           <Text style={[styles.footerHint, { color: t.textMuted }]}>
             Already have an account?{' '}
@@ -248,6 +266,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   submitBtn: { width: '100%', height: 54, marginTop: 22 },
+  legalHint: {
+    fontFamily: 'Archivo_500Medium',
+    fontSize: 12.5,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginTop: 16,
+  },
+  legalLink: {
+    fontFamily: 'Archivo_700Bold',
+    fontSize: 12.5,
+  },
   footerWrap: {
     flexDirection: 'row',
     justifyContent: 'center',

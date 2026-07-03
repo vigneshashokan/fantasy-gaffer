@@ -4,6 +4,7 @@ import { fireEvent, render, waitFor } from '@testing-library/react-native';
 const mockSignUp = jest.fn();
 const mockReplace = jest.fn();
 const mockBack = jest.fn();
+const mockPush = jest.fn();
 
 jest.mock('@/lib/auth/email', () => ({
   __esModule: true,
@@ -15,6 +16,7 @@ jest.mock('expo-router', () => ({
   router: {
     replace: (p: string) => mockReplace(p),
     back: () => mockBack(),
+    push: (p: string) => mockPush(p),
   },
 }));
 
@@ -30,6 +32,7 @@ describe('SignUp screen', () => {
     mockSignUp.mockReset();
     mockReplace.mockReset();
     mockBack.mockReset();
+    mockPush.mockReset();
   });
 
   function fill(getByPlaceholderText: ReturnType<typeof render>['getByPlaceholderText'], overrides: Partial<{
@@ -132,5 +135,13 @@ describe('SignUp screen', () => {
     expect(getByPlaceholderText('Email address').props.value).toBe('');
     expect(getByPlaceholderText('Password').props.value).toBe('');
     expect(getByPlaceholderText('Confirm password').props.value).toBe('');
+  });
+
+  it('navigates to legal screens from the disclosure links', () => {
+    const { getByText } = render(<SignUp />);
+    fireEvent.press(getByText('Terms of Service'));
+    expect(mockPush).toHaveBeenCalledWith('/legal/terms');
+    fireEvent.press(getByText('Privacy Policy'));
+    expect(mockPush).toHaveBeenCalledWith('/legal/privacy');
   });
 });

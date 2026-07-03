@@ -1,9 +1,11 @@
 // src/constants/links.ts
 //
-// Placeholder external destinations. Swap in real values when the legal
-// page (#46) ships and the app is published to the stores. Nothing else
-// in the app references these literals — change them here only.
+// External destinations. The legal URLs are the hosted mirrors of the in-app
+// legal screens (src/app/legal/*); they are consumed by store-listing config
+// (app.config.ts extra) and are what the store submission (#45) points at.
+// In-app, Settings and signup navigate to the native screens, not these URLs.
 
 export const APP_STORE_URL = 'https://fantasy-gaffer.com';
 export const TERMS_URL = 'https://fantasy-gaffer.com/terms';
+export const PRIVACY_URL = 'https://fantasy-gaffer.com/privacy';
 export const FEEDBACK_EMAIL = 'feedback@fantasy-gaffer.com';

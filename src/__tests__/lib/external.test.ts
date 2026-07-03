@@ -2,18 +2,14 @@ import { Share } from 'react-native';
 
 const mockCanOpenURL = jest.fn();
 const mockOpenURL = jest.fn();
-const mockOpenBrowserAsync = jest.fn();
 
 jest.mock('expo-linking', () => ({
   canOpenURL: (u: string) => mockCanOpenURL(u),
   openURL: (u: string) => mockOpenURL(u),
 }));
-jest.mock('expo-web-browser', () => ({
-  openBrowserAsync: (u: string) => mockOpenBrowserAsync(u),
-}));
 
-import { shareApp, sendFeedback, openTerms } from '@/lib/external';
-import { APP_STORE_URL, TERMS_URL, FEEDBACK_EMAIL } from '@/constants/links';
+import { shareApp, sendFeedback } from '@/lib/external';
+import { APP_STORE_URL, FEEDBACK_EMAIL } from '@/constants/links';
 
 let shareSpy: jest.SpyInstance;
 
@@ -49,13 +45,5 @@ describe('sendFeedback', () => {
     const r = await sendFeedback();
     expect(r).toEqual({ ok: false });
     expect(mockOpenURL).not.toHaveBeenCalled();
-  });
-});
-
-describe('openTerms', () => {
-  it('opens the terms URL in the in-app browser', async () => {
-    mockOpenBrowserAsync.mockResolvedValueOnce({ type: 'opened' });
-    await openTerms();
-    expect(mockOpenBrowserAsync).toHaveBeenCalledWith(TERMS_URL);
   });
 });

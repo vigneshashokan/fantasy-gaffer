@@ -16,7 +16,7 @@ import { FollowUsRow } from '@/components/settings/FollowUsRow';
 import { PrivacyCard } from '@/components/settings/PrivacyCard';
 import { supabase } from '@/lib/supabase';
 import { sendTestNotification } from '@/lib/notifications/sendTestNotification';
-import { shareApp, sendFeedback, openTerms } from '@/lib/external';
+import { shareApp, sendFeedback } from '@/lib/external';
 import { FEEDBACK_EMAIL } from '@/constants/links';
 
 export default function SettingsModal() {
@@ -74,13 +74,17 @@ export default function SettingsModal() {
             showDivider
           />
           <SettingsRow
-            icon={<TermsIcon color={tk.faint} />}
-            label="Terms & Conditions"
-            onPress={() => {
-              openTerms().catch(() => {});
-            }}
+            icon={<PrivacyIcon color={tk.faint} />}
+            label="Privacy Policy"
+            onPress={() => router.push('/legal/privacy')}
             tk={tk}
-            external
+            showDivider
+          />
+          <SettingsRow
+            icon={<TermsIcon color={tk.faint} />}
+            label="Terms of Service"
+            onPress={() => router.push('/legal/terms')}
+            tk={tk}
             showDivider
           />
         </SectionCard>
@@ -214,6 +218,20 @@ function TermsIcon({ color }: { color: string }) {
       />
       <Path
         d="M14 3v5h5M9 13h6M9 17h6"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function PrivacyIcon({ color }: { color: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"
         stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
