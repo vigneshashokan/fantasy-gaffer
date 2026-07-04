@@ -171,7 +171,10 @@ row), `artifacts/xpts-v2.json`.
   once, resolves the next upcoming GW from `events` (`is_next`), and upserts one row per
   player for that GW. When the deadline passes, `is_next` advances and the prior GW's
   rows are never touched again — the frozen value is the last pre-deadline capture.
-  Season label via the existing `lib/calendar.ts` `currentSeasonLabel()`.
+  The post-deadline freeze is enforced by an explicit deadline check, not by trusting
+  FPL's `is_next` flip. Season label via `currentSeasonLabel(deadline_time)` — derived
+  from the GW's **deadline date** (definitionally in-season), never from `now()`: a
+  July run capturing the August GW1 must label it 2026/27.
 - **Cadence: every 6 hours** (`pg_cron`, reusing the existing vault-secret invocation
   pattern). A missed snapshot is unrecoverable, so **frequency is the redundancy**: one
   failed run costs ~6h staleness, not a gameweek. `ep_next` moves most on injury news in
