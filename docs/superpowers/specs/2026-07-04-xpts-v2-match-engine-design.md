@@ -131,8 +131,11 @@ season the real judge.
 on cumulative captaincy; interval coverage stays within 0.50 ± 0.10. The backtest report
 gains: **(a) an ablation** — v1 · v1+match-features · full v2 (isolates where gains come
 from and verifies dropping static strengths costs nothing); **(b) standalone match-engine
-metrics** — clean-sheet Brier score and per-match xG MAE vs a static-strengths baseline.
-Results appended to `docs/xpts-model.md`.
+metrics** — clean-sheet Brier score and per-match xG MAE vs a static-strengths baseline;
+**(c) a hot-streak diagnostic** — mean signed error among players whose last-3-GW actual
+points sit in the top decile, confirming the xG-based form features regress hot streaks
+to the mean rather than over-predicting them (the model's core anti-recency bet, made
+explicit). Results appended to `docs/xpts-model.md`.
 
 ## 3. Shadow serving (Deno, `fpl-project`)
 
@@ -257,7 +260,8 @@ identity, so the scoreboard stays correct across a promotion swap.
   form; cheapest future proxy = a "new manager" flag); AFCON/international availability
   (near-term already covered by FPL `status`/`news` via the decision layer).
 - **Routed to the decision layer, not the model:** injury-proneness / substitution
-  planning (transfer-advice backlog).
+  planning — tracked as issue #132 (the #123 snapshots accumulate its
+  availability-history data automatically).
 
 ## 10. Invariants
 
