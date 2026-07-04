@@ -166,9 +166,14 @@ row), `artifacts/xpts-v2.json`.
 | Group | Columns |
 |---|---|
 | Benchmark | `ep_next`, `ep_this` |
-| Future v2.1+ features (live-only) | `selected_by_percent`, `penalties_order`, `corners_and_indirect_freekicks_order`, `direct_freekicks_order` |
+| Future v2.1+ features (live-only) | `selected_by_percent`, `penalties_order`, `corners_and_indirect_freekicks_order`, `direct_freekicks_order`, `news`, `news_added` |
 | Eval context | `now_cost`, `form`, `status`, `chance_of_playing_next_round`, `transfers_in_event`, `transfers_out_event` |
 | Audit | `captured_at` |
+
+`news`/`news_added` earn their place from the v2.1 schema audit: the injury *type*
+("hamstring" vs "knock") and the news-vs-deadline timing exist only in these fields —
+inputs for the minutes model (#127) and injury-proneness advice (#132) that cannot be
+backfilled later.
 
 - **Semantics — upsert until the deadline freezes it:** each run reads the FPL bootstrap
   once, resolves the next upcoming GW from `events` (`is_next`), and upserts one row per

@@ -71,6 +71,11 @@ create table public.player_gw_snapshots (
   form                                  numeric(3,1) not null,
   status                                char(1)     not null,
   chance_of_playing_next_round          smallint,
+  -- injury-news text + when it landed: the injury TYPE ("hamstring" vs "knock")
+  -- and news-vs-deadline timing exist ONLY here; feeds the v2.1 minutes model
+  -- (#127) and injury-proneness advice (#132). Live-only -> capture or lose.
+  news                                  text        not null,
+  news_added                            timestamptz,
   transfers_in_event                    integer     not null,
   transfers_out_event                   integer     not null,
   -- audit
@@ -116,7 +121,7 @@ git commit -m "feat(db): player_gw_snapshots table for prospective capture (#107
 - Consumes: `currentSeasonLabel(d: Date): string` from `../lib/calendar.ts`.
 - Produces (used by Task 3):
   - `interface SnapshotEvent { id: number; is_next: boolean; deadline_time: string | null }`
-  - `interface SnapshotElement` (13 fields, below)
+  - `interface SnapshotElement` (15 fields, below)
   - `interface PlayerGwSnapshotRow` (DB row shape, below)
   - `selectSnapshotGw(events: SnapshotEvent[], now: Date): { gw: number; season: string } | null`
   - `snapshotRows(season: string, gw: number, elements: SnapshotElement[], capturedAt: string): PlayerGwSnapshotRow[]`
@@ -186,6 +191,8 @@ function element(over: Partial<SnapshotElement> = {}): SnapshotElement {
     form: '6.2',
     status: 'a',
     chance_of_playing_next_round: null,
+    news: '',
+    news_added: null,
     transfers_in_event: 12345,
     transfers_out_event: 678,
     penalties_order: 1,
@@ -228,11 +235,18 @@ Deno.test('snapshotRows: preserves nullable set-piece order and chance fields', 
   assertEquals(r.chance_of_playing_next_round, null);
 });
 
-Deno.test('snapshotRows: passes through integer/status fields', () => {
-  const r = snapshotRows('2026/27', 1, [element({ status: 'd', chance_of_playing_next_round: 75 })], 't')[0];
+Deno.test('snapshotRows: passes through integer/status/news fields', () => {
+  const r = snapshotRows('2026/27', 1, [element({
+    status: 'd',
+    chance_of_playing_next_round: 75,
+    news: 'Hamstring injury - Expected back 22 Aug',
+    news_added: '2026-08-01T10:30:00Z',
+  })], 't')[0];
   assertEquals(r.now_cost, 75);
   assertEquals(r.status, 'd');
   assertEquals(r.chance_of_playing_next_round, 75);
+  assertEquals(r.news, 'Hamstring injury - Expected back 22 Aug');
+  assertEquals(r.news_added, '2026-08-01T10:30:00Z');
   assertEquals(r.transfers_in_event, 12345);
   assertEquals(r.transfers_out_event, 678);
 });
@@ -274,6 +288,8 @@ export interface SnapshotElement {
   form: string;
   status: string;
   chance_of_playing_next_round: number | null;
+  news: string;
+  news_added: string | null;
   transfers_in_event: number;
   transfers_out_event: number;
   penalties_order: number | null;
@@ -297,6 +313,8 @@ export interface PlayerGwSnapshotRow {
   form: number;
   status: string;
   chance_of_playing_next_round: number | null;
+  news: string;
+  news_added: string | null;
   transfers_in_event: number;
   transfers_out_event: number;
   penalties_order: number | null;
@@ -343,6 +361,8 @@ export function snapshotRows(
     form: num(e.form),
     status: e.status,
     chance_of_playing_next_round: e.chance_of_playing_next_round,
+    news: e.news,
+    news_added: e.news_added,
     transfers_in_event: e.transfers_in_event,
     transfers_out_event: e.transfers_out_event,
     penalties_order: e.penalties_order,
