@@ -117,3 +117,99 @@ Deno.test('snapshotRows: passes through integer/status/news fields', () => {
   assertEquals(r.transfers_in_event, 12345);
   assertEquals(r.transfers_out_event, 678);
 });
+
+import { ingestSnapshot, type IngestSnapshotDeps } from '../sources/snapshot.ts';
+
+function makeSnapshotDeps(opts: {
+  events: SnapshotEvent[];
+  elements: SnapshotElement[];
+  now: Date;
+}): {
+  deps: IngestSnapshotDeps;
+  upserts: Array<{ table: string; rows: unknown[]; onConflict?: string }>;
+  runUpdates: Array<Record<string, unknown>>;
+} {
+  const upserts: Array<{ table: string; rows: unknown[]; onConflict?: string }> = [];
+  const runUpdates: Array<Record<string, unknown>> = [];
+
+  // deno-lint-ignore no-explicit-any
+  const supabase: any = {
+    from(table: string) {
+      return {
+        upsert(rows: unknown[], upsertOpts?: { onConflict?: string }) {
+          upserts.push({ table, rows, onConflict: upsertOpts?.onConflict });
+          return Promise.resolve({ data: null, error: null });
+        },
+        update(payload: Record<string, unknown>) {
+          return {
+            eq(_col: string, _val: string) {
+              runUpdates.push(payload);
+              return Promise.resolve({ data: null, error: null });
+            },
+          };
+        },
+      };
+    },
+  };
+
+  const fetchStub: typeof fetch = (input: string | URL | Request) => {
+    const url = String(input);
+    if (url.includes('bootstrap-static')) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ events: opts.events, elements: opts.elements }), { status: 200 }),
+      );
+    }
+    return Promise.resolve(new Response('{}', { status: 200 }));
+  };
+
+  return { deps: { supabase, fetch: fetchStub, now: () => opts.now }, upserts, runUpdates };
+}
+
+Deno.test('ingestSnapshot: upserts one row per element for the next GW and closes success', async () => {
+  const { deps, upserts, runUpdates } = makeSnapshotDeps({
+    events: [AUG_GW1],
+    elements: [element(), element({ id: 200, ep_next: '2.1' })],
+    now: new Date('2026-08-10T06:15:00Z'),
+  });
+
+  await ingestSnapshot('run-1', deps);
+
+  assertEquals(upserts.length, 1);
+  assertEquals(upserts[0].table, 'player_gw_snapshots');
+  assertEquals(upserts[0].onConflict, 'season,gw,player_id');
+  const rows = upserts[0].rows as Array<Record<string, unknown>>;
+  assertEquals(rows.length, 2);
+  assertEquals(rows[0].season, '2026/27');
+  assertEquals(rows[0].gw, 1);
+  assertEquals(rows[0].captured_at, '2026-08-10T06:15:00.000Z');
+  assertEquals(rows[1].ep_next, 2.1);
+  assertEquals(runUpdates.at(-1)?.status, 'success');
+  assertEquals(runUpdates.at(-1)?.rows_upserted, 2);
+});
+
+Deno.test('ingestSnapshot: off-season (no is_next) -> skip, no upsert', async () => {
+  const { deps, upserts, runUpdates } = makeSnapshotDeps({
+    events: [{ id: 38, is_next: false, deadline_time: '2026-05-20T10:00:00Z' }],
+    elements: [element()],
+    now: new Date('2026-07-04T06:15:00Z'),
+  });
+
+  await ingestSnapshot('run-1', deps);
+
+  assertEquals(upserts.length, 0);
+  assertEquals(runUpdates.at(-1)?.status, 'skipped');
+  assertEquals(runUpdates.at(-1)?.skip_reason, 'no upcoming gameweek deadline (off-season or frozen)');
+});
+
+Deno.test('ingestSnapshot: deadline passed but is_next stale -> skip (freeze guard)', async () => {
+  const { deps, upserts, runUpdates } = makeSnapshotDeps({
+    events: [AUG_GW1],
+    elements: [element()],
+    now: new Date('2026-08-15T11:00:00Z'), // 1h after the GW1 deadline
+  });
+
+  await ingestSnapshot('run-1', deps);
+
+  assertEquals(upserts.length, 0);
+  assertEquals(runUpdates.at(-1)?.status, 'skipped');
+});
