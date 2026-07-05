@@ -5,11 +5,12 @@ import { errorRun, serializeError, startRun } from './lib/ingestion-runs.ts';
 import { ingestBootstrap } from './sources/bootstrap.ts';
 import { ingestFixtures } from './sources/fixtures.ts';
 import { ingestHistory } from './sources/history.ts';
+import { ingestSnapshot } from './sources/snapshot.ts';
 
-type Source = 'bootstrap' | 'fixtures' | 'history';
+type Source = 'bootstrap' | 'fixtures' | 'history' | 'snapshot';
 
 const isSource = (s: string | null): s is Source =>
-  s === 'bootstrap' || s === 'fixtures' || s === 'history';
+  s === 'bootstrap' || s === 'fixtures' || s === 'history' || s === 'snapshot';
 
 export interface Deps {
   supabase: SupabaseClient;
@@ -32,7 +33,7 @@ export async function handler(req: Request, depsOverride?: Deps): Promise<Respon
 
   if (!isSource(source)) {
     return Response.json(
-      { error: 'missing or invalid ?source= (expected bootstrap|fixtures|history)' },
+      { error: 'missing or invalid ?source= (expected bootstrap|fixtures|history|snapshot)' },
       { status: 400 },
     );
   }
@@ -45,8 +46,10 @@ export async function handler(req: Request, depsOverride?: Deps): Promise<Respon
       await ingestBootstrap(runId, deps, { force });
     } else if (source === 'fixtures') {
       await ingestFixtures(runId, deps);
-    } else {
+    } else if (source === 'history') {
       await ingestHistory(runId, deps);
+    } else {
+      await ingestSnapshot(runId, deps);
     }
     return Response.json({ ok: true, runId, source }, { status: 200 });
   } catch (err) {
