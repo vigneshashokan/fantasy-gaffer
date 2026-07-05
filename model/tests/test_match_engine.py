@@ -121,3 +121,13 @@ def test_def_rating_reads_xg_against_at_venue():
     eng = MatchEngine(TF, window=6, alpha=1.0, prior_weight=0)
     # team 1 home defence: conceded 0.5 (GW1), 1.5 (GW3)
     assert eng.rating(1, "home", "def", before_gw=4) == pytest.approx(1.0)
+
+
+def test_def_rating_shrinks_toward_opposite_venue_baseline():
+    # Home DEFENCE lives in away-goals units -> shrinks toward the AWAY
+    # baseline. A regression flipping the venue would change L and fail here.
+    eng = MatchEngine(TF, window=6, alpha=1.0, prior_weight=2)
+    L = eng.league_baseline("away", before_gw=4)
+    k, raw = 2, 1.0  # team 1 conceded 0.5 (GW1), 1.5 (GW3) at home
+    assert eng.rating(1, "home", "def", before_gw=4) == pytest.approx((k * raw + 2 * L) / (k + 2))
+    assert L != pytest.approx(eng.league_baseline("home", before_gw=4))  # flip is observable
