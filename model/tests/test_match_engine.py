@@ -131,3 +131,53 @@ def test_def_rating_shrinks_toward_opposite_venue_baseline():
     k, raw = 2, 1.0  # team 1 conceded 0.5 (GW1), 1.5 (GW3) at home
     assert eng.rating(1, "home", "def", before_gw=4) == pytest.approx((k * raw + 2 * L) / (k + 2))
     assert L != pytest.approx(eng.league_baseline("home", before_gw=4))  # flip is observable
+
+
+import math
+
+
+def _uniform_tf(xg):
+    """Every team identical: each played one home + one away match with the
+    same xg for/against -> every rating equals the league baseline."""
+    rows, fixture = [], 0
+    for gw, (h, a) in enumerate([(1, 2), (3, 4), (2, 1), (4, 3)], start=1):
+        fixture += 1
+        rows.append(_tf(h, a, gw, fixture, True, xg, xg))
+        rows.append(_tf(a, h, gw, fixture, False, xg, xg))
+    return pd.DataFrame(rows)
+
+
+def test_league_average_teams_reproduce_league_baseline():
+    # SANITY INVARIANT (spec §2): both-average teams -> lambda == L_venue.
+    # xg must equal the prior: shrinkage blends raw ratings toward L, so the
+    # invariant is exact only when raw == prior == L.
+    eng = MatchEngine(_uniform_tf(xg=LEAGUE_XG_PRIOR), window=6, alpha=1.0, prior_weight=4)
+    lam_for, lam_against = eng.lambdas(1, 2, was_home=True, before_gw=5)
+    assert lam_for == pytest.approx(eng.league_baseline("home", before_gw=5))
+    assert lam_against == pytest.approx(eng.league_baseline("away", before_gw=5))
+
+
+def test_lambdas_multiplicative_form_home():
+    eng = MatchEngine(TF, window=6, alpha=1.0, prior_weight=0)
+    lam_for, lam_against = eng.lambdas(1, 3, was_home=True, before_gw=4)
+    L_home = eng.league_baseline("home", before_gw=4)
+    L_away = eng.league_baseline("away", before_gw=4)
+    att = eng.rating(1, "home", "att", before_gw=4)
+    dfn = eng.rating(3, "away", "def", before_gw=4)
+    assert lam_for == pytest.approx(att * dfn / L_home)
+    att_o = eng.rating(3, "away", "att", before_gw=4)
+    dfn_t = eng.rating(1, "home", "def", before_gw=4)
+    assert lam_against == pytest.approx(att_o * dfn_t / L_away)
+
+
+def test_lambdas_away_is_the_mirror():
+    eng = MatchEngine(TF, window=6, alpha=1.0, prior_weight=0)
+    f_home = eng.lambdas(1, 3, was_home=True, before_gw=4)
+    f_away = eng.lambdas(3, 1, was_home=False, before_gw=4)
+    assert f_home[0] == pytest.approx(f_away[1])
+    assert f_home[1] == pytest.approx(f_away[0])
+
+
+def test_p_clean_sheet_is_poisson_zero():
+    assert MatchEngine.p_clean_sheet(0.0) == pytest.approx(1.0)
+    assert MatchEngine.p_clean_sheet(1.2) == pytest.approx(math.exp(-1.2))

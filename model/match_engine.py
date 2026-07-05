@@ -83,3 +83,22 @@ class MatchEngine:
         raw = exp_decay_mean(rows[col].tolist(), alpha=self.alpha)
         m = self.prior_weight
         return (k * raw + m * L) / (k + m)
+
+    def lambdas(self, team_id: int, opponent_team: int, was_home: bool,
+                before_gw: int) -> tuple[float, float]:
+        """(lambda_for, lambda_against) for team_id in this fixture. Spec §2:
+        home: λ_for = att_home(T)·def_away(O)/L_home ; λ_against = def_home(T)·att_away(O)/L_away
+        away is the exact mirror."""
+        tv = "home" if was_home else "away"
+        ov = "away" if was_home else "home"
+        L_t = self.league_baseline(tv, before_gw)
+        L_o = self.league_baseline(ov, before_gw)
+        lam_for = self.rating(team_id, tv, "att", before_gw) \
+            * self.rating(opponent_team, ov, "def", before_gw) / L_t
+        lam_against = self.rating(opponent_team, ov, "att", before_gw) \
+            * self.rating(team_id, tv, "def", before_gw) / L_o
+        return (lam_for, lam_against)
+
+    @staticmethod
+    def p_clean_sheet(lambda_against: float) -> float:
+        return math.exp(-lambda_against)
