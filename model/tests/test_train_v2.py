@@ -64,3 +64,10 @@ def test_predict_recovers_planted_signal():
     lo = predict(art, {**row, "team_lambda_for": 0.1}, "MID", 0.5)
     hi = predict(art, {**row, "team_lambda_for": 0.9}, "MID", 0.5)
     assert hi - lo == pytest.approx(3.0 * 0.8, abs=0.3)  # planted slope ≈ 3
+
+
+def test_fit_models_rejects_extra_clobbering_reserved_keys():
+    with pytest.raises(ValueError, match="clobber"):
+        fit_models(_synthetic_samples(), feature_columns=FEATURE_COLUMNS_V2,
+                   model_version=MODEL_VERSION_V2, decay_alpha=0.85,
+                   form_window=6, scaling={}, extra={"coefficients": {}})

@@ -60,6 +60,9 @@ def fit_models(samples: pd.DataFrame, *, feature_columns: list | None = None,
         "coefficients": coefficients,
     }
     if extra:
+        overlap = extra.keys() & artifact.keys()
+        if overlap:
+            raise ValueError(f"extra would clobber artifact keys: {sorted(overlap)}")
         artifact.update(extra)
     return artifact
 
