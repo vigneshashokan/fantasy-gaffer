@@ -41,6 +41,3 @@ create table public.player_gw_snapshots (
 -- bypasses RLS) write, and the Python eval harness reads via direct DB
 -- connection. The app never queries this table.
 alter table public.player_gw_snapshots enable row level security;
-
-create index player_gw_snapshots_season_gw_idx
-  on public.player_gw_snapshots (season, gw);

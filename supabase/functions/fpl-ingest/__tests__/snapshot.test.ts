@@ -1,10 +1,13 @@
 import { assertEquals } from '@std/assert';
 import {
+  ingestSnapshot,
   selectSnapshotGw,
   snapshotRows,
+  type IngestSnapshotDeps,
   type SnapshotElement,
   type SnapshotEvent,
 } from '../sources/snapshot.ts';
+import { handler } from '../index.ts';
 
 // ---- selectSnapshotGw ------------------------------------------------------
 
@@ -118,8 +121,6 @@ Deno.test('snapshotRows: passes through integer/status/news fields', () => {
   assertEquals(r.transfers_out_event, 678);
 });
 
-import { ingestSnapshot, type IngestSnapshotDeps } from '../sources/snapshot.ts';
-
 function makeSnapshotDeps(opts: {
   events: SnapshotEvent[];
   elements: SnapshotElement[];
@@ -213,8 +214,6 @@ Deno.test('ingestSnapshot: deadline passed but is_next stale -> skip (freeze gua
   assertEquals(upserts.length, 0);
   assertEquals(runUpdates.at(-1)?.status, 'skipped');
 });
-
-import { handler } from '../index.ts';
 
 Deno.test('handler: ?source=snapshot routes to ingestSnapshot and returns 200', async () => {
   const { deps } = makeSnapshotDeps({
