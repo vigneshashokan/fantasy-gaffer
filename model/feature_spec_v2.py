@@ -34,9 +34,11 @@ RATING_WINDOW = 10   # venue-specific matches per rating stream
 RATING_ALPHA = 0.9   # exp-decay base across those matches (most-recent-first)
 PRIOR_WEIGHT = 4     # shrinkage: rating = (k*raw + m*L) / (k + m), m = this
 
-# League-average team-xG per team-fixture, frozen from the 2025/26 mean in
-# Task 8 (the zero-data fallback for league baselines at season start).
-LEAGUE_XG_PRIOR = 1.35
+# League-average team-xG per team-fixture, frozen from the 2025/26 mean
+# (the zero-data fallback for league baselines at season start). Units are
+# "sum of tracked players' expected_goals per team-fixture" — the same
+# quantity the engine's ratings average, NOT external/Opta team xG.
+LEAGUE_XG_PRIOR = 1.4057
 
 FEATURE_COLUMNS_V2 = (
     [f"form_{s}" for s in FORM_STATS_V2]

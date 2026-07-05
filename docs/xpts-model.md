@@ -51,3 +51,46 @@ to a Python batch job (Approach C) when the model outgrows a portable dot produc
 (e.g. GBM/ensemble) such that re-implementing inference in Deno risks train/serve
 skew — *not* merely when adding xG data. Until then, serving stays in-stack (Deno
 `pg_cron`).
+
+<!-- xpts-v2-results -->
+
+# xPts model — v2.0 results (match engine)
+
+**Model version:** `v2.0.0` · gate vs v1 (`v1.0.0`) on the same
+walk-forward (2025/26, GW 8→38, eval among xmin ≥ 0.5; n = 7373).
+Spec: `docs/superpowers/specs/2026-07-04-xpts-v2-match-engine-design.md`.
+
+## Ablation (MAE, lower better)
+
+| variant | MAE |
+|---------|-----|
+| (a) v1 features | 2.063 |
+| (b) v1 + match features | 2.063 |
+| (c) full v2 (xGI + static strengths dropped) | 2.061 |
+| exp-decay form baseline | 2.444 |
+
+Captaincy: v2 184 vs v1 185.
+Spearman: v2 0.303 vs v1 0.302.
+Coverage of [p25, p75]: 0.489 (target 0.50 ± 0.10).
+
+## Match-engine standalone (620 team-fixtures)
+
+| metric | dynamic ratings | static strengths |
+|--------|-----------------|------------------|
+| per-match xG MAE | 0.600 | 0.593 |
+| clean-sheet Brier | 0.192 | 0.189 |
+
+## Hot-streak diagnostic (top-decile last-3-GW points; n = 881)
+
+Mean signed error (pred − actual): v2 -1.108 ·
+v1 -1.103 · form baseline +2.017.
+Positive = over-prediction of hot players; the xG-form design should keep v2's
+value near the form baseline's or better (regression to the mean).
+
+## Gate
+
+- v2 beats v1 on MAE: **True**
+- v2 captaincy ≥ v1: **False**
+- Coverage within ±0.10 of 0.50: **True**
+
+**Verdict: ❌ FAIL — documented finding; do NOT wire shadow serving**
