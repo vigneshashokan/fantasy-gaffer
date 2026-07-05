@@ -213,3 +213,33 @@ Deno.test('ingestSnapshot: deadline passed but is_next stale -> skip (freeze gua
   assertEquals(upserts.length, 0);
   assertEquals(runUpdates.at(-1)?.status, 'skipped');
 });
+
+import { handler } from '../index.ts';
+
+Deno.test('handler: ?source=snapshot routes to ingestSnapshot and returns 200', async () => {
+  const { deps } = makeSnapshotDeps({
+    events: [AUG_GW1],
+    elements: [element()],
+    now: new Date('2026-08-10T06:15:00Z'),
+  });
+  // handler also inserts an ingestion_runs row via startRun -> stub needs insert()
+  // deno-lint-ignore no-explicit-any
+  const anySupabase = deps.supabase as any;
+  const origFrom = anySupabase.from.bind(anySupabase);
+  anySupabase.from = (table: string) => ({
+    ...origFrom(table),
+    insert(_row: Record<string, unknown>) {
+      return {
+        select: () => ({
+          single: () => Promise.resolve({ data: { id: 'run-x' }, error: null }),
+        }),
+      };
+    },
+  });
+
+  const res = await handler(new Request('http://localhost/fpl-ingest?source=snapshot'), deps);
+  const body = await res.json();
+  assertEquals(res.status, 200);
+  assertEquals(body.ok, true);
+  assertEquals(body.source, 'snapshot');
+});
