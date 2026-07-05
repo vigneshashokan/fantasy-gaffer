@@ -36,3 +36,50 @@ def build_team_fixtures(history: pd.DataFrame) -> pd.DataFrame:
     return side.merge(opp, on=["fixture_id", "opponent_team"], how="left").fillna(
         {"xg_against": 0.0, "goals_against": 0}
     )
+
+
+class MatchEngine:
+    """Venue-split exp-decay team ratings with sample-size shrinkage, and the
+    independent-Poisson fixture model on top. All queries take `before_gw` and
+    only see matches with gw < before_gw (walk-forward safe by construction)."""
+
+    def __init__(self, team_fixtures: pd.DataFrame, *,
+                 window: int = RATING_WINDOW, alpha: float = RATING_ALPHA,
+                 prior_weight: float = PRIOR_WEIGHT,
+                 league_prior: float = LEAGUE_XG_PRIOR) -> None:
+        self.tf = team_fixtures.sort_values(["gw", "fixture_id"])
+        self.window = window
+        self.alpha = alpha
+        self.prior_weight = prior_weight
+        self.league_prior = league_prior
+
+    def _venue_rows(self, venue: str, before_gw: int) -> pd.DataFrame:
+        is_home = venue == "home"
+        return self.tf[(self.tf.was_home == is_home) & (self.tf.gw < before_gw)]
+
+    def league_baseline(self, venue: str, before_gw: int) -> float:
+        rows = self._venue_rows(venue, before_gw)
+        n = len(rows)
+        if n == 0:
+            return float(self.league_prior)
+        raw = float(rows["xg_for"].mean())
+        m = self.prior_weight
+        return (n * raw + m * self.league_prior) / (n + m)
+
+    def rating(self, team_id: int, venue: str, kind: str, before_gw: int) -> float:
+        rows = self._venue_rows(venue, before_gw)
+        rows = rows[rows.team_id == team_id].sort_values(
+            ["gw", "fixture_id"], ascending=False
+        ).head(self.window)
+        col = "xg_for" if kind == "att" else "xg_against"
+        # def_home / att_away both live in "away-goals" units and vice versa:
+        # a team's home defence concedes what opponents score away. The league
+        # baseline for a stream is the mean of the goals-units it's measured in.
+        baseline_venue = venue if kind == "att" else ("away" if venue == "home" else "home")
+        L = self.league_baseline(baseline_venue, before_gw)
+        k = len(rows)
+        if k == 0:
+            return L
+        raw = exp_decay_mean(rows[col].tolist(), alpha=self.alpha)
+        m = self.prior_weight
+        return (k * raw + m * L) / (k + m)
