@@ -96,9 +96,80 @@ The app's expected-points number is now a **real owned model**, not the old `xPt
 - **Roadmap / status:**
   - **Decision layer — SHIPPED (Phase 3):** captain/best-XI/bench optimizer (#31/#32, PR #103), transfer suggestions (#33, PR #105), chip advice (#34, PR #106); Top Picks model ranking (#35, closed). All **advisory** — see the Decision layer section.
   - **Ongoing per-GW capture — SHIPPED (PR #104):** `fpl-ingest?source=history` self-healing daily cron keeps `player_gw_history` fresh through the season (was the v1 fast-follow).
-  - **v2 model (next big lever):** external xG (Understat/FBref), the elaborate factor set, fix the xGI collinearity / regularize, a real minutes-rotation classifier, GBM/ensemble, possibly Approach C (Python serving).
+  - **v2 model — IN PROGRESS, has its own section below** (`## xPts v2 (#107)`): the old lever list here (external xG, factor set, xGI fix, minutes classifier, GBM, Approach C) was decomposed into a designed, issue-tracked arc — see that section for the destination architecture, ship policy, and per-issue status.
   - **Monetization instrumentation (likely Phase 4):** PostHog usage tracking on the now-free decision features → find the "aha" feature → data-driven paywall placement (see Monetization strategy). PostHog also gives feature-flags for the wall + A/B.
-  - Serving-side p-value flooring/calibration (a documented v2 lever).
+  - Serving-side p-value flooring/calibration (a documented v2 lever — now v2.2, see the xPts v2 section).
+
+## xPts v2 (#107) — the decomposed-model arc: decisions, status & gotchas
+
+Designed 2026-07-04 (brainstorm → spec → plans, all committed). **Spec:**
+`docs/superpowers/specs/2026-07-04-xpts-v2-match-engine-design.md` (on `main`); plans alongside in
+`docs/superpowers/plans/2026-07-04-xpts-v2-plan-{1-snapshotter,2-match-engine}.md`. **Issue #107's body is
+the living index** of the whole arc — read it for current status before touching anything v2.
+
+- **Destination (decided, don't relitigate): decomposed match→player architecture** — model the fixture
+  first (dynamic team ratings → expected goals → P(clean sheet)), then the player's share of those events,
+  then convert to points via FPL's actual rules. Delivered **iteratively, each stage gated on the
+  walk-forward backtest** — never big-bang. The v1 direct regression survives as the permanent benchmark
+  (and likely future ensemble member). Path-1-vs-Path-2 was a false final dichotomy.
+- **Ship policy (user decision): HOLD until prospectively validated.** Even if v2.0 passes the backtest
+  gate, **v1 keeps serving**; v2.0 writes a shadow table. Promote after **≥6 evaluated live GWs** iff v2
+  leads v1 on cumulative MAE and is not behind on captaincy. Promotion = **champion/challenger table swap**
+  in `fpl-project` (artifacts trade tables; the dethroned model keeps running as shadow; rollback = swap
+  back). Eval attribution is by `model_version`, never table identity. The `projections` client contract
+  never changes.
+- **Issue map:** v2.0 = #123 snapshotter (**SHIPPED**) · #125 match engine + backtest gate (plan ready,
+  execution-ready) · #128 shadow serving (**blocked by #125's gate verdict**) · #130 eval harness +
+  promotion runbook. v2.1 (**PARKED until v2.0 lands — deliberate; do NOT spec early**) = #126 external xG ·
+  #127 minutes classifier · #131 ownership/set-piece factors (backtestable only ~GW10+ once snapshots
+  accumulate) · #129 event decomposition + **the A→C serving migration** (planned stop, not a surprise).
+  v2.2 (roadmap-only in #107, no issues yet) = Dixon-Coles, GBM stages, quantile calibration, cross-season
+  seeding. #132 = injury-proneness routed to the **decision layer**, not the model.
+- **Snapshotter — SHIPPED (PR #133, squash `200a0d6`, deployed 2026-07-05).** `player_gw_snapshots`
+  (PK `(season,gw,player_id)`, season-scoped, no FK, RLS-no-policies) + `fpl-ingest ?source=snapshot` +
+  6-hourly cron (`15 0,6,12,18 * * *`). Captures the **live-only, unrecoverable** FPL bootstrap fields:
+  `ep_next`/`ep_this` (the honest benchmark v1 never had), ownership, set-piece/penalty order,
+  `news`/`news_added` (injury *type* + timing — added via a v2.1 schema audit; only unbackfillable v2.1
+  need), price/status/chance/transfers. **Freeze semantics:** rows upsert until the GW deadline passes,
+  then are never touched — enforced by **our explicit `deadline <= now` check**, not FPL's `is_next` flip.
+  **Season label derives from the DEADLINE date** (`currentSeasonLabel(deadline)`), never `now()` — a July
+  run capturing August's GW1 must label it 2026/27. Off-season runs no-op (`skipped` in `ingestion_runs` =
+  the HEALTHY signal) → deployed-and-armed weeks before GW1. **#123 stays open** as the GW1 validation
+  tracker (freeze check after the first deadline, ~mid-Aug).
+- **v2.0 match engine (the #125 build):** team match-xG aggregated from our own `player_gw_history`
+  (groupby fixture-team — no external data in v2.0); four venue-split exp-decay rating streams per team,
+  shrunk `(k·raw + m·L)/(k+m)` (promoted teams start league-average); independent-Poisson
+  `λ_for/λ_against` + `p_clean_sheet = exp(−λ)`. v2 features = v1's minus `form_expected_goal_involvements`
+  (the xGI collinearity fix) minus static `opp_strength_*` (superseded; ablation verifies) plus the three
+  match features. **`FEATURE_COLUMNS_V2` order is a serving contract** (guard test exists in the plan);
+  `feature_spec_v2.py` is parallel to the **frozen** v1 `feature_spec.py`; the v2 artifact is
+  **self-describing** (rating hyperparams embedded, so the Deno port reads them from the artifact).
+  **Retrain-recopy invariant grows to FOUR files** (both artifacts + parity fixture → function dir).
+  Gate: beats v1 MAE + not-worse captaincy + coverage 0.50±0.10; report adds ablation
+  (v1 / v1+match / full v2), standalone engine metrics (CS Brier, match-xG MAE vs static baseline), and a
+  **hot-streak diagnostic** (top-decile last-3-GW points, mean signed error — makes the xG-form
+  regression-to-the-mean bet measurable).
+- **Gotchas already learned (spec/plan review + execution):**
+  - `MatchEngine` default args **bind at definition time** — hyperparam grids must pass `rating_params`
+    explicitly; patching module constants silently does nothing.
+  - The league-average Poisson invariant (`λ == L`) is exact **only when raw == prior** — shrinkage pulls
+    ratings off `L` otherwise; the plan's invariant test constructs uniform xG == `LEAGUE_XG_PRIOR`.
+  - Full fpl-ingest suite needs **`deno test --allow-read`** (two pre-existing fixture-reading suites);
+    bare `deno test` shows NotCapable failures that are NOT regressions.
+  - Snapshot `ep_next = 0` can mean **"unparseable at capture time"** (`num()` coercion) — the #130 eval
+    harness must treat 0 with suspicion.
+  - Migration header comments are **immutable once applied** — get cross-references to other cron
+    schedules right pre-merge (bootstrap has been daily 03:00 UTC since `20260625…`; the 02:00 slot is
+    dead).
+  - Subagent execution: a haiku implementer once committed to a typo'd `subabase/` tree against
+    **fabricated lib stubs** (green tests, invalid evidence) — use sonnet+ even for transcription tasks,
+    and treat "created missing libs" in any report as an alarm.
+- **v2.2 needs NOTHING captured now (audited):** every input either persists (history, scores) or is
+  already being frozen by v2.0's infra — the deadline-freeze tables ARE the future calibration dataset.
+- **Execution state / next:** #125's plan is on `main` — cut `feat/xpts-v2-engine` **from `main`** (the
+  plan's Task 1 names a base branch that was merged+deleted). Plan Tasks 1–7 are pure; **Tasks 8–9 need
+  the local Supabase stack with the 2025/26 `player_gw_history` backfill**. #128/#130 get their plans
+  only after #125's gate verdict. Monetization stance unchanged: **v2 deepens premium; it is not the wall.**
 
 ## Decision layer (Phase 3) — shipped, the monetization surface
 
