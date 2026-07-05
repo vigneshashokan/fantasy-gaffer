@@ -3,7 +3,7 @@
 -- unrecoverable (live-only fields), so frequency is the redundancy: one failed
 -- run costs ~6h staleness, not a gameweek. Off-season runs no-op cleanly, so
 -- this deploys now and arms itself when FPL publishes the 2026/27 calendar.
--- :15 offset avoids the 02:00 bootstrap / 03:00 fixtures / 03:30 history jobs.
+-- :15 offset avoids the 03:00 bootstrap+fixtures / 03:30 history / 04:00 project jobs.
 
 alter table public.ingestion_runs
   drop constraint ingestion_runs_source_check,
