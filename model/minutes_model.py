@@ -2,8 +2,8 @@
 
 Two binary logits per position — play = P(minutes >= 1), p60_given_play =
 P(minutes >= 60 | played) — on 8 minutes/starts-derived features. Downstream
-features: p_play and p60 = p_play * p60_given_play. Fitting/prediction and
-the leakage-safe per-GW precompute complete the module in later tasks.
+features: p_play and p60 = p_play * p60_given_play. Feature construction,
+fitting/prediction, and the leakage-safe per-GW precompute are all here.
 """
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ import math
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from statsmodels.tools.sm_exceptions import PerfectSeparationError
 
 from feature_spec import POSITIONS
 from feature_spec_v21 import (
@@ -87,16 +88,22 @@ def _intercept_only(rate: float) -> dict:
 
 def _fit_logit(df: pd.DataFrame, label: str) -> dict:
     """One L1-regularized logit -> {const, <feature>: coef}. Falls back to
-    intercept-only when the subset is too small or single-class (never
-    crashes the walk-forward — spec §2)."""
+    intercept-only when the subset is too small, single-class, or the fit
+    is numerically degenerate (collinear/(near-)perfectly-separated features
+    at the L1-selected active set leave the restricted Hessian singular —
+    statsmodels raises rather than warns there, unlike its unregularized
+    path) — never crashes the walk-forward — spec §2)."""
     y = df[label]
     if len(df) <= len(MINUTES_FEATURE_COLUMNS) + 1 or y.nunique() < 2:
         return _intercept_only(float(y.mean()) if len(df) else 0.5)
     X = sm.add_constant(df[MINUTES_FEATURE_COLUMNS], has_constant="add")
     alpha = np.full(X.shape[1], MINUTES_L1_ALPHA)
     alpha[list(X.columns).index("const")] = 0.0  # never penalize the intercept
-    res = sm.Logit(y, X).fit_regularized(method="l1", alpha=alpha, disp=0,
-                                         maxiter=1000)
+    try:
+        res = sm.Logit(y, X).fit_regularized(method="l1", alpha=alpha, disp=0,
+                                             maxiter=1000)
+    except (np.linalg.LinAlgError, PerfectSeparationError):
+        return _intercept_only(float(y.mean()))
     params = res.params
     entry = {"const": float(params.get("const", 0.0))}
     for c in MINUTES_FEATURE_COLUMNS:
@@ -134,3 +141,45 @@ def predict_minutes(minutes_models: dict, feature_row: dict,
     p_play = _p(m["play"])
     p60 = _clip(p_play * _p(m["p60_given_play"]))
     return (p_play, p60)
+
+
+def _fallback_rates(history_before: pd.DataFrame) -> tuple[float, float]:
+    """Empirical (play rate, 60+|played rate) from raw prior rows; (0.5, 0.5)
+    when empty. Used for GWs whose prior data yields zero training samples."""
+    if len(history_before) == 0:
+        return (0.5, 0.5)
+    played = history_before["minutes"] >= 1
+    p_play = float(played.mean())
+    p60g = (float((history_before.loc[played, "minutes"] >= MINUTES_CUTOFF).mean())
+            if played.any() else 0.5)
+    return (p_play, p60g)
+
+
+def _rate_models(p_play_rate: float, p60g_rate: float) -> dict:
+    return {pos: {"play": _intercept_only(p_play_rate),
+                  "p60_given_play": _intercept_only(p60g_rate)}
+            for pos in POSITIONS}
+
+
+def precompute_minutes_predictions(history: pd.DataFrame) -> pd.DataFrame:
+    """Leakage-safe per-row (p_play, p60): for each GW s ascending, fit the
+    hurdle logits on samples with gw < s and predict every (player, gw=s)
+    with >= 1 prior GW row. A row's prediction never depends on data at
+    gw >= s — using one model per walk-forward step t to featurize its
+    TRAINING rows at s < t would leak row s's own minutes into its own
+    points-model feature (spec §2)."""
+    samples = build_minutes_samples(history)
+    out: list[dict] = []
+    for s in sorted(history["gw"].unique()):
+        train = samples[samples["gw"] < s]
+        if len(train):
+            models = fit_minutes_models(train)
+        else:
+            models = _rate_models(*_fallback_rates(history[history["gw"] < s]))
+        # DGW: both same-GW rows share identical features -> predict once.
+        gw_rows = samples[samples["gw"] == s].drop_duplicates(["player_id"])
+        for _, row in gw_rows.iterrows():
+            p_play, p60 = predict_minutes(models, row, row["position"])
+            out.append({"player_id": int(row["player_id"]), "gw": int(s),
+                        "p_play": p_play, "p60": p60})
+    return pd.DataFrame(out, columns=["player_id", "gw", "p_play", "p60"])

@@ -126,3 +126,45 @@ def test_learned_signal_orders_probabilities():
     lo = {**hi, "start_share_6": 0.1, "start_share_3": 0.1, "mins_share_6": 0.1,
           "p60_share_6": 0.1, "started_last": 0.0, "mins_last": 0.1, "zeros_last_3": 2.0}
     assert predict_minutes(models, hi, "MID")[1] > predict_minutes(models, lo, "MID")[1]
+
+
+from minutes_model import precompute_minutes_predictions
+
+
+def _history_two_players(gws=8):
+    rows = []
+    for pid in (1, 2):
+        for gw in range(1, gws + 1):
+            m = 90 if (gw + pid) % 4 else 0
+            rows.append({"player_id": pid, "gw": gw, "fixture_id": gw * 10 + pid,
+                         "position": "MID", "starts": 1 if m else 0, "minutes": m})
+    return pd.DataFrame(rows)
+
+
+def test_precompute_columns_and_dgw_dedup():
+    h = _history_two_players()
+    dgw = pd.DataFrame([{"player_id": 1, "gw": 8, "fixture_id": 999,
+                         "position": "MID", "starts": 1, "minutes": 45}])
+    preds = precompute_minutes_predictions(pd.concat([h, dgw], ignore_index=True))
+    assert list(preds.columns) == ["player_id", "gw", "p_play", "p60"]
+    assert len(preds[(preds["player_id"] == 1) & (preds["gw"] == 8)]) == 1
+    assert preds["p_play"].between(0, 1).all() and preds["p60"].between(0, 1).all()
+
+
+def test_leakage_guard_future_rows_do_not_change_past_predictions():
+    h = _history_two_players()
+    preds_a = precompute_minutes_predictions(h)
+    mutated = h.copy()
+    mutated.loc[mutated["gw"] >= 5, "minutes"] = 0
+    mutated.loc[mutated["gw"] >= 5, "starts"] = 0
+    preds_b = precompute_minutes_predictions(mutated)
+    a = preds_a[preds_a["gw"] <= 5].reset_index(drop=True)
+    b = preds_b[preds_b["gw"] <= 5].reset_index(drop=True)
+    pd.testing.assert_frame_equal(a, b)
+
+
+def test_earliest_gw_uses_fallback_rates():
+    preds = precompute_minutes_predictions(_history_two_players(gws=3))
+    first = preds[preds["gw"] == 2]
+    assert len(first) == 2
+    assert first["p_play"].between(0, 1).all()
