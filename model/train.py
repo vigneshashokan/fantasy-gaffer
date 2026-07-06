@@ -109,6 +109,39 @@ def train_v2(history: pd.DataFrame) -> dict:
     )
 
 
+def train_v21(history: pd.DataFrame, team_strengths: dict) -> dict:
+    """Fit the v2.1 candidate (#127): v1 features with xmin -> (p_play, p60),
+    plus the self-describing minutes block. Committed but NOT wired into
+    serving (#128 parked pending the gate + prospective validation)."""
+    from feature_spec_v21 import (
+        FEATURE_COLUMNS_V21, MINUTES_CUTOFF, MINUTES_FEATURE_COLUMNS,
+        MINUTES_L1_ALPHA, MINUTES_WINDOW_LONG, MINUTES_WINDOW_SHORT,
+        MODEL_VERSION_V21,
+    )
+    from features_v21 import build_samples_v21
+    from minutes_model import (build_minutes_samples, fit_minutes_models,
+                               precompute_minutes_predictions)
+
+    # Quantile coefs train on leakage-safe (strictly-prior) minutes features —
+    # classic stacking; the SERVED minutes model refits on all rows.
+    preds = precompute_minutes_predictions(history)
+    samples = build_samples_v21(history, team_strengths, preds)
+    minutes_models = fit_minutes_models(build_minutes_samples(history))
+    return fit_models(
+        samples,
+        feature_columns=FEATURE_COLUMNS_V21,
+        model_version=MODEL_VERSION_V21,
+        extra={"minutes": {
+            "cutoff": MINUTES_CUTOFF,
+            "window_long": MINUTES_WINDOW_LONG,
+            "window_short": MINUTES_WINDOW_SHORT,
+            "l1_alpha": MINUTES_L1_ALPHA,
+            "feature_columns": MINUTES_FEATURE_COLUMNS,
+            "models": minutes_models,
+        }},
+    )
+
+
 if __name__ == "__main__":
     import sys
 
@@ -121,6 +154,12 @@ if __name__ == "__main__":
         out = os.path.join(os.path.dirname(__file__), "artifacts", "xpts-v2.json")
         save_artifact(artifact, out)
         print(f"[train] v2: {len(artifact['coefficients'])} position models -> {out}")
+    elif "--v21" in sys.argv:
+        strengths = load_team_strengths()
+        artifact = train_v21(history, strengths)
+        out = os.path.join(os.path.dirname(__file__), "artifacts", "xpts-v21.json")
+        save_artifact(artifact, out)
+        print(f"[train] v21: {len(artifact['coefficients'])} position models -> {out}")
     else:
         strengths = load_team_strengths()
         samples = build_samples(history, strengths)
