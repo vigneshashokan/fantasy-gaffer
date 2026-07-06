@@ -7,11 +7,17 @@ the leakage-safe per-GW precompute complete the module in later tasks.
 """
 from __future__ import annotations
 
-import pandas as pd
+import math
 
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+
+from feature_spec import POSITIONS
 from feature_spec_v21 import (
     MINUTES_CUTOFF,
     MINUTES_FEATURE_COLUMNS,
+    MINUTES_L1_ALPHA,
     MINUTES_WINDOW_LONG,
     MINUTES_WINDOW_SHORT,
 )
@@ -58,3 +64,73 @@ def build_minutes_samples(history: pd.DataFrame) -> pd.DataFrame:
             rows.append(feat)
     cols = MINUTES_FEATURE_COLUMNS + ["player_id", "gw", "position", "played", "sixty"]
     return pd.DataFrame(rows, columns=cols)
+
+
+_P_MIN, _P_MAX = 1e-6, 1.0 - 1e-6
+
+
+def _sigmoid(z: float) -> float:
+    return 1.0 / (1.0 + math.exp(-z))
+
+
+def _clip(p: float) -> float:
+    return min(max(p, _P_MIN), _P_MAX)
+
+
+def _intercept_only(rate: float) -> dict:
+    """Uniform artifact shape: const = logit(clipped rate), all coefs 0."""
+    r = _clip(rate)
+    entry = {"const": math.log(r / (1.0 - r))}
+    entry.update({c: 0.0 for c in MINUTES_FEATURE_COLUMNS})
+    return entry
+
+
+def _fit_logit(df: pd.DataFrame, label: str) -> dict:
+    """One L1-regularized logit -> {const, <feature>: coef}. Falls back to
+    intercept-only when the subset is too small or single-class (never
+    crashes the walk-forward — spec §2)."""
+    y = df[label]
+    if len(df) <= len(MINUTES_FEATURE_COLUMNS) + 1 or y.nunique() < 2:
+        return _intercept_only(float(y.mean()) if len(df) else 0.5)
+    X = sm.add_constant(df[MINUTES_FEATURE_COLUMNS], has_constant="add")
+    alpha = np.full(X.shape[1], MINUTES_L1_ALPHA)
+    alpha[list(X.columns).index("const")] = 0.0  # never penalize the intercept
+    res = sm.Logit(y, X).fit_regularized(method="l1", alpha=alpha, disp=0,
+                                         maxiter=1000)
+    params = res.params
+    entry = {"const": float(params.get("const", 0.0))}
+    for c in MINUTES_FEATURE_COLUMNS:
+        entry[c] = float(params.get(c, 0.0))
+    return entry
+
+
+def fit_minutes_models(samples: pd.DataFrame) -> dict:
+    """Per-position hurdle pair: play on all rows, p60_given_play on the
+    played subset."""
+    models: dict[str, dict] = {}
+    for pos in POSITIONS:
+        pos_df = samples[samples["position"] == pos]
+        played_df = pos_df[pos_df["played"] == 1.0]
+        models[pos] = {
+            "play": _fit_logit(pos_df, "played"),
+            "p60_given_play": _fit_logit(played_df, "sixty"),
+        }
+    return models
+
+
+def predict_minutes(minutes_models: dict, feature_row: dict,
+                    position: str) -> tuple[float, float]:
+    """(p_play, p60) via the hurdle: p60 = p_play * P(60+ | played)."""
+    m = minutes_models.get(position)
+    if m is None:
+        return (0.5, 0.25)
+
+    def _p(entry: dict) -> float:
+        z = entry["const"]
+        for c in MINUTES_FEATURE_COLUMNS:
+            z += entry[c] * float(feature_row[c])
+        return _clip(_sigmoid(z))
+
+    p_play = _p(m["play"])
+    p60 = _clip(p_play * _p(m["p60_given_play"]))
+    return (p_play, p60)

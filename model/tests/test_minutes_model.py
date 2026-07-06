@@ -62,3 +62,67 @@ def test_dgw_rows_share_features_but_carry_own_labels():
     for c in ["start_share_6", "mins_share_6", "n_prior"]:
         assert dgw[c].nunique() == 1          # same prior rows -> same features
     assert sorted(dgw["sixty"]) == [0.0, 1.0]  # per-fixture labels differ
+
+
+import math
+
+from feature_spec_v21 import MINUTES_FEATURE_COLUMNS
+from minutes_model import fit_minutes_models, predict_minutes
+
+
+def test_intercept_only_fallback_single_class():
+    rows = []
+    for i in range(30):
+        feat = {c: 0.5 for c in MINUTES_FEATURE_COLUMNS}
+        feat.update({"player_id": i, "gw": 2, "position": "GKP",
+                     "played": 1.0, "sixty": 1.0})
+        rows.append(feat)
+    models = fit_minutes_models(pd.DataFrame(rows))
+    play = models["GKP"]["play"]
+    assert all(play[c] == 0.0 for c in MINUTES_FEATURE_COLUMNS)
+    p_play, p60 = predict_minutes(models, {c: 0.5 for c in MINUTES_FEATURE_COLUMNS}, "GKP")
+    assert p_play > 0.999 and p60 > 0.999
+
+
+def test_empty_position_gets_default_fallback():
+    # No DEF rows at all -> intercept-only at rate 0.5, never a crash.
+    rows = [{**{c: 0.5 for c in MINUTES_FEATURE_COLUMNS},
+             "player_id": 1, "gw": 2, "position": "MID", "played": 1.0, "sixty": 0.0}]
+    models = fit_minutes_models(pd.DataFrame(rows))
+    p_play, _ = predict_minutes(models, {c: 0.5 for c in MINUTES_FEATURE_COLUMNS}, "DEF")
+    assert p_play == pytest.approx(0.5, abs=1e-3)
+
+
+def test_hurdle_math_and_bounds():
+    entry = {"const": 0.0}
+    entry.update({c: 0.0 for c in MINUTES_FEATURE_COLUMNS})
+    models = {"MID": {"play": {**entry, "const": 1.0},
+                      "p60_given_play": {**entry, "const": -1.0}}}
+    row = {c: 0.0 for c in MINUTES_FEATURE_COLUMNS}
+    p_play, p60 = predict_minutes(models, row, "MID")
+    assert p_play == pytest.approx(1 / (1 + math.exp(-1.0)))
+    assert p60 == pytest.approx(p_play * (1 / (1 + math.exp(1.0))))
+    assert 0.0 < p60 < p_play < 1.0
+
+
+def test_learned_signal_orders_probabilities():
+    rows = []
+    for i in range(60):
+        starter = i % 2 == 0
+        base = 0.9 if starter else 0.1
+        feat = {"start_share_6": base, "start_share_3": base, "mins_share_6": base,
+                "p60_share_6": base, "started_last": 1.0 if starter else 0.0,
+                "mins_last": base, "zeros_last_3": 0.0 if starter else 2.0,
+                "n_prior": 1.0}
+        played = 1.0 if (starter or i % 8 == 1) else 0.0
+        sixty = 1.0 if (starter and i % 10 != 2) else 0.0
+        feat.update({"player_id": i, "gw": 5, "position": "MID",
+                     "played": played, "sixty": sixty})
+        rows.append(feat)
+    models = fit_minutes_models(pd.DataFrame(rows))
+    hi = {"start_share_6": 0.9, "start_share_3": 0.9, "mins_share_6": 0.9,
+          "p60_share_6": 0.9, "started_last": 1.0, "mins_last": 0.9,
+          "zeros_last_3": 0.0, "n_prior": 1.0}
+    lo = {**hi, "start_share_6": 0.1, "start_share_3": 0.1, "mins_share_6": 0.1,
+          "p60_share_6": 0.1, "started_last": 0.0, "mins_last": 0.1, "zeros_last_3": 2.0}
+    assert predict_minutes(models, hi, "MID")[1] > predict_minutes(models, lo, "MID")[1]
