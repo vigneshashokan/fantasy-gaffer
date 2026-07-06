@@ -837,6 +837,8 @@ def test_train_v21_artifact_shape(synthetic_history, synthetic_strengths):
     assert artifact["feature_columns"] == FEATURE_COLUMNS_V21
     minutes = artifact["minutes"]
     assert minutes["cutoff"] == 60
+    assert minutes["window_long"] == 6
+    assert minutes["window_short"] == 3
     assert minutes["l1_alpha"] == 0.1
     assert minutes["feature_columns"] == MINUTES_FEATURE_COLUMNS
     for pos in ("GKP", "DEF", "MID", "FWD"):
