@@ -36,6 +36,36 @@ export interface BackfillOpts {
   delayMs?: number;
 }
 
+export interface FixtureTeams {
+  team_h: number;
+  team_a: number;
+}
+
+/** A row's true team is derived from its own fixture (home side or away side),
+ * never from the player's current club — mid-season transfers otherwise
+ * mislabel every pre-transfer row. Rows whose fixture is unknown are left
+ * unchanged (and counted, so the caller can log). */
+export function remapTeamIds(
+  rows: PlayerGwHistoryRow[],
+  fixtures: Map<number, FixtureTeams>,
+): { remapped: number; unknownFixtures: number } {
+  let remapped = 0;
+  let unknownFixtures = 0;
+  for (const row of rows) {
+    const fx = fixtures.get(row.fixture_id);
+    if (!fx) {
+      unknownFixtures++;
+      continue;
+    }
+    const trueTeam = row.was_home ? fx.team_h : fx.team_a;
+    if (row.team_id !== trueTeam) {
+      row.team_id = trueTeam;
+      remapped++;
+    }
+  }
+  return { remapped, unknownFixtures };
+}
+
 const CHUNK = 500;
 
 export async function runBackfill(
@@ -51,6 +81,14 @@ export async function runBackfill(
   let players = normalizePlayers(boot); // { id, position, team_id, ... }
   if (opts.limit !== undefined) players = players.slice(0, opts.limit);
 
+  const fixturesList = await fetchJson<Array<{ id: number; team_h: number; team_a: number }>>(
+    'https://fantasy.premierleague.com/api/fixtures/',
+    { fetch: deps.fetch },
+  );
+  const fixtureMap = new Map<number, FixtureTeams>(
+    fixturesList.map((f) => [f.id, { team_h: f.team_h, team_a: f.team_a }]),
+  );
+
   const allRows: PlayerGwHistoryRow[] = [];
   let done = 0;
   for (const p of players) {
@@ -65,6 +103,9 @@ export async function runBackfill(
     if (done % 50 === 0) deps.log(`fetched ${done}/${players.length} players, ${allRows.length} rows`);
     if (delayMs > 0) await deps.sleep(delayMs);
   }
+
+  const { remapped, unknownFixtures } = remapTeamIds(allRows, fixtureMap);
+  deps.log(`team_id remap: ${remapped} corrected, ${unknownFixtures} unknown fixtures`);
 
   if (!opts.dryRun) {
     for (let i = 0; i < allRows.length; i += CHUNK) {

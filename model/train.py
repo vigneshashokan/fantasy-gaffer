@@ -23,30 +23,48 @@ def _qkey(q: float) -> str:
     return str(q).rstrip("0").rstrip(".") if "." in str(q) else str(q)
 
 
-def fit_models(samples: pd.DataFrame) -> dict:
+def fit_models(samples: pd.DataFrame, *, feature_columns: list | None = None,
+               model_version: str | None = None, decay_alpha: float | None = None,
+               form_window: int | None = None, scaling: dict | None = None,
+               extra: dict | None = None) -> dict:
+    # Defaults = the frozen v1 contract; v2 passes its own spec explicitly.
+    feature_columns = feature_columns if feature_columns is not None else FEATURE_COLUMNS
+    model_version = model_version if model_version is not None else MODEL_VERSION
+    decay_alpha = decay_alpha if decay_alpha is not None else DECAY_ALPHA
+    form_window = form_window if form_window is not None else FORM_WINDOW
+    scaling = scaling if scaling is not None else {
+        "value_scale": VALUE_SCALE, "strength_scale": STRENGTH_SCALE,
+    }
+
     coefficients: dict[str, dict] = {}
     for pos in POSITIONS:
         pos_df = samples[samples["position"] == pos]
-        if len(pos_df) <= len(FEATURE_COLUMNS) + 1:
+        if len(pos_df) <= len(feature_columns) + 1:
             continue  # too few rows to fit; serving falls back to ep_next
-        X = sm.add_constant(pos_df[FEATURE_COLUMNS], has_constant="add")
+        X = sm.add_constant(pos_df[feature_columns], has_constant="add")
         y = pos_df["target"]
         coefficients[pos] = {}
         for q in QUANTILES:
             res = sm.QuantReg(y, X).fit(q=q)
             params = res.params
             entry = {"const": float(params.get("const", 0.0))}
-            for c in FEATURE_COLUMNS:
+            for c in feature_columns:
                 entry[c] = float(params.get(c, 0.0))
             coefficients[pos][_qkey(q)] = entry
-    return {
-        "model_version": MODEL_VERSION,
-        "feature_columns": FEATURE_COLUMNS,
-        "decay_alpha": DECAY_ALPHA,
-        "form_window": FORM_WINDOW,
-        "scaling": {"value_scale": VALUE_SCALE, "strength_scale": STRENGTH_SCALE},
+    artifact = {
+        "model_version": model_version,
+        "feature_columns": feature_columns,
+        "decay_alpha": decay_alpha,
+        "form_window": form_window,
+        "scaling": scaling,
         "coefficients": coefficients,
     }
+    if extra:
+        overlap = extra.keys() & artifact.keys()
+        if overlap:
+            raise ValueError(f"extra would clobber artifact keys: {sorted(overlap)}")
+        artifact.update(extra)
+    return artifact
 
 
 def predict(artifact: dict, feature_row: dict, position: str, quantile: float) -> float:
@@ -67,15 +85,47 @@ def save_artifact(artifact: dict, path: str) -> None:
         f.write("\n")
 
 
+def train_v2(history: pd.DataFrame) -> dict:
+    """Fit the v2.0 artifact: match-engine features + xGI-free form."""
+    from feature_spec_v2 import (
+        DECAY_ALPHA_V2, FEATURE_COLUMNS_V2, FORM_WINDOW_V2, LEAGUE_XG_PRIOR,
+        MODEL_VERSION_V2, PRIOR_WEIGHT, RATING_ALPHA, RATING_WINDOW, VALUE_SCALE_V2,
+    )
+    from features_v2 import build_samples_v2
+    from match_engine import MatchEngine, build_team_fixtures
+
+    engine = MatchEngine(build_team_fixtures(history))
+    samples = build_samples_v2(history, engine)
+    return fit_models(
+        samples,
+        feature_columns=FEATURE_COLUMNS_V2,
+        model_version=MODEL_VERSION_V2,
+        decay_alpha=DECAY_ALPHA_V2,
+        form_window=FORM_WINDOW_V2,
+        scaling={"value_scale": VALUE_SCALE_V2},
+        extra={"rating": {"window": RATING_WINDOW, "alpha": RATING_ALPHA,
+                          "prior_weight": PRIOR_WEIGHT,
+                          "league_xg_prior": LEAGUE_XG_PRIOR}},
+    )
+
+
 if __name__ == "__main__":
+    import sys
+
     from data import load_history, load_team_strengths
     from features import build_samples
 
     history = load_history()
-    strengths = load_team_strengths()
-    samples = build_samples(history, strengths)
-    artifact = fit_models(samples)
-    out = os.path.join(os.path.dirname(__file__), "artifacts", "xpts-v1.json")
-    save_artifact(artifact, out)
-    print(f"[train] {len(samples)} samples, "
-          f"{len(artifact['coefficients'])} position models -> {out}")
+    if "--v2" in sys.argv:
+        artifact = train_v2(history)
+        out = os.path.join(os.path.dirname(__file__), "artifacts", "xpts-v2.json")
+        save_artifact(artifact, out)
+        print(f"[train] v2: {len(artifact['coefficients'])} position models -> {out}")
+    else:
+        strengths = load_team_strengths()
+        samples = build_samples(history, strengths)
+        artifact = fit_models(samples)
+        out = os.path.join(os.path.dirname(__file__), "artifacts", "xpts-v1.json")
+        save_artifact(artifact, out)
+        print(f"[train] {len(samples)} samples, "
+              f"{len(artifact['coefficients'])} position models -> {out}")

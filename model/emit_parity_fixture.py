@@ -12,8 +12,31 @@ from feature_spec import FEATURE_COLUMNS, MODEL_VERSION, POSITIONS
 from features import build_feature_row
 from train import predict
 
+from feature_spec_v2 import FEATURE_COLUMNS_V2, MODEL_VERSION_V2
+from features_v2 import build_feature_row_v2
+from match_engine import MatchEngine, build_team_fixtures
+
 _ART = os.path.join(os.path.dirname(__file__), "artifacts", "xpts-v1.json")
 _OUT = os.path.join(os.path.dirname(__file__), "artifacts", "parity-fixture.json")
+_ART_V2 = os.path.join(os.path.dirname(__file__), "artifacts", "xpts-v2.json")
+
+# Deterministic synthetic team history: teams 1..4, 4 GWs, asymmetric xG so
+# ratings/lambdas are non-trivial. The Deno port must reproduce every number.
+_TEAM_HISTORY_ROWS = []
+_xg = {(1, True): 1.8, (1, False): 1.1, (2, True): 1.2, (2, False): 0.7,
+       (3, True): 1.5, (3, False): 1.3, (4, True): 0.9, (4, False): 0.6}
+_fixture = 100
+for gw, pairs in enumerate([[(1, 2), (3, 4)], [(2, 3), (4, 1)],
+                            [(1, 3), (2, 4)], [(3, 1), (4, 2)]], start=1):
+    for h, a in pairs:
+        _fixture += 1
+        for team, opp, home in ((h, a, True), (a, h, False)):
+            _TEAM_HISTORY_ROWS.append({
+                "player_id": team * 1000 + _fixture, "fixture_id": _fixture,
+                "gw": gw, "team_id": team, "opponent_team": opp,
+                "was_home": home, "expected_goals": _xg[(team, home)],
+                "goals_scored": 0,
+            })
 
 # One opponent club with distinct home/away strengths so the away/home branch
 # is exercised.
@@ -70,6 +93,39 @@ def _prior(pos: str):
     return pd.DataFrame(position_priors[pos])
 
 
+def build_v2_cases() -> dict:
+    with open(_ART_V2) as f:
+        artifact = json.load(f)
+    team_history = pd.DataFrame(_TEAM_HISTORY_ROWS)
+    engine = MatchEngine(build_team_fixtures(team_history))
+    position_values = {"GKP": 45, "DEF": 50, "MID": 76, "FWD": 86}
+    cases = []
+    for i, pos in enumerate(POSITIONS):
+        if pos not in artifact["coefficients"]:
+            continue
+        prior = _prior(pos)
+        target = pd.Series({
+            "was_home": bool(i % 2), "opponent_team": 3, "team_id": 1,
+            "value": position_values[pos], "gw": 5,
+        })
+        feat = build_feature_row_v2(prior, target, engine)
+        cases.append({
+            "position": pos,
+            "prior_rows": prior.drop(columns=["minutes", "value"]).to_dict(orient="records"),
+            "target": {"was_home": bool(target["was_home"]),
+                       "opponent_team": 3, "team_id": 1, "gw": 5,
+                       "value": int(target["value"])},
+            "expected_features": {c: feat[c] for c in FEATURE_COLUMNS_V2},
+            "expected": {
+                "p25": predict(artifact, feat, pos, 0.25),
+                "p50": predict(artifact, feat, pos, 0.50),
+                "p75": predict(artifact, feat, pos, 0.75),
+            },
+        })
+    return {"model_version": MODEL_VERSION_V2,
+            "team_history": _TEAM_HISTORY_ROWS, "cases": cases}
+
+
 def main() -> None:
     with open(_ART) as f:
         artifact = json.load(f)
@@ -95,7 +151,7 @@ def main() -> None:
                 "p75": predict(artifact, feat, pos, 0.75),
             },
         })
-    out = {"model_version": MODEL_VERSION, "cases": cases}
+    out = {"model_version": MODEL_VERSION, "cases": cases, "v2": build_v2_cases()}
     with open(_OUT, "w") as f:
         json.dump(out, f, indent=2, sort_keys=True)
         f.write("\n")
