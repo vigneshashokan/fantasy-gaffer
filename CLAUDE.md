@@ -96,7 +96,7 @@ The app's expected-points number is now a **real owned model**, not the old `xPt
 - **Roadmap / status:**
   - **Decision layer — SHIPPED (Phase 3):** captain/best-XI/bench optimizer (#31/#32, PR #103), transfer suggestions (#33, PR #105), chip advice (#34, PR #106); Top Picks model ranking (#35, closed). All **advisory** — see the Decision layer section.
   - **Ongoing per-GW capture — SHIPPED (PR #104):** `fpl-ingest?source=history` self-healing daily cron keeps `player_gw_history` fresh through the season (was the v1 fast-follow).
-  - **v2 model — v2.0 COMPLETE (gate FAIL, v1 keeps serving); has its own section below** (`## xPts v2 (#107)`): the old lever list here (external xG, factor set, xGI fix, minutes classifier, GBM, Approach C) was decomposed into a designed, issue-tracked arc — see that section for the destination architecture, ship policy, the v2.0 verdict, and per-issue status.
+  - **v2 model — v2.0 + v2.1-minutes COMPLETE (both gates FAIL, v1 keeps serving; the minutes model itself is validated reusable infra); has its own section below** (`## xPts v2 (#107)`): the old lever list here (external xG, factor set, xGI fix, minutes classifier, GBM, Approach C) was decomposed into a designed, issue-tracked arc — see that section for the destination architecture, ship policy, both gate verdicts, and per-issue status.
   - **Monetization instrumentation (likely Phase 4):** PostHog usage tracking on the now-free decision features → find the "aha" feature → data-driven paywall placement (see Monetization strategy). PostHog also gives feature-flags for the wall + A/B.
   - Serving-side p-value flooring/calibration (a documented v2 lever — now v2.2, see the xPts v2 section).
 
@@ -123,10 +123,16 @@ the living index** of the whole arc — read it for current status before touchi
   verdict bullet) · #128 shadow serving (**PARKED — gate failed**; revives when a v2.1 candidate passes the
   same gate; its Deno-port groundwork — self-describing artifact + parity-fixture v2 block — is already on
   `main`) · #130 eval harness + promotion runbook (**PARKED with #128**; #123 keeps banking the `ep_next`
-  benchmark meanwhile). v2.1 (**now UNPARKED — v2.0 landed**) = #126 external xG · #127 minutes classifier ·
-  #131 ownership/set-piece factors (backtestable only ~GW10+ once snapshots accumulate) · #129 event
-  decomposition + **the A→C serving migration** (planned stop, not a surprise). Each v2.1 issue still needs
-  its own brainstorm→spec; the target to beat is **v1's walk-forward MAE 2.0632 / captaincy 185**. v2.2
+  benchmark meanwhile). v2.1 = #127 minutes classifier (**DONE — merged PR #137 `b6c4e29`, CLOSED, gate
+  verdict ❌ FAIL**, see the v2.1 verdict bullet; the minutes model itself is VALIDATED reusable infra) ·
+  #138 **augment mini-cycle** (v1 + p_play/p60, xmin kept — scored 2.0440 as #127's diagnostic, best MAE
+  tested; needs its own small pre-registered run; cheapest shot at a v1 upgrade) · #126 external xG
+  (**role reframed by #125+#127: design as fuel for the match engine inside #129, NOT features for the
+  linear head**) · #131 ownership/set-piece factors (backtestable only ~GW10+ once snapshots accumulate) ·
+  #129 event decomposition + **the A→C serving migration** (planned stop, not a surprise — now the main
+  event: two pre-built legs exist, see the v2.1 verdict bullet). Remaining v2.1 issues still need their
+  own brainstorm→spec; the target to beat is **v1's walk-forward MAE ~2.063 / captaincy 185** (in-run v1
+  MAE drifts at the 4th dp with live team strengths — see gotchas). v2.2
   (roadmap-only in #107, no issues yet) = Dixon-Coles, GBM stages, quantile calibration, cross-season
   seeding. #132 = injury-proneness routed to the **decision layer**, not the model.
 - **Snapshotter — SHIPPED (PR #133, squash `200a0d6`, deployed 2026-07-05).** `player_gw_snapshots`
@@ -167,6 +173,35 @@ the living index** of the whole arc — read it for current status before touchi
   (NOTE: its grid subsection + expanded verdict are **hand-written inside the generated section** —
   `write_report_v2` truncates at the `<!-- xpts-v2-results -->` marker and would clobber them; re-add if
   regenerated).
+- **v2.1 minutes model (#127) — BUILT + MERGED (PR #137 `b6c4e29`), GATE VERDICT ❌ FAIL (2026-07-06).**
+  The build (all on `main`): per-position **hurdle logits** — `p_play` = P(mins≥1), `p60 = p_play ×
+  P(60+|played)` — on 8 minutes/starts features (L1 `alpha=0.1`, intercept unpenalized, intercept-only
+  fallback on small/single-class/singular fits so the walk-forward NEVER crashes); **leakage-safe
+  strictly-prior precompute** (`precompute_minutes_predictions`: per GW s, fit on `gw<s`, predict s —
+  one cache feeds both training and eval rows, else a row's own minutes leak into its own points
+  feature); `FEATURE_COLUMNS_V21` = v1 minus `xmin` plus `p_play`/`p60` (`feature_spec_v21.py` — order =
+  serving contract); `train.py --v21` → self-describing `model/artifacts/xpts-v21.json` (**committed,
+  NOT wired into serving**); parity-fixture `v21` block + freshness test. Files:
+  `model/{feature_spec_v21,minutes_model,features_v21,backtest_v21}.py`.
+- **The v2.1 verdict & why (n=7373, heuristic xmin≥0.5):** candidate MAE **2.0497 vs v1 2.0629** (beats,
+  −0.64% — a real margin, unlike v2.0's) · **captaincy 172 vs 185 (−13 → gate fails)** · coverage 0.478
+  OK. Load-bearing findings: **(a) the minutes model is VALIDATED standalone** — p60 log-loss **0.2625 vs
+  0.6519** for xmin-as-P(60+), Brier 0.0805 vs 0.1047, calibrated deciles — the signal is real and the
+  component is reusable; **(b) the additive linear head is the wrong integration point** — 25/31 captain
+  picks identical, six flips none positive, two pathological (GW8 captains a **goalkeeper**, Haaland
+  ranked 6th; GW20 captains a `p60=0.41` rotation-risk): `p_play`/`p60` ≈0.9 across the eval population
+  (near-collinear with the intercept → unstable small-sample coefficients) and a weighted sum can only
+  *add* a minutes term, never **gate** output by it — second consecutive cycle (#125, #127) to die at the
+  same head; **(c) the augment diagnostic (xmin KEPT + p_play/p60) scored 2.0440**, beating the
+  pre-registered candidate — pre-registration honored (no post-hoc swap), spun out as **#138**.
+  **Strategy decided from this (user-confirmed 2026-07-06):** the minutes model routes to its
+  **multiplicative consumers** — #129's appearance/CS legs (`p_play + p60`; `p60 × p_clean_sheet`) and
+  potentially the decision layer's availability weighting; recommended order = **#138 mini-cycle
+  (cheap, possible v1 upgrade for season start) → #126 as data infrastructure for the engine → #129
+  decomposition** (its two legs — minutes model + match engine — are now both pre-built). Full analysis:
+  `docs/xpts-model.md` (NOTE: the **captaincy-regression diagnostic subsection is hand-written inside
+  the generated v21 section** — `write_report_v21` truncates at `<!-- xpts-v21-results -->` and would
+  clobber it; re-add if regenerated. Same caveat as the v2 grid subsection).
 - **Gotchas already learned (spec/plan review + execution):**
   - `MatchEngine` default args **bind at definition time** — hyperparam grids must pass `rating_params`
     explicitly; patching module constants silently does nothing.
@@ -207,16 +242,32 @@ the living index** of the whole arc — read it for current status before touchi
     producing expected output ~30s after launch**, and give monitors a **process-exit event**, not just
     log patterns. Walk-forward runtime ≈ 39 min; grids parallelize cleanly via the
     `walk_forward_v2(rating_params=…)` API (3 workers ≈ 4h for 18 configs).
-  - Triaged-for-later minors (address in passing when #126/#131 reopen `model/`): dead `POSITIONS_V2`
-    (v2 paths iterate v1's `POSITIONS`), `grid_v2.py`'s `min()` tie-break can print an arbitrary "BEST"
-    on ties (prefer incumbent defaults), ablation call-sites pass `decay_alpha=None` meaning
-    "use v1 default" not "None".
+  - **The v1 benchmark is not exactly reproducible across runs:** `load_team_strengths()` fetches LIVE
+    bootstrap strengths, which FPL re-tunes — #127's in-run v1 MAE was 2.0629 vs the published 2.0632
+    (captaincy/n/form-baseline reproduced exactly; investigated, bootstrap still 2025/26). Gate
+    comparisons are in-run (both models see identical strengths) so verdicts are unaffected; pinning
+    strengths per season is a future harness lever. Don't chase a 4th-dp v1 drift as a bug.
+  - **DGW rows in minutes diagnostics double-score one shared prediction by design** (`minutes_rows`
+    stay per-fixture; both same-GW rows join the one `(player_id, gw)` prediction) — spec-mandated,
+    gate unaffected; do not mistake for a bug.
+  - v2.1 execution pattern that paid off: per-task review gates caught **three plan-authored defects**
+    (synthetic fixture lacked hurdle label variance → only the fallback path would have been exercised;
+    artifact test skipped 2 of 5 contract values; statsmodels L1 fit raises `LinAlgError` on singular
+    designs → try/except → intercept-only fallback, ratified against spec's never-crash contract). When
+    a brief's own test data feeds a fit, check it produces BOTH label classes per position.
+  - Triaged-for-later minors (address in passing when #138/#126/#129 reopen `model/`): dead
+    `POSITIONS_V2` (v2 paths iterate v1's `POSITIONS`), `grid_v2.py`'s `min()` tie-break can print an
+    arbitrary "BEST" on ties (prefer incumbent defaults), ablation call-sites pass `decay_alpha=None`
+    meaning "use v1 default" not "None", `evaluate_v21` crashes opaquely on empty `minutes_rows`
+    (qcut), raw qcut interval reprs in the calibration table, `_fit_logit` docstring stray paren,
+    `position_values` literal duplicated 3× in `emit_parity_fixture.py`.
 - **v2.2 needs NOTHING captured now (audited):** every input either persists (history, scores) or is
   already being frozen by v2.0's infra — the deadline-freeze tables ARE the future calibration dataset.
-- **Execution state / next: v2.0 is COMPLETE** — snapshotter live+armed (#123 open only for the ~mid-Aug
-  GW1 freeze check) and the engine finding recorded (#125 closed; #128/#130 parked). **Next work in the
-  arc = v2.1 design**: #126 external xG / #127 minutes classifier / #131 factors, each needing its own
-  brainstorm→spec, building on the merged engine + backtest harness, chasing v1's 2.0632/185. v1 keeps
+- **Execution state / next: v2.0 + v2.1-minutes are COMPLETE** — snapshotter live+armed (#123 open only
+  for the ~mid-Aug GW1 freeze check); engine finding recorded (#125 closed); minutes finding recorded
+  (#127 closed — model validated, head indicted); #128/#130 stay parked. **Recommended next order
+  (user-confirmed): #138 augment mini-cycle → #126 (as engine fuel) → #129 decomposition** — #129's two
+  legs (minutes model + match engine) are pre-built; #131 waits for snapshot data (~GW10+). v1 keeps
   serving untouched. Monetization stance unchanged: **v2 deepens premium; it is not the wall.**
 
 ## Decision layer (Phase 3) — shipped, the monetization surface
