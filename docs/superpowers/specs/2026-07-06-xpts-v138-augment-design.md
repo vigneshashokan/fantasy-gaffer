@@ -77,10 +77,13 @@ Two touch points, mirroring the established per-cycle module pattern
   table (v1 / augment / form baseline), captaincy, Spearman, coverage, uncapped MAE, hot-streak,
   gate booleans, verdict line (PASS → "revive #128/#130 for this candidate — prospective
   validation before any promotion"; FAIL → "documented finding; #128 stays parked").
-- `run_gate(history, team_strengths, report_path, dump_path=None) -> dict` — the testable seam:
-  runs `walk_forward_v21`, optionally dumps the per-(player, gw) results frame to `dump_path`
-  as CSV **before** evaluating, then `evaluate_aug` + `write_report_aug`, returns the metrics
-  dict. `__main__` just loads full local data and calls it, printing the one-line summary.
+- `run_gate(history, team_strengths, report_path, dump_path=None, start_gw=8, end_gw=38) ->
+  dict` — the testable seam: runs `walk_forward_v21`, optionally dumps the per-(player, gw)
+  results frame to `dump_path` as CSV — and the per-fixture `minutes_rows` frame alongside it
+  (`*.minutes.csv`; the diagnostic's `p60 < 0.5` pathology check needs the picks' minutes
+  predictions) — **before** evaluating, then `evaluate_aug` + `write_report_aug`, returns the
+  metrics dict. `__main__` just loads full local data and calls it, printing the one-line
+  summary.
   This is a #127 lesson: the captain-flip diagnostic must analyze *the exact run that produced
   the verdict*, not a fresh walk-forward whose live-strengths input may have drifted. The
   runbook passes an absolute path outside the repo.
@@ -97,7 +100,7 @@ built for a mini-cycle.
 
 The per-GW captain-flip diagnostic (the #127 scratch script, `captain_diag.py`, adapted to
 compare `p50_v1` vs `p50_aug` picks) runs **whatever the gate says**, reading the dumped results
-CSV from the gate run (no re-run). If the augment passes captaincy but still produces
++ minutes CSVs from the gate run (no re-run). If the augment passes captaincy but still produces
 GW8-goalkeeper-style pathological picks that merely got lucky, that goes on record before anyone
 considers promotion. Its summary — flip count, per-flip deltas, worst flips, any pathological
 picks (wrong-position captain; captain with `p60 < 0.5`) — is added to the report section as a
