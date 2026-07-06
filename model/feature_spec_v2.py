@@ -12,7 +12,6 @@ MODEL_VERSION_V2 = "v2.0.0"
 FORM_WINDOW_V2 = 6
 DECAY_ALPHA_V2 = 0.85
 QUANTILES_V2 = [0.25, 0.50, 0.75]
-POSITIONS_V2 = ["GKP", "DEF", "MID", "FWD"]
 VALUE_SCALE_V2 = 10.0
 
 # v1 FORM_STATS minus expected_goal_involvements (xGI ≈ xG + xA collinearity

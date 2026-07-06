@@ -25,6 +25,8 @@ _OUT = os.path.join(os.path.dirname(__file__), "artifacts", "parity-fixture.json
 _ART_V2 = os.path.join(os.path.dirname(__file__), "artifacts", "xpts-v2.json")
 _ART_V21 = os.path.join(os.path.dirname(__file__), "artifacts", "xpts-v21.json")
 
+POSITION_VALUES = {"GKP": 45, "DEF": 50, "MID": 76, "FWD": 86}
+
 # Deterministic synthetic team history: teams 1..4, 4 GWs, asymmetric xG so
 # ratings/lambdas are non-trivial. The Deno port must reproduce every number.
 _TEAM_HISTORY_ROWS = []
@@ -129,7 +131,6 @@ def _prior_v21(pos: str) -> pd.DataFrame:
 def build_v21_cases() -> dict:
     with open(_ART_V21) as f:
         artifact = json.load(f)
-    position_values = {"GKP": 45, "DEF": 50, "MID": 76, "FWD": 86}
     cases = []
     for i, pos in enumerate(POSITIONS):
         if pos not in artifact["coefficients"]:
@@ -138,7 +139,7 @@ def build_v21_cases() -> dict:
         mf = build_minutes_feature_row(prior)
         p_play, p60 = predict_minutes(artifact["minutes"]["models"], mf, pos)
         target = pd.Series({"was_home": bool(i % 2), "opponent_team": 5,
-                            "value": position_values[pos]})
+                            "value": POSITION_VALUES[pos]})
         feat = build_feature_row_v21(prior, target, CLUB_STRENGTHS,
                                      {"p_play": p_play, "p60": p60})
         cases.append({
@@ -164,7 +165,6 @@ def build_v2_cases() -> dict:
         artifact = json.load(f)
     team_history = pd.DataFrame(_TEAM_HISTORY_ROWS)
     engine = MatchEngine(build_team_fixtures(team_history))
-    position_values = {"GKP": 45, "DEF": 50, "MID": 76, "FWD": 86}
     cases = []
     for i, pos in enumerate(POSITIONS):
         if pos not in artifact["coefficients"]:
@@ -172,7 +172,7 @@ def build_v2_cases() -> dict:
         prior = _prior(pos)
         target = pd.Series({
             "was_home": bool(i % 2), "opponent_team": 3, "team_id": 1,
-            "value": position_values[pos], "gw": 5,
+            "value": POSITION_VALUES[pos], "gw": 5,
         })
         feat = build_feature_row_v2(prior, target, engine)
         cases.append({
@@ -196,12 +196,11 @@ def main() -> None:
     with open(_ART) as f:
         artifact = json.load(f)
     cases = []
-    position_values = {"GKP": 45, "DEF": 50, "MID": 76, "FWD": 86}
     for i, pos in enumerate(POSITIONS):
         if pos not in artifact["coefficients"]:
             continue
         prior = _prior(pos)
-        target = pd.Series({"was_home": bool(i % 2), "opponent_team": 5, "value": position_values[pos]})
+        target = pd.Series({"was_home": bool(i % 2), "opponent_team": 5, "value": POSITION_VALUES[pos]})
         feat = build_feature_row(prior, target, CLUB_STRENGTHS)
         cases.append({
             "position": pos,

@@ -115,10 +115,13 @@ def evaluate_v21(results: pd.DataFrame, minutes_rows: pd.DataFrame,
     hot = df[df["hot3"] >= hot_cut]
 
     m = minutes_rows
+    if len(m) == 0:
+        raise ValueError("evaluate_v21: minutes_rows is empty — the "
+                         "walk-forward produced no per-fixture minutes rows")
     calibration = []
     dec = pd.qcut(m["p60"], 10, duplicates="drop")
     for interval, g in m.groupby(dec, observed=True):
-        calibration.append({"bucket": str(interval),
+        calibration.append({"bucket": f"{interval.left:.3f}–{interval.right:.3f}",
                             "mean_pred": float(g["p60"].mean()),
                             "observed": float(g["sixty"].mean()),
                             "n": int(len(g))})

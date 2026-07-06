@@ -108,3 +108,19 @@ def test_report_refuses_duplicate_marker(tmp_path):
     path.write_text(f"{REPORT_MARKER}\nx\n{REPORT_MARKER}\ny\n")
     with pytest.raises(ValueError):
         write_report_v21(_metrics_stub(), str(path))
+
+
+def test_evaluate_v21_raises_clearly_on_empty_minutes_rows():
+    empty = pd.DataFrame(columns=["player_id", "gw", "position", "p_play",
+                                  "p60", "xmin", "played", "sixty"])
+    with pytest.raises(ValueError, match="minutes_rows is empty"):
+        evaluate_v21(_mk_results(2.0, 0.25, cap_flip=False), empty)
+
+
+def test_calibration_buckets_are_readable_ranges():
+    m = evaluate_v21(_mk_results(2.0, 0.25, cap_flip=False), _mk_minutes())
+    assert m["minutes"]["calibration"]
+    for b in m["minutes"]["calibration"]:
+        # raw pd.Interval reprs look like "(0.0989, 0.341]" — we want plain
+        # "0.099–0.341" ranges in the report table.
+        assert "(" not in b["bucket"] and "]" not in b["bucket"]

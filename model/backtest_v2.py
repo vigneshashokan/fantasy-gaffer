@@ -57,6 +57,9 @@ def walk_forward_v2(history: pd.DataFrame, team_strengths: dict,
             on=["player_id", "gw"], how="inner",
         )
         art_v1 = fit_models(s_v1)
+        # decay_alpha=None / form_window=None mean "use the v1 defaults"
+        # (fit_models substitutes DECAY_ALPHA / FORM_WINDOW) — NOT "disabled".
+        # scaling={} / extra=None are the v2 spec's explicit choices.
         art_v1m = fit_models(s_v1m, feature_columns=FEATURE_COLUMNS_V1M,
                              model_version="v1m", decay_alpha=None,
                              form_window=None, scaling={}, extra=None)

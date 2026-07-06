@@ -92,7 +92,7 @@ def _fit_logit(df: pd.DataFrame, label: str) -> dict:
     is numerically degenerate (collinear/(near-)perfectly-separated features
     at the L1-selected active set leave the restricted Hessian singular —
     statsmodels raises rather than warns there, unlike its unregularized
-    path) — never crashes the walk-forward — spec §2)."""
+    path) — never crashes the walk-forward — spec §2."""
     y = df[label]
     if len(df) <= len(MINUTES_FEATURE_COLUMNS) + 1 or y.nunique() < 2:
         return _intercept_only(float(y.mean()) if len(df) else 0.5)
