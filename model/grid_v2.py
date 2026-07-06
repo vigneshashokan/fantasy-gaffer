@@ -19,6 +19,10 @@ GRID = {
     "prior_weight": [2, 4],
 }
 
+# The frozen defaults (feature_spec_v2). On (4-dp) MAE ties — observed: all
+# 18 configs tied — BEST must be the incumbent, not min()'s arbitrary pick.
+INCUMBENT = {"window": 10, "alpha": 0.9, "prior_weight": 4}
+
 
 def main() -> None:
     history = load_history()
@@ -32,7 +36,7 @@ def main() -> None:
         m = evaluate_v2(walk_forward_v2(history, strengths, rating_params=combo))
         results.append((combo, m["v2_mae"], m["v2_captaincy"]))
         print(f"[grid] {combo} -> MAE {m['v2_mae']:.4f} cap {m['v2_captaincy']:.0f}")
-    best = min(results, key=lambda r: r[1])
+    best = min(results, key=lambda r: (round(r[1], 4), r[0] != INCUMBENT))
     print(f"[grid] BEST: {best[0]} MAE {best[1]:.4f} cap {best[2]:.0f}")
 
 

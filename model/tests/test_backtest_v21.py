@@ -60,7 +60,8 @@ def test_walk_forward_shapes(synthetic_history, synthetic_strengths):
     results, minutes_rows = walk_forward_v21(
         synthetic_history, synthetic_strengths, start_gw=25, end_gw=28)
     assert not results.empty and not minutes_rows.empty
-    assert {"p50_v1", "p50_aug", "p25", "p50", "p75", "xmin", "hot3"} <= set(results.columns)
+    assert {"p50_v1", "p50_aug", "p25_aug", "p75_aug",
+            "p25", "p50", "p75", "xmin", "hot3"} <= set(results.columns)
     assert {"p_play", "p60", "played", "sixty", "xmin"} <= set(minutes_rows.columns)
     m = evaluate_v21(results, minutes_rows)
     for k in ("passes_gate", "beats_v1_mae", "captaincy_ok", "coverage_ok"):
@@ -107,3 +108,19 @@ def test_report_refuses_duplicate_marker(tmp_path):
     path.write_text(f"{REPORT_MARKER}\nx\n{REPORT_MARKER}\ny\n")
     with pytest.raises(ValueError):
         write_report_v21(_metrics_stub(), str(path))
+
+
+def test_evaluate_v21_raises_clearly_on_empty_minutes_rows():
+    empty = pd.DataFrame(columns=["player_id", "gw", "position", "p_play",
+                                  "p60", "xmin", "played", "sixty"])
+    with pytest.raises(ValueError, match="minutes_rows is empty"):
+        evaluate_v21(_mk_results(2.0, 0.25, cap_flip=False), empty)
+
+
+def test_calibration_buckets_are_readable_ranges():
+    m = evaluate_v21(_mk_results(2.0, 0.25, cap_flip=False), _mk_minutes())
+    assert m["minutes"]["calibration"]
+    for b in m["minutes"]["calibration"]:
+        # raw pd.Interval reprs look like "(0.0989, 0.341]" — we want plain
+        # "0.099–0.341" ranges in the report table.
+        assert "(" not in b["bucket"] and "]" not in b["bucket"]
