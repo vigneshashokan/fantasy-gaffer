@@ -20,8 +20,10 @@ from metrics import (brier, captaincy_points, interval_coverage, log_loss,
 from minutes_model import precompute_minutes_predictions
 from train import fit_models, predict
 
-# Diagnostic variant (c): v1's columns (incl. xmin) + the minutes outputs.
-# NEVER gate-eligible — the pre-registered candidate is FEATURE_COLUMNS_V21.
+# Variant (c): v1's columns (incl. xmin) + the minutes outputs. Diagnostic-only
+# under #127's registration; #138 pre-registers it as its own gate candidate —
+# that gate lives in backtest_aug.py (spec: docs/superpowers/specs/
+# 2026-07-06-xpts-v138-augment-design.md §2).
 FEATURE_COLUMNS_AUG = FEATURE_COLUMNS + ["p_play", "p60"]
 
 REPORT_MARKER = "<!-- xpts-v21-results -->"
@@ -69,7 +71,9 @@ def walk_forward_v21(history: pd.DataFrame, team_strengths: dict,
                 "player_id": pid, "gw": t, "position": pos,
                 "actual": float(target["total_points"]),
                 "p50_v1": predict(art_v1, f1, pos, 0.50),
+                "p25_aug": predict(art_aug, f21, pos, 0.25),
                 "p50_aug": predict(art_aug, f21, pos, 0.50),
+                "p75_aug": predict(art_aug, f21, pos, 0.75),
                 "p25": predict(art_v21, f21, pos, 0.25),
                 "p50": predict(art_v21, f21, pos, 0.50),
                 "p75": predict(art_v21, f21, pos, 0.75),
@@ -87,7 +91,8 @@ def walk_forward_v21(history: pd.DataFrame, team_strengths: dict,
     mdf = pd.DataFrame(minutes_rows)
     if df.empty:
         return df, mdf
-    agg = {"actual": "sum", "p50_v1": "sum", "p50_aug": "sum", "p25": "sum",
+    agg = {"actual": "sum", "p50_v1": "sum", "p25_aug": "sum",
+           "p50_aug": "sum", "p75_aug": "sum", "p25": "sum",
            "p50": "sum", "p75": "sum", "base_form": "sum",
            "position": "first", "xmin": "first", "hot3": "first"}
     return df.groupby(["player_id", "gw"], as_index=False).agg(agg), mdf

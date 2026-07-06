@@ -60,7 +60,8 @@ def test_walk_forward_shapes(synthetic_history, synthetic_strengths):
     results, minutes_rows = walk_forward_v21(
         synthetic_history, synthetic_strengths, start_gw=25, end_gw=28)
     assert not results.empty and not minutes_rows.empty
-    assert {"p50_v1", "p50_aug", "p25", "p50", "p75", "xmin", "hot3"} <= set(results.columns)
+    assert {"p50_v1", "p50_aug", "p25_aug", "p75_aug",
+            "p25", "p50", "p75", "xmin", "hot3"} <= set(results.columns)
     assert {"p_play", "p60", "played", "sixty", "xmin"} <= set(minutes_rows.columns)
     m = evaluate_v21(results, minutes_rows)
     for k in ("passes_gate", "beats_v1_mae", "captaincy_ok", "coverage_ok"):
