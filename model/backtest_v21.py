@@ -1,8 +1,11 @@
 """Walk-forward backtest for xPts v2.1 (#127): v1 benchmark vs the
 pre-registered candidate (xmin -> p_play/p60) vs the augment diagnostic,
-the gate, and the minutes model's standalone quality. Report writer is
-appended in the next task."""
+the gate, and the minutes model's standalone quality. Also the report
+writer (own-marker-scoped) and the __main__ entry point run against the
+full local dataset."""
 from __future__ import annotations
+
+import os
 
 import pandas as pd
 
@@ -147,3 +150,93 @@ def evaluate_v21(results: pd.DataFrame, minutes_rows: pd.DataFrame,
             "base_form_signed_error": float((hot["base_form"] - hot["actual"]).mean()) if len(hot) else 0.0,
         },
     }
+
+
+def _calibration_table(cal: list[dict]) -> str:
+    lines = ["| bucket | mean p60 | observed 60+ rate | n |",
+             "|--------|----------|-------------------|---|"]
+    for b in cal:
+        lines.append(f"| {b['bucket']} | {b['mean_pred']:.3f} "
+                     f"| {b['observed']:.3f} | {b['n']} |")
+    return "\n".join(lines)
+
+
+def write_report_v21(metrics: dict, path: str) -> None:
+    verdict = ("✅ PASS — revive #128/#130 for this candidate (prospective "
+               "validation before any promotion)" if metrics["passes_gate"]
+               else "❌ FAIL — documented finding; #128 stays parked")
+    hs = metrics["hot_streak"]
+    section = f"""{REPORT_MARKER}
+
+# xPts model — v2.1 results (minutes model, #127)
+
+**Model version:** `{MODEL_VERSION_V21}` · gate vs v1 on the same walk-forward
+(2025/26, GW 8→38, eval among heuristic xmin ≥ 0.5; n = {metrics['n_eval']}).
+Spec: `docs/superpowers/specs/2026-07-05-xpts-v21-minutes-model-design.md`.
+
+## Ablation (MAE, lower better)
+
+| variant | MAE |
+|---------|-----|
+| (a) v1 features | {metrics['v1_mae']:.4f} |
+| (b) candidate — xmin → p_play + p60 | {metrics['v21_mae']:.4f} |
+| (c) augment — v1 + p_play + p60 (diagnostic only) | {metrics['aug_mae']:.4f} |
+| exp-decay form baseline | {metrics['base_form_mae']:.4f} |
+
+Captaincy: candidate {metrics['v21_captaincy']:.0f} vs v1 {metrics['v1_captaincy']:.0f}.
+Spearman: candidate {metrics['v21_spearman']:.3f} vs v1 {metrics['v1_spearman']:.3f}.
+Coverage of [p25, p75]: {metrics['coverage']:.3f} (target 0.50 ± 0.10).
+Uncapped population (n = {metrics['uncapped']['n']}): candidate MAE
+{metrics['uncapped']['v21_mae']:.4f} vs v1 {metrics['uncapped']['v1_mae']:.4f}.
+
+## Minutes model standalone (per-fixture eval rows, n = {metrics['minutes']['n']})
+
+| metric | hurdle model (p60) | xmin-as-P(60+) baseline |
+|--------|--------------------|--------------------------|
+| log-loss | {metrics['minutes']['logloss_p60']:.4f} | {metrics['minutes']['logloss_xmin']:.4f} |
+| Brier | {metrics['minutes']['brier_p60']:.4f} | {metrics['minutes']['brier_xmin']:.4f} |
+
+### Calibration (p60 deciles)
+
+{_calibration_table(metrics['minutes']['calibration'])}
+
+## Hot-streak diagnostic (top-decile last-3-GW points; n = {hs['n']})
+
+Mean signed error (pred − actual): candidate {hs['v21_signed_error']:+.3f} ·
+v1 {hs['v1_signed_error']:+.3f} · form baseline {hs['base_form_signed_error']:+.3f}.
+
+## Gate
+
+- candidate beats v1 on MAE: **{metrics['beats_v1_mae']}**
+- candidate captaincy ≥ v1: **{metrics['captaincy_ok']}**
+- Coverage within ±0.10 of 0.50: **{metrics['coverage_ok']}**
+
+**Verdict: {verdict}**
+"""
+    with open(path) as f:
+        content = f.read()
+    if content.count(REPORT_MARKER) > 1:
+        raise ValueError("duplicate xpts-v21 marker in report — refusing to write")
+    if REPORT_MARKER in content:
+        content = content[: content.index(REPORT_MARKER)].rstrip() + "\n"
+    with open(path, "w") as f:
+        f.write(content.rstrip() + "\n\n" + section)
+
+
+if __name__ == "__main__":
+    from data import load_history, load_team_strengths
+
+    history = load_history()
+    strengths = load_team_strengths()
+    results, minutes_rows = walk_forward_v21(history, strengths)
+    metrics = evaluate_v21(results, minutes_rows)
+    out = os.path.normpath(os.path.join(os.path.dirname(__file__), "..",
+                                        "docs", "xpts-model.md"))
+    write_report_v21(metrics, out)
+    print(f"[backtest-v21] n={metrics['n_eval']} v1={metrics['v1_mae']:.4f} "
+          f"aug={metrics['aug_mae']:.4f} v21={metrics['v21_mae']:.4f} "
+          f"cap {metrics['v21_captaincy']:.0f} vs {metrics['v1_captaincy']:.0f} "
+          f"cov={metrics['coverage']:.3f} "
+          f"minutes-ll {metrics['minutes']['logloss_p60']:.4f} vs "
+          f"xmin-ll {metrics['minutes']['logloss_xmin']:.4f} "
+          f"PASS={metrics['passes_gate']}")

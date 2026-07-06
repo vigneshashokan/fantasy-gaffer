@@ -66,3 +66,44 @@ def test_walk_forward_shapes(synthetic_history, synthetic_strengths):
     for k in ("passes_gate", "beats_v1_mae", "captaincy_ok", "coverage_ok"):
         assert isinstance(m[k], bool)
     assert m["minutes"]["n"] == len(minutes_rows)
+
+
+import pytest
+
+from backtest_v21 import REPORT_MARKER, write_report_v21
+
+
+def _metrics_stub() -> dict:
+    return {
+        "n_eval": 100, "v1_mae": 2.0632, "aug_mae": 2.06, "v21_mae": 2.05,
+        "base_form_mae": 2.44, "v1_captaincy": 185.0, "v21_captaincy": 186.0,
+        "v21_spearman": 0.31, "v1_spearman": 0.30, "coverage": 0.49,
+        "beats_v1_mae": True, "captaincy_ok": True, "coverage_ok": True,
+        "passes_gate": True,
+        "uncapped": {"n": 200, "v1_mae": 2.5, "v21_mae": 2.4},
+        "minutes": {"n": 200, "logloss_p60": 0.4, "logloss_xmin": 0.6,
+                    "brier_p60": 0.12, "brier_xmin": 0.2,
+                    "calibration": [{"bucket": "(0.0, 0.5]", "mean_pred": 0.3,
+                                     "observed": 0.28, "n": 100}]},
+        "hot_streak": {"n": 20, "v21_signed_error": -1.0,
+                       "v1_signed_error": -1.1, "base_form_signed_error": 2.0},
+    }
+
+
+def test_report_truncates_only_own_marker(tmp_path):
+    path = tmp_path / "xpts-model.md"
+    prefix = "# v1 stuff\n\nv1 body\n\n<!-- xpts-v2-results -->\n\nv2 body\n"
+    path.write_text(prefix + f"\n{REPORT_MARKER}\n\nOLD v21 section\n")
+    write_report_v21(_metrics_stub(), str(path))
+    content = path.read_text()
+    assert content.startswith(prefix.rstrip() + "\n\n" + REPORT_MARKER)
+    assert content.count(REPORT_MARKER) == 1
+    assert "OLD v21 section" not in content
+    assert "✅ PASS" in content
+
+
+def test_report_refuses_duplicate_marker(tmp_path):
+    path = tmp_path / "xpts-model.md"
+    path.write_text(f"{REPORT_MARKER}\nx\n{REPORT_MARKER}\ny\n")
+    with pytest.raises(ValueError):
+        write_report_v21(_metrics_stub(), str(path))
