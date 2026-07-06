@@ -96,7 +96,7 @@ The app's expected-points number is now a **real owned model**, not the old `xPt
 - **Roadmap / status:**
   - **Decision layer — SHIPPED (Phase 3):** captain/best-XI/bench optimizer (#31/#32, PR #103), transfer suggestions (#33, PR #105), chip advice (#34, PR #106); Top Picks model ranking (#35, closed). All **advisory** — see the Decision layer section.
   - **Ongoing per-GW capture — SHIPPED (PR #104):** `fpl-ingest?source=history` self-healing daily cron keeps `player_gw_history` fresh through the season (was the v1 fast-follow).
-  - **v2 model — v2.0 + v2.1-minutes COMPLETE (both gates FAIL, v1 keeps serving; the minutes model itself is validated reusable infra); has its own section below** (`## xPts v2 (#107)`): the old lever list here (external xG, factor set, xGI fix, minutes classifier, GBM, Approach C) was decomposed into a designed, issue-tracked arc — see that section for the destination architecture, ship policy, both gate verdicts, and per-issue status.
+  - **v2 model — v2.0 + v2.1-minutes + #138-augment COMPLETE (all three gates FAIL, v1 keeps serving; the minutes model itself is validated reusable infra); has its own section below** (`## xPts v2 (#107)`): the old lever list here (external xG, factor set, xGI fix, minutes classifier, GBM, Approach C) was decomposed into a designed, issue-tracked arc — see that section for the destination architecture, ship policy, the gate verdicts, and per-issue status.
   - **Monetization instrumentation (likely Phase 4):** PostHog usage tracking on the now-free decision features → find the "aha" feature → data-driven paywall placement (see Monetization strategy). PostHog also gives feature-flags for the wall + A/B.
   - Serving-side p-value flooring/calibration (a documented v2 lever — now v2.2, see the xPts v2 section).
 
@@ -125,8 +125,8 @@ the living index** of the whole arc — read it for current status before touchi
   `main`) · #130 eval harness + promotion runbook (**PARKED with #128**; #123 keeps banking the `ep_next`
   benchmark meanwhile). v2.1 = #127 minutes classifier (**DONE — merged PR #137 `b6c4e29`, CLOSED, gate
   verdict ❌ FAIL**, see the v2.1 verdict bullet; the minutes model itself is VALIDATED reusable infra) ·
-  #138 **augment mini-cycle** (v1 + p_play/p60, xmin kept — scored 2.0440 as #127's diagnostic, best MAE
-  tested; needs its own small pre-registered run; cheapest shot at a v1 upgrade) · #126 external xG
+  #138 **augment mini-cycle** (**DONE — merged `e470f1d`/PR #140, CLOSED, gate verdict ❌ FAIL**, see the
+  #138 verdict bullet; the cheap v1-upgrade lever is now exhausted) · #126 external xG
   (**role reframed by #125+#127: design as fuel for the match engine inside #129, NOT features for the
   linear head**) · #131 ownership/set-piece factors (backtestable only ~GW10+ once snapshots accumulate) ·
   #129 event decomposition + **the A→C serving migration** (planned stop, not a surprise — now the main
@@ -193,7 +193,8 @@ the living index** of the whole arc — read it for current status before touchi
   (near-collinear with the intercept → unstable small-sample coefficients) and a weighted sum can only
   *add* a minutes term, never **gate** output by it — second consecutive cycle (#125, #127) to die at the
   same head; **(c) the augment diagnostic (xmin KEPT + p_play/p60) scored 2.0440**, beating the
-  pre-registered candidate — pre-registration honored (no post-hoc swap), spun out as **#138**.
+  pre-registered candidate — pre-registration honored (no post-hoc swap), spun out as **#138**
+  (since run: gate ❌ FAIL — see the #138 verdict bullet).
   **Strategy decided from this (user-confirmed 2026-07-06):** the minutes model routes to its
   **multiplicative consumers** — #129's appearance/CS legs (`p_play + p60`; `p60 × p_clean_sheet`) and
   potentially the decision layer's availability weighting; recommended order = **#138 mini-cycle
@@ -202,6 +203,24 @@ the living index** of the whole arc — read it for current status before touchi
   `docs/xpts-model.md` (NOTE: the **captaincy-regression diagnostic subsection is hand-written inside
   the generated v21 section** — `write_report_v21` truncates at `<!-- xpts-v21-results -->` and would
   clobber it; re-add if regenerated. Same caveat as the v2 grid subsection).
+- **#138 augment mini-cycle — RUN + MERGED (`e470f1d`/PR #140), GATE VERDICT ❌ FAIL (2026-07-06).**
+  The pre-registered run of the augment candidate (v1's full set **including xmin** + p_play/p60):
+  MAE **2.0440 vs v1 2.0629** (beats — best MAE ever tested, reproduces #127's diagnostic exactly) ·
+  **captaincy 171 vs 185 (−14 → gate fails**, marginally worse than #127's replace-candidate's 172) ·
+  coverage 0.485 OK. Captain-flip diagnostic: 27/31 identical, 4 flips none positive; keeping xmin
+  **softened but did not cure** the pathology — no GKP captain this time, but **GW20 again captains the
+  `p60=0.41` Calvert-Lewin** (the identical #127 pick) and GW8 dethrones Haaland (+13) for Semenyo (+4).
+  **Third consecutive cycle (#125/#127/#138) to die at the additive linear head — the cheap v1-upgrade
+  lever is exhausted; the minutes signal's value is confirmed to live in multiplicative integration
+  (#129's legs + decision-layer availability).** Build shipped: `model/backtest_aug.py` (gate module
+  under its own `<!-- xpts-v138-results -->` marker; `run_gate` dumps results+minutes CSVs BEFORE
+  evaluating so diagnostics analyze the exact gate run — a #127 lesson codified), `walk_forward_v21`
+  now emits `p25_aug`/`p75_aug`, and the **7-item triaged-minors batch landed** (parity-verified
+  byte-neutral). Full analysis: `docs/xpts-model.md` (NOTE: the **captain-flip subsection is
+  hand-written inside the generated #138 section** — `write_report_aug` truncates at its marker;
+  re-add if regenerated. Also: each report writer truncates from its own marker to EOF, so re-running
+  an EARLIER cycle's writer deletes every later section — never run `backtest_v2.py`/`backtest_v21.py`
+  as `__main__`).
 - **Gotchas already learned (spec/plan review + execution):**
   - `MatchEngine` default args **bind at definition time** — hyperparam grids must pass `rating_params`
     explicitly; patching module constants silently does nothing.
@@ -255,20 +274,24 @@ the living index** of the whole arc — read it for current status before touchi
     artifact test skipped 2 of 5 contract values; statsmodels L1 fit raises `LinAlgError` on singular
     designs → try/except → intercept-only fallback, ratified against spec's never-crash contract). When
     a brief's own test data feeds a fit, check it produces BOTH label classes per position.
-  - Triaged-for-later minors (address in passing when #138/#126/#129 reopen `model/`): dead
-    `POSITIONS_V2` (v2 paths iterate v1's `POSITIONS`), `grid_v2.py`'s `min()` tie-break can print an
-    arbitrary "BEST" on ties (prefer incumbent defaults), ablation call-sites pass `decay_alpha=None`
-    meaning "use v1 default" not "None", `evaluate_v21` crashes opaquely on empty `minutes_rows`
-    (qcut), raw qcut interval reprs in the calibration table, `_fit_logit` docstring stray paren,
-    `position_values` literal duplicated 3× in `emit_parity_fixture.py`.
+  - The #125/#127 triaged-minors batch (7 items) **landed in #138's PR #140** — the parked list is
+    cleared. New triaged-for-later minors from #140's final review (address when #126/#129 reopen
+    `model/`): add a non-flaky aggregate quantile-ordering assert to the walk-forward shapes test
+    (`results["p25_aug"].mean() < results["p75_aug"].mean()` — per-row monotonicity is flaky by design
+    under raw QuantReg crossing; a 0.25↔0.75 arg swap currently only self-detects via the gate's
+    coverage check), `grid_v2.py`'s 4-dp `round()` tie-break means a 5th-decimal-better config loses
+    to the incumbent (declared in comment, acceptable), `evaluate_aug` lacks `evaluate_v21`'s
+    empty-frame guard (unreachable in real use).
 - **v2.2 needs NOTHING captured now (audited):** every input either persists (history, scores) or is
   already being frozen by v2.0's infra — the deadline-freeze tables ARE the future calibration dataset.
-- **Execution state / next: v2.0 + v2.1-minutes are COMPLETE** — snapshotter live+armed (#123 open only
-  for the ~mid-Aug GW1 freeze check); engine finding recorded (#125 closed); minutes finding recorded
-  (#127 closed — model validated, head indicted); #128/#130 stay parked. **Recommended next order
-  (user-confirmed): #138 augment mini-cycle → #126 (as engine fuel) → #129 decomposition** — #129's two
-  legs (minutes model + match engine) are pre-built; #131 waits for snapshot data (~GW10+). v1 keeps
-  serving untouched. Monetization stance unchanged: **v2 deepens premium; it is not the wall.**
+- **Execution state / next: v2.0 + v2.1-minutes + #138-augment are COMPLETE (all three gates FAIL)** —
+  snapshotter live+armed (#123 open only for the ~mid-Aug GW1 freeze check); findings recorded on #125,
+  #127, #138 (all closed); #128/#130 stay parked (revival now requires a #129/#131-class candidate to
+  pass the gate). **Recommended next order: #126 (as engine fuel/data infrastructure) → #129
+  decomposition** — #129 is the main event and the only remaining path with a plausible gate-pass;
+  its two hard legs (minutes model + match engine) are pre-built and validated; #131 waits for
+  snapshot data (~GW10+). v1 keeps serving untouched. Monetization stance unchanged: **v2 deepens
+  premium; it is not the wall.**
 
 ## Decision layer (Phase 3) — shipped, the monetization surface
 
