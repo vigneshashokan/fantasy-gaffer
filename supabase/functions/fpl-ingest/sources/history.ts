@@ -28,6 +28,12 @@ export interface ElementSummaryHistoryRow {
   creativity: string;
   threat: string;
   defensive_contribution: number;
+  saves: number;
+  penalties_saved: number;
+  penalties_missed: number;
+  yellow_cards: number;
+  red_cards: number;
+  own_goals: number;
   value: number;
 }
 
@@ -62,6 +68,12 @@ export interface PlayerGwHistoryRow {
   creativity: number;
   threat: number;
   defensive_contribution: number;
+  saves: number;
+  penalties_saved: number;
+  penalties_missed: number;
+  yellow_cards: number;
+  red_cards: number;
+  own_goals: number;
   value: number;
 }
 
@@ -102,6 +114,12 @@ export function normalizeHistory(
     creativity: num(r.creativity),
     threat: num(r.threat),
     defensive_contribution: r.defensive_contribution,
+    saves: r.saves,
+    penalties_saved: r.penalties_saved,
+    penalties_missed: r.penalties_missed,
+    yellow_cards: r.yellow_cards,
+    red_cards: r.red_cards,
+    own_goals: r.own_goals,
     value: r.value,
   }));
 }
@@ -143,6 +161,12 @@ export interface LiveElementStats {
   threat: string;
   ict_index: string;
   defensive_contribution: number;
+  saves: number;
+  penalties_saved: number;
+  penalties_missed: number;
+  yellow_cards: number;
+  red_cards: number;
+  own_goals: number;
 }
 
 export interface LiveElement {
@@ -227,6 +251,12 @@ export function liveToHistoryRows(
       creativity: num(s.creativity),
       threat: num(s.threat),
       defensive_contribution: s.defensive_contribution,
+      saves: s.saves,
+      penalties_saved: s.penalties_saved,
+      penalties_missed: s.penalties_missed,
+      yellow_cards: s.yellow_cards,
+      red_cards: s.red_cards,
+      own_goals: s.own_goals,
       value: meta.now_cost,
     });
   }

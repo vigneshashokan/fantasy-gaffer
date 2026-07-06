@@ -29,6 +29,12 @@ const ROWS: ElementSummaryHistoryRow[] = [
     creativity: '0.0',
     threat: '0.0',
     defensive_contribution: 0,
+    saves: 0,
+    penalties_saved: 0,
+    penalties_missed: 0,
+    yellow_cards: 0,
+    red_cards: 0,
+    own_goals: 0,
     value: 55,
   },
   {
@@ -55,6 +61,12 @@ const ROWS: ElementSummaryHistoryRow[] = [
     creativity: '28.1',
     threat: '41.0',
     defensive_contribution: 2,
+    saves: 3,
+    penalties_saved: 1,
+    penalties_missed: 0,
+    yellow_cards: 1,
+    red_cards: 0,
+    own_goals: 0,
     value: 56,
   },
 ];
@@ -93,4 +105,15 @@ Deno.test('normalizeHistory passes through integer stat fields', () => {
   assertEquals(gw2.bps, 42);
   assertEquals(gw2.defensive_contribution, 2);
   assertEquals(gw2.value, 56);
+});
+
+Deno.test('normalizeHistory passes through the points-component fields', () => {
+  const out = normalizeHistory('2025/26', { position: 'MID', teamId: 12 }, ROWS);
+  const gw2 = out[1];
+  assertEquals(gw2.saves, 3);
+  assertEquals(gw2.penalties_saved, 1);
+  assertEquals(gw2.penalties_missed, 0);
+  assertEquals(gw2.yellow_cards, 1);
+  assertEquals(gw2.red_cards, 0);
+  assertEquals(gw2.own_goals, 0);
 });

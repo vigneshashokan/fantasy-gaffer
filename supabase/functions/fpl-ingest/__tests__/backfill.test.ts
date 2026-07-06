@@ -120,6 +120,12 @@ function historyRow(over: Partial<PlayerGwHistoryRow> = {}): PlayerGwHistoryRow 
     creativity: 8,
     threat: 12,
     defensive_contribution: 1,
+    saves: 0,
+    penalties_saved: 0,
+    penalties_missed: 0,
+    yellow_cards: 0,
+    red_cards: 0,
+    own_goals: 0,
     value: 50,
     ...over,
   };

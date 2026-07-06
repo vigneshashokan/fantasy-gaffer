@@ -2,5 +2,7 @@
 __pycache__/
 *.pyc
 .env
-data/
+# scratch data stays ignored, but committed season snapshots are re-included
+data/*
+!data/player_gw_history_2025-26.csv.gz
 .pytest_cache/
