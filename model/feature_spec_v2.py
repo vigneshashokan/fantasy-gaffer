@@ -28,8 +28,10 @@ FORM_STATS_V2 = [
     "total_points",
 ]
 
-# Match-engine rating hyperparams. Initial values; Task 9's grid selection
-# freezes the final ones (walk-forward MAE) and re-records them here.
+# Match-engine rating hyperparams — frozen by the Task 9 grid (#125). All 18
+# configs (window 6/10/19 x alpha 0.8/0.9/1.0 x prior_weight 2/4) tied at
+# walk-forward MAE 2.0614 / captaincy 184: the linear quantile head absorbs
+# near-affine rating rescalings, so the grid is flat and the defaults stand.
 RATING_WINDOW = 10   # venue-specific matches per rating stream
 RATING_ALPHA = 0.9   # exp-decay base across those matches (most-recent-first)
 PRIOR_WEIGHT = 4     # shrinkage: rating = (k*raw + m*L) / (k + m), m = this
