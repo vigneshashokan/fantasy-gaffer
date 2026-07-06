@@ -114,3 +114,61 @@ engine does not beat FPL's static strengths (xG MAE 0.600 vs 0.593, CS Brier
 *signal* might — external xG (#126), a minutes model (#127), and the v2.1
 factor set (#131) are the designed next levers. #128 (shadow serving) must NOT
 proceed on this artifact per the ship policy.
+
+<!-- xpts-v21-results -->
+
+# xPts model — v2.1 results (minutes model, #127)
+
+**Model version:** `v2.1.0` · gate vs v1 on the same walk-forward
+(2025/26, GW 8→38, eval among heuristic xmin ≥ 0.5; n = 7373).
+Spec: `docs/superpowers/specs/2026-07-05-xpts-v21-minutes-model-design.md`.
+
+## Ablation (MAE, lower better)
+
+| variant | MAE |
+|---------|-----|
+| (a) v1 features | 2.0629 |
+| (b) candidate — xmin → p_play + p60 | 2.0497 |
+| (c) augment — v1 + p_play + p60 (diagnostic only) | 2.0440 |
+| exp-decay form baseline | 2.4439 |
+
+Captaincy: candidate 172 vs v1 185.
+Spearman: candidate 0.313 vs v1 0.302.
+Coverage of [p25, p75]: 0.478 (target 0.50 ± 0.10).
+Uncapped population (n = 24167): candidate MAE
+0.8848 vs v1 0.8927.
+
+## Minutes model standalone (per-fixture eval rows, n = 24575)
+
+| metric | hurdle model (p60) | xmin-as-P(60+) baseline |
+|--------|--------------------|--------------------------|
+| log-loss | 0.2625 | 0.6519 |
+| Brier | 0.0805 | 0.1047 |
+
+### Calibration (p60 deciles)
+
+| bucket | mean p60 | observed 60+ rate | n |
+|--------|----------|-------------------|---|
+| (-0.0009975000000000001, 0.00913] | 0.007 | 0.004 | 2536 |
+| (0.00913, 0.0118] | 0.011 | 0.006 | 2552 |
+| (0.0118, 0.0146] | 0.013 | 0.009 | 2344 |
+| (0.0146, 0.0267] | 0.019 | 0.014 | 2465 |
+| (0.0267, 0.0299] | 0.029 | 0.013 | 2537 |
+| (0.0299, 0.0924] | 0.052 | 0.087 | 2311 |
+| (0.0924, 0.341] | 0.198 | 0.241 | 2457 |
+| (0.341, 0.717] | 0.546 | 0.541 | 2458 |
+| (0.717, 0.879] | 0.815 | 0.786 | 2458 |
+| (0.879, 0.995] | 0.908 | 0.896 | 2457 |
+
+## Hot-streak diagnostic (top-decile last-3-GW points; n = 881)
+
+Mean signed error (pred − actual): candidate -1.096 ·
+v1 -1.103 · form baseline +2.017.
+
+## Gate
+
+- candidate beats v1 on MAE: **True**
+- candidate captaincy ≥ v1: **False**
+- Coverage within ±0.10 of 0.50: **True**
+
+**Verdict: ❌ FAIL — documented finding; #128 stays parked**
