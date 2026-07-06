@@ -1,5 +1,6 @@
 """Shared deterministic fixtures for v2.1 tests: 8 players (2 per position)
-x 30 GWs with rotation patterns and within-position stat variation. No RNG."""
+x 30 GWs with rotation patterns and within-position stat variation, giving every
+position both hurdle label classes (rotation benching + sub-60 cameos). No RNG."""
 import pandas as pd
 import pytest
 
@@ -10,10 +11,10 @@ def synthetic_history() -> pd.DataFrame:
     positions = ["GKP", "DEF", "MID", "FWD"]
     for pid in range(1, 9):
         pos = positions[(pid - 1) % 4]
-        rotated = pid in (3, 7)
+        rotated = pid in (3, 4, 5, 6)
         for gw in range(1, 31):
             benched = rotated and gw % 5 == 0
-            minutes = 0 if benched else (90 if (gw + pid) % 3 else 62)
+            minutes = 0 if benched else (90 if (gw + pid) % 3 else (62 if gw % 2 else 25))
             rows.append({
                 "player_id": pid, "gw": gw, "fixture_id": gw * 100 + pid,
                 "position": pos, "was_home": (gw + pid) % 2 == 0,
