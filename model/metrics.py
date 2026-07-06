@@ -36,3 +36,13 @@ def interval_coverage(df: pd.DataFrame, lo_col: str, hi_col: str, actual_col: st
         return 0.0
     inside = (df[actual_col] >= df[lo_col]) & (df[actual_col] <= df[hi_col])
     return float(inside.mean())
+
+
+def log_loss(pred: pd.Series, outcome: pd.Series) -> float:
+    p = np.clip(np.asarray(pred, float), 1e-6, 1 - 1e-6)
+    y = np.asarray(outcome, float)
+    return float(-np.mean(y * np.log(p) + (1 - y) * np.log(1 - p)))
+
+
+def brier(pred: pd.Series, outcome: pd.Series) -> float:
+    return float(np.mean((np.asarray(pred, float) - np.asarray(outcome, float)) ** 2))

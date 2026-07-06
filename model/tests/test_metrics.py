@@ -64,3 +64,20 @@ def test_captaincy_points_empty_dataframe_returns_zero():
 def test_interval_coverage_empty_dataframe_returns_zero():
     df = pd.DataFrame(columns=["p25", "p75", "actual"])
     assert interval_coverage(df, "p25", "p75") == pytest.approx(0.0)
+
+
+from metrics import brier, log_loss
+
+
+def test_log_loss_clips_and_scores():
+    import pandas as pd
+    perfect = log_loss(pd.Series([1.0, 0.0]), pd.Series([1.0, 0.0]))
+    assert perfect < 1e-4                      # clipped, not -inf
+    bad = log_loss(pd.Series([0.0, 1.0]), pd.Series([1.0, 0.0]))
+    assert bad > perfect
+
+
+def test_brier():
+    import pandas as pd
+    assert brier(pd.Series([1.0, 0.0]), pd.Series([1.0, 0.0])) == 0.0
+    assert brier(pd.Series([0.5, 0.5]), pd.Series([1.0, 0.0])) == 0.25
