@@ -186,7 +186,9 @@ The artifact is **self-describing**: quantile coefficients (per position ×
 quantile over `FEATURE_COLUMNS_V21`) plus a `minutes` block — per-position
 `{play: {coef, intercept}, p60_given_play: {coef, intercept}}` over
 `MINUTES_FEATURE_COLUMNS`, with the cutoff/window constants embedded.
-Intercept-only fallbacks serialize as empty `coef` + the constant rate.
+Intercept-only fallbacks serialize in the SAME shape as fitted models —
+`const = logit(clipped rate)`, all feature coefficients `0.0` — so the
+predict path has no special case.
 
 **The v2.1 artifact is committed but NOT wired into serving** — same posture
 as `xpts-v2.json`. The four-file retrain-recopy invariant activates only if
