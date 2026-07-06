@@ -680,5 +680,418 @@
         "was_home": false
       }
     ]
+  },
+  "v21": {
+    "cases": [
+      {
+        "club_strengths": {
+          "5": {
+            "strength_attack_away": 1000,
+            "strength_attack_home": 1100,
+            "strength_defence_away": 1300,
+            "strength_defence_home": 1200
+          }
+        },
+        "expected": {
+          "p25": 0.787758841686604,
+          "p50": 0.8992121224515217,
+          "p75": 2.2392229058911903
+        },
+        "expected_features": {
+          "form_bps": 12.473275024295432,
+          "form_creativity": 0.6608357628765792,
+          "form_defensive_contribution": 0.0,
+          "form_expected_assists": 0.0,
+          "form_expected_goal_involvements": 0.0,
+          "form_expected_goals": 0.0,
+          "form_influence": 12.621963070942662,
+          "form_threat": 0.0,
+          "form_total_points": 2.5442176870748296,
+          "opp_strength_att": 1.1,
+          "opp_strength_def": 1.2,
+          "p60": 0.1596463188931144,
+          "p_play": 0.16179619662687894,
+          "value_scaled": 4.5,
+          "was_home": 0.0
+        },
+        "expected_minutes": {
+          "p60": 0.1596463188931144,
+          "p_play": 0.16179619662687894
+        },
+        "expected_minutes_features": {
+          "mins_last": 0.0,
+          "mins_share_6": 0.6666666666666666,
+          "n_prior": 0.5,
+          "p60_share_6": 0.6666666666666666,
+          "start_share_3": 0.6666666666666666,
+          "start_share_6": 0.6666666666666666,
+          "started_last": 0.0,
+          "zeros_last_3": 1.0
+        },
+        "position": "GKP",
+        "prior_rows": [
+          {
+            "bps": 15,
+            "creativity": 0.0,
+            "defensive_contribution": 0,
+            "expected_assists": 0.0,
+            "expected_goal_involvements": 0.0,
+            "expected_goals": 0.0,
+            "fixture_id": 10,
+            "gw": 1,
+            "influence": 12.0,
+            "minutes": 90,
+            "starts": 1,
+            "threat": 0.0,
+            "total_points": 2,
+            "value": 45
+          },
+          {
+            "bps": 25,
+            "creativity": 2.0,
+            "defensive_contribution": 0,
+            "expected_assists": 0.0,
+            "expected_goal_involvements": 0.0,
+            "expected_goals": 0.0,
+            "fixture_id": 20,
+            "gw": 2,
+            "influence": 28.0,
+            "minutes": 90,
+            "starts": 1,
+            "threat": 0.0,
+            "total_points": 6,
+            "value": 45
+          },
+          {
+            "bps": 0,
+            "creativity": 0.0,
+            "defensive_contribution": 0,
+            "expected_assists": 0.0,
+            "expected_goal_involvements": 0.0,
+            "expected_goals": 0.0,
+            "fixture_id": 30,
+            "gw": 3,
+            "influence": 0.0,
+            "minutes": 0,
+            "starts": 0,
+            "threat": 0.0,
+            "total_points": 0,
+            "value": 45
+          }
+        ],
+        "target": {
+          "opponent_team": 5,
+          "value": 45,
+          "was_home": false
+        }
+      },
+      {
+        "club_strengths": {
+          "5": {
+            "strength_attack_away": 1000,
+            "strength_attack_home": 1100,
+            "strength_defence_away": 1300,
+            "strength_defence_home": 1200
+          }
+        },
+        "expected": {
+          "p25": 0.3623017541442185,
+          "p50": 1.0412705297959837,
+          "p75": 2.9766924850080656
+        },
+        "expected_features": {
+          "form_bps": 14.30709426627794,
+          "form_creativity": 9.978620019436345,
+          "form_defensive_contribution": 5.551020408163265,
+          "form_expected_assists": 0.04708454810495627,
+          "form_expected_goal_involvements": 0.06922254616132167,
+          "form_expected_goals": 0.0221379980563654,
+          "form_influence": 14.96793002915452,
+          "form_threat": 6.2118561710398446,
+          "form_total_points": 2.8746355685131193,
+          "opp_strength_att": 1.0,
+          "opp_strength_def": 1.3,
+          "p60": 0.20932057553911437,
+          "p_play": 0.3288894191643511,
+          "value_scaled": 5.0,
+          "was_home": 1.0
+        },
+        "expected_minutes": {
+          "p60": 0.20932057553911437,
+          "p_play": 0.3288894191643511
+        },
+        "expected_minutes_features": {
+          "mins_last": 0.0,
+          "mins_share_6": 0.6666666666666666,
+          "n_prior": 0.5,
+          "p60_share_6": 0.6666666666666666,
+          "start_share_3": 0.6666666666666666,
+          "start_share_6": 0.6666666666666666,
+          "started_last": 0.0,
+          "zeros_last_3": 1.0
+        },
+        "position": "DEF",
+        "prior_rows": [
+          {
+            "bps": 18,
+            "creativity": 12.0,
+            "defensive_contribution": 8,
+            "expected_assists": 0.05,
+            "expected_goal_involvements": 0.07,
+            "expected_goals": 0.02,
+            "fixture_id": 10,
+            "gw": 1,
+            "influence": 18.0,
+            "minutes": 90,
+            "starts": 1,
+            "threat": 8.0,
+            "total_points": 2,
+            "value": 50
+          },
+          {
+            "bps": 28,
+            "creativity": 20.0,
+            "defensive_contribution": 10,
+            "expected_assists": 0.1,
+            "expected_goal_involvements": 0.15,
+            "expected_goals": 0.05,
+            "fixture_id": 20,
+            "gw": 2,
+            "influence": 30.0,
+            "minutes": 90,
+            "starts": 1,
+            "threat": 12.0,
+            "total_points": 7,
+            "value": 50
+          },
+          {
+            "bps": 0,
+            "creativity": 0.0,
+            "defensive_contribution": 0,
+            "expected_assists": 0.0,
+            "expected_goal_involvements": 0.0,
+            "expected_goals": 0.0,
+            "fixture_id": 30,
+            "gw": 3,
+            "influence": 0.0,
+            "minutes": 0,
+            "starts": 0,
+            "threat": 0.0,
+            "total_points": 0,
+            "value": 50
+          }
+        ],
+        "target": {
+          "opponent_team": 5,
+          "value": 50,
+          "was_home": true
+        }
+      },
+      {
+        "club_strengths": {
+          "5": {
+            "strength_attack_away": 1000,
+            "strength_attack_home": 1100,
+            "strength_defence_away": 1300,
+            "strength_defence_home": 1200
+          }
+        },
+        "expected": {
+          "p25": 1.1410871086130103,
+          "p50": 2.059766944186763,
+          "p75": 4.23420794311219
+        },
+        "expected_features": {
+          "form_bps": 16.522837706511176,
+          "form_creativity": 26.229348882410108,
+          "form_defensive_contribution": 2.552964042759961,
+          "form_expected_assists": 0.1318561710398445,
+          "form_expected_goal_involvements": 0.34210884353741494,
+          "form_expected_goals": 0.21025267249757046,
+          "form_influence": 20.950437317784257,
+          "form_threat": 27.526724975704568,
+          "form_total_points": 4.205053449951409,
+          "opp_strength_att": 1.1,
+          "opp_strength_def": 1.2,
+          "p60": 0.5651446185409454,
+          "p_play": 0.8584135761792953,
+          "value_scaled": 7.6,
+          "was_home": 0.0
+        },
+        "expected_minutes": {
+          "p60": 0.5651446185409454,
+          "p_play": 0.8584135761792953
+        },
+        "expected_minutes_features": {
+          "mins_last": 0.2777777777777778,
+          "mins_share_6": 0.7592592592592592,
+          "n_prior": 0.5,
+          "p60_share_6": 0.6666666666666666,
+          "start_share_3": 0.6666666666666666,
+          "start_share_6": 0.6666666666666666,
+          "started_last": 0.0,
+          "zeros_last_3": 0.0
+        },
+        "position": "MID",
+        "prior_rows": [
+          {
+            "bps": 18,
+            "creativity": 30.0,
+            "defensive_contribution": 3,
+            "expected_assists": 0.12,
+            "expected_goal_involvements": 0.27,
+            "expected_goals": 0.15,
+            "fixture_id": 10,
+            "gw": 1,
+            "influence": 22.0,
+            "minutes": 90,
+            "starts": 1,
+            "threat": 25.0,
+            "total_points": 3,
+            "value": 75
+          },
+          {
+            "bps": 30,
+            "creativity": 48.0,
+            "defensive_contribution": 4,
+            "expected_assists": 0.25,
+            "expected_goal_involvements": 0.7,
+            "expected_goals": 0.45,
+            "fixture_id": 20,
+            "gw": 2,
+            "influence": 40.0,
+            "minutes": 90,
+            "starts": 1,
+            "threat": 55.0,
+            "total_points": 9,
+            "value": 76
+          },
+          {
+            "bps": 4,
+            "creativity": 5.0,
+            "defensive_contribution": 1,
+            "expected_assists": 0.04,
+            "expected_goal_involvements": 0.09,
+            "expected_goals": 0.05,
+            "fixture_id": 30,
+            "gw": 3,
+            "influence": 4.0,
+            "minutes": 25,
+            "starts": 0,
+            "threat": 6.0,
+            "total_points": 1,
+            "value": 76
+          }
+        ],
+        "target": {
+          "opponent_team": 5,
+          "value": 76,
+          "was_home": false
+        }
+      },
+      {
+        "club_strengths": {
+          "5": {
+            "strength_attack_away": 1000,
+            "strength_attack_home": 1100,
+            "strength_defence_away": 1300,
+            "strength_defence_home": 1200
+          }
+        },
+        "expected": {
+          "p25": 1.348259003810715,
+          "p50": 1.8238080167639694,
+          "p75": 4.18288566313036
+        },
+        "expected_features": {
+          "form_bps": 15.796890184645287,
+          "form_creativity": 13.639455782312925,
+          "form_defensive_contribution": 0.6112730806608357,
+          "form_expected_assists": 0.07980563654033042,
+          "form_expected_goal_involvements": 0.41770651117589896,
+          "form_expected_goals": 0.3379008746355685,
+          "form_influence": 20.505344995140913,
+          "form_threat": 39.028182701652085,
+          "form_total_points": 3.9825072886297375,
+          "opp_strength_att": 1.0,
+          "opp_strength_def": 1.3,
+          "p60": 0.6220907260030355,
+          "p_play": 0.9343081151147015,
+          "value_scaled": 8.6,
+          "was_home": 1.0
+        },
+        "expected_minutes": {
+          "p60": 0.6220907260030355,
+          "p_play": 0.9343081151147015
+        },
+        "expected_minutes_features": {
+          "mins_last": 0.3333333333333333,
+          "mins_share_6": 0.7777777777777777,
+          "n_prior": 0.5,
+          "p60_share_6": 0.6666666666666666,
+          "start_share_3": 0.6666666666666666,
+          "start_share_6": 0.6666666666666666,
+          "started_last": 0.0,
+          "zeros_last_3": 0.0
+        },
+        "position": "FWD",
+        "prior_rows": [
+          {
+            "bps": 15,
+            "creativity": 15.0,
+            "defensive_contribution": 1,
+            "expected_assists": 0.08,
+            "expected_goal_involvements": 0.38,
+            "expected_goals": 0.3,
+            "fixture_id": 10,
+            "gw": 1,
+            "influence": 20.0,
+            "minutes": 90,
+            "starts": 1,
+            "threat": 40.0,
+            "total_points": 2,
+            "value": 85
+          },
+          {
+            "bps": 28,
+            "creativity": 25.0,
+            "defensive_contribution": 1,
+            "expected_assists": 0.15,
+            "expected_goal_involvements": 0.8,
+            "expected_goals": 0.65,
+            "fixture_id": 20,
+            "gw": 2,
+            "influence": 38.0,
+            "minutes": 90,
+            "starts": 1,
+            "threat": 70.0,
+            "total_points": 8,
+            "value": 86
+          },
+          {
+            "bps": 6,
+            "creativity": 3.0,
+            "defensive_contribution": 0,
+            "expected_assists": 0.02,
+            "expected_goal_involvements": 0.12,
+            "expected_goals": 0.1,
+            "fixture_id": 30,
+            "gw": 3,
+            "influence": 6.0,
+            "minutes": 30,
+            "starts": 0,
+            "threat": 12.0,
+            "total_points": 2,
+            "value": 86
+          }
+        ],
+        "target": {
+          "opponent_team": 5,
+          "value": 86,
+          "was_home": true
+        }
+      }
+    ],
+    "model_version": "v2.1.0"
   }
 }

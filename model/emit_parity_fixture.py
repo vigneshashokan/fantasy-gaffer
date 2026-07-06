@@ -16,9 +16,14 @@ from feature_spec_v2 import FEATURE_COLUMNS_V2, MODEL_VERSION_V2
 from features_v2 import build_feature_row_v2
 from match_engine import MatchEngine, build_team_fixtures
 
+from feature_spec_v21 import FEATURE_COLUMNS_V21, MINUTES_FEATURE_COLUMNS, MODEL_VERSION_V21
+from features_v21 import build_feature_row_v21
+from minutes_model import build_minutes_feature_row, predict_minutes
+
 _ART = os.path.join(os.path.dirname(__file__), "artifacts", "xpts-v1.json")
 _OUT = os.path.join(os.path.dirname(__file__), "artifacts", "parity-fixture.json")
 _ART_V2 = os.path.join(os.path.dirname(__file__), "artifacts", "xpts-v2.json")
+_ART_V21 = os.path.join(os.path.dirname(__file__), "artifacts", "xpts-v21.json")
 
 # Deterministic synthetic team history: teams 1..4, 4 GWs, asymmetric xG so
 # ratings/lambdas are non-trivial. The Deno port must reproduce every number.
@@ -93,6 +98,67 @@ def _prior(pos: str):
     return pd.DataFrame(position_priors[pos])
 
 
+# v2.1 cases get a third, rotation-flavoured prior row so the minutes
+# features exercise the zeros/short-minutes paths. _prior itself is shared
+# with the v1/v2 cases and MUST stay byte-identical.
+_V21_EXTRA_ROW = {
+    "GKP": {"gw": 3, "fixture_id": 30, "starts": 0, "minutes": 0, "total_points": 0,
+            "expected_goals": 0.0, "expected_assists": 0.0,
+            "expected_goal_involvements": 0.0, "threat": 0.0, "creativity": 0.0,
+            "influence": 0.0, "bps": 0, "defensive_contribution": 0, "value": 45},
+    "DEF": {"gw": 3, "fixture_id": 30, "starts": 0, "minutes": 0, "total_points": 0,
+            "expected_goals": 0.0, "expected_assists": 0.0,
+            "expected_goal_involvements": 0.0, "threat": 0.0, "creativity": 0.0,
+            "influence": 0.0, "bps": 0, "defensive_contribution": 0, "value": 50},
+    "MID": {"gw": 3, "fixture_id": 30, "starts": 0, "minutes": 25, "total_points": 1,
+            "expected_goals": 0.05, "expected_assists": 0.04,
+            "expected_goal_involvements": 0.09, "threat": 6.0, "creativity": 5.0,
+            "influence": 4.0, "bps": 4, "defensive_contribution": 1, "value": 76},
+    "FWD": {"gw": 3, "fixture_id": 30, "starts": 0, "minutes": 30, "total_points": 2,
+            "expected_goals": 0.10, "expected_assists": 0.02,
+            "expected_goal_involvements": 0.12, "threat": 12.0, "creativity": 3.0,
+            "influence": 6.0, "bps": 6, "defensive_contribution": 0, "value": 86},
+}
+
+
+def _prior_v21(pos: str) -> pd.DataFrame:
+    return pd.concat([_prior(pos), pd.DataFrame([_V21_EXTRA_ROW[pos]])],
+                     ignore_index=True)
+
+
+def build_v21_cases() -> dict:
+    with open(_ART_V21) as f:
+        artifact = json.load(f)
+    position_values = {"GKP": 45, "DEF": 50, "MID": 76, "FWD": 86}
+    cases = []
+    for i, pos in enumerate(POSITIONS):
+        if pos not in artifact["coefficients"]:
+            continue
+        prior = _prior_v21(pos)
+        mf = build_minutes_feature_row(prior)
+        p_play, p60 = predict_minutes(artifact["minutes"]["models"], mf, pos)
+        target = pd.Series({"was_home": bool(i % 2), "opponent_team": 5,
+                            "value": position_values[pos]})
+        feat = build_feature_row_v21(prior, target, CLUB_STRENGTHS,
+                                     {"p_play": p_play, "p60": p60})
+        cases.append({
+            "position": pos,
+            "prior_rows": prior.to_dict(orient="records"),
+            "target": {"was_home": bool(target["was_home"]),
+                       "opponent_team": 5, "value": int(target["value"])},
+            "club_strengths": {str(k): v for k, v in CLUB_STRENGTHS.items()},
+            "expected_minutes_features": {c: mf[c] for c in MINUTES_FEATURE_COLUMNS},
+            "expected_minutes": {"p_play": p_play, "p60": p60},
+            "expected_features": {c: feat[c] for c in FEATURE_COLUMNS_V21},
+            "expected": {
+                "p25": predict(artifact, feat, pos, 0.25),
+                "p50": predict(artifact, feat, pos, 0.50),
+                "p75": predict(artifact, feat, pos, 0.75),
+            },
+        })
+    return {"model_version": MODEL_VERSION_V21, "cases": cases}
+
+
 def build_v2_cases() -> dict:
     with open(_ART_V2) as f:
         artifact = json.load(f)
@@ -151,7 +217,8 @@ def main() -> None:
                 "p75": predict(artifact, feat, pos, 0.75),
             },
         })
-    out = {"model_version": MODEL_VERSION, "cases": cases, "v2": build_v2_cases()}
+    out = {"model_version": MODEL_VERSION, "cases": cases,
+           "v2": build_v2_cases(), "v21": build_v21_cases()}
     with open(_OUT, "w") as f:
         json.dump(out, f, indent=2, sort_keys=True)
         f.write("\n")
