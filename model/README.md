@@ -28,6 +28,20 @@ python backtest.py
 Override the DB with `DATABASE_URL` (default
 `postgresql://postgres:postgres@127.0.0.1:54322/postgres`).
 
+## Data
+
+`data/player_gw_history_2025-26.csv.gz` is the committed snapshot of the full
+2025/26 `player_gw_history` (29,747 rows, incl. the points-component columns
+added 2026-07-06). It exists because the season became unrecoverable from the
+FPL API at rollover and the local Docker Postgres was the only copy. To restore
+into a fresh local stack:
+
+```bash
+gunzip -c data/player_gw_history_2025-26.csv.gz | \
+  docker exec -i supabase_db_fantasy-gaffer psql -U postgres \
+    -c "\copy player_gw_history from stdin with csv header"
+```
+
 ## Tests
 
 ```bash

@@ -41,7 +41,8 @@ function stats(over: Partial<LiveElementStats> = {}): LiveElementStats {
     goals_conceded: 0, bonus: 0, bps: 0, total_points: 2,
     expected_goals: '0.00', expected_assists: '0.00', expected_goal_involvements: '0.00',
     expected_goals_conceded: '0.00', influence: '0.0', creativity: '0.0', threat: '0.0',
-    ict_index: '0.0', defensive_contribution: 0, ...over,
+    ict_index: '0.0', defensive_contribution: 0, saves: 0, penalties_saved: 0,
+    penalties_missed: 0, yellow_cards: 0, red_cards: 0, own_goals: 0, ...over,
   };
 }
 
@@ -113,6 +114,22 @@ Deno.test('liveToHistoryRows: an away-side player gets was_home=false and oppone
   assertEquals(rows[0].opponent_team, 12); // team_h (player is on the away side, team_a=9)
   assertEquals(rows[0].fixture_id, 10);
   assertEquals(rows[0].defensive_contribution, 5);
+});
+
+Deno.test('liveToHistoryRows: passes through the points-component fields', () => {
+  const meta = new Map<number, ElementMeta>([[500, { position: 'GKP', team_id: 12, now_cost: 45 }]]);
+  const fixtures: GwFixture[] = [{ fixture_id: 10, team_h: 12, team_a: 9 }];
+  const live = new Map<number, LiveElementStats>([
+    [500, stats({ saves: 7, penalties_saved: 1, yellow_cards: 1, total_points: 12 })],
+  ]);
+  const rows = liveToHistoryRows('2026/27', 2, live, meta, fixtures);
+  assertEquals(rows.length, 1);
+  assertEquals(rows[0].saves, 7);
+  assertEquals(rows[0].penalties_saved, 1);
+  assertEquals(rows[0].penalties_missed, 0);
+  assertEquals(rows[0].yellow_cards, 1);
+  assertEquals(rows[0].red_cards, 0);
+  assertEquals(rows[0].own_goals, 0);
 });
 
 function elt(id: number, team: number, element_type: number): BootstrapElement {
