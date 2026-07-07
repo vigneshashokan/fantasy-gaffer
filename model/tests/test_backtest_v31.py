@@ -2,12 +2,15 @@
 captaincy_points, bootstrap gate condition, evaluate_v31 pass/fail per gate
 condition (including an explicit full-pass frame), and the walk-forward
 wrapper smoke. Report/run_gate tests are appended by Task 4."""
+import os
+
 import numpy as np
 import pandas as pd
 import pytest
 
-from backtest_v31 import (bootstrap_captaincy, build_captain_picks,
-                          evaluate_v31, walk_forward_v31)
+from backtest_v31 import (REPORT_MARKER_V31, bootstrap_captaincy,
+                          build_captain_picks, evaluate_v31, run_gate,
+                          walk_forward_v31, write_report_v31)
 from metrics import captaincy_points
 
 FAST = dict(start_gw=25, end_gw=28, n_sims=300)
@@ -163,3 +166,46 @@ def test_walk_forward_v31_smoke(synthetic_history, synthetic_strengths):
             "xmin"} <= set(results.columns)
     assert len(results) > 0 and len(minutes_rows) > 0
     assert results["u_mid"].between(0.0, 1.0).all()
+
+
+def _metrics() -> dict:
+    return evaluate_v31(_v31_frame())
+
+
+def test_report_appends_after_existing_sections(tmp_path):
+    p = tmp_path / "report.md"
+    p.write_text("# Header\n\n<!-- xpts-v3-results -->\n\nold v3 section\n")
+    write_report_v31(_metrics(), str(p))
+    content = p.read_text()
+    assert "old v3 section" in content
+    assert content.index(REPORT_MARKER_V31) > content.index("old v3 section")
+
+
+def test_report_truncates_own_marker_only(tmp_path):
+    p = tmp_path / "report.md"
+    p.write_text("keep me\n\n" + REPORT_MARKER_V31 + "\n\nstale v31 section\n")
+    write_report_v31(_metrics(), str(p))
+    content = p.read_text()
+    assert "keep me" in content and "stale v31 section" not in content
+    assert content.count(REPORT_MARKER_V31) == 1
+
+
+def test_report_refuses_duplicate_marker(tmp_path):
+    p = tmp_path / "report.md"
+    p.write_text(REPORT_MARKER_V31 + "\n\n" + REPORT_MARKER_V31 + "\n")
+    with pytest.raises(ValueError, match="duplicate"):
+        write_report_v31(_metrics(), str(p))
+
+
+def test_run_gate_dumps_three_frames_before_evaluating(tmp_path, synthetic_history,
+                                                       synthetic_strengths):
+    report = tmp_path / "report.md"
+    report.write_text("# xPts model\n")
+    dump = tmp_path / "results.csv"
+    metrics = run_gate(synthetic_history, synthetic_strengths, str(report),
+                       dump_path=str(dump), start_gw=25, end_gw=28)
+    assert os.path.exists(dump)
+    assert os.path.exists(tmp_path / "results.minutes.csv")
+    assert os.path.exists(tmp_path / "results.picks.csv")
+    assert isinstance(metrics["passes_gate"], bool)
+    assert REPORT_MARKER_V31 in report.read_text()
