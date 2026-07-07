@@ -68,17 +68,36 @@ def test_mae_summary_pools():
 
 
 def test_ep_summary_uses_joint_pool():
+    """Discriminates the FIXED semantics (ep MAE on the joint both-models
+    pool) from the old buggy semantics (ep MAE on ep-inner-join-actuals,
+    ignoring the model pool): player 9's row is model_version
+    "v2-experimental", which split_by_model puts in neither the v3.1 nor v1
+    family, so (9, 1) never has a v31/v1 row and therefore never enters the
+    joint pool -- even once it also has a real actual and an ep_next row.
+    Under the old ep-and-actuals-only semantics, (9, 1) WOULD be picked up
+    (it has both an ep row and an actual row), changing n and mae; under the
+    fixed joint-pool semantics it stays excluded and the assertions below are
+    unchanged."""
     v31, v1 = split_by_model(_rows())
-    joint = joint_frame(v31, v1, _actuals())  # (1,1), (2,1), (1,2)
+    actuals = pd.concat([
+        _actuals(),
+        pd.DataFrame([{"player_id": 9, "gw": 1, "actual": 5.0,
+                       "minutes": 90}]),
+    ], ignore_index=True)
+    joint = joint_frame(v31, v1, actuals)  # (1,1), (2,1), (1,2) -- (9,1)
+    # excluded: no v31/v1 row exists for player 9 (v2-experimental belongs to
+    # neither family), despite it now having an actual
     ep = pd.DataFrame([
         {"player_id": 1, "gw": 1, "ep_next": 7.0},
         {"player_id": 2, "gw": 1, "ep_next": 1.0},
         {"player_id": 1, "gw": 2, "ep_next": 4.0},
-        {"player_id": 99, "gw": 1, "ep_next": 0.1},  # not in the joint pool
+        {"player_id": 99, "gw": 1, "ep_next": 0.1},  # not in the joint pool,
+        # and no actual row either -- doesn't discriminate on its own
+        {"player_id": 9, "gw": 1, "ep_next": 4.0},  # has an actual but no
+        # model-pool row -- excluded only under the fixed (joint) semantics
     ])
     s = ep_summary(ep, joint)
-    # the (99, 1) row is excluded even though it's a valid ep row -- it has
-    # no joint-pool entry (no matching model + actual row)
+    # both (99, 1) and (9, 1) are excluded from the fixed joint-pool result
     assert s["n"] == 3
     # actuals: (1,1)=8.0, (2,1)=2.0, (1,2)=3.0 -> |7-8|,|1-2|,|4-3| -> mae 1.0
     assert s["mae"] == pytest.approx(1.0)
