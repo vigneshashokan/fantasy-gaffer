@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from assist_scale import compute_assist_scale
+from backtest_v3 import mid_p_value
 from backtest_v3 import (REPORT_MARKER_V3, evaluate_v3, run_gate,
                          walk_forward_v3, write_report_v3)
 
@@ -20,7 +22,7 @@ def test_walk_forward_shapes_and_quantile_coherence(synthetic_history, synthetic
             "p25_v1", "p50_v1", "p75_v1",
             "mean_v3", "p25_v3", "p50_v3", "p75_v3",
             "p_goal", "p_assist", "p_cs_pts", "p_haul",
-            "point_ens", "p25_ens", "p50_ens", "p75_ens"}
+            "point_ens", "p25_ens", "p50_ens", "p75_ens", "u_mid"}
     assert need <= set(results.columns)
     assert len(results) > 0 and len(minutes_rows) > 0
     # Simulation quantiles are coherent per row BY CONSTRUCTION (same draws).
@@ -29,6 +31,7 @@ def test_walk_forward_shapes_and_quantile_coherence(synthetic_history, synthetic
     # Aggregate ordering (non-flaky) as the cross-column sanity check.
     assert results["p25_v3"].mean() < results["p75_v3"].mean()
     assert results["mean_v3"].notna().all()
+    assert results["u_mid"].between(0.0, 1.0).all()
 
 
 def test_walk_forward_is_deterministic(synthetic_history, synthetic_strengths):
@@ -62,6 +65,29 @@ def test_target_gw_stats_do_not_leak_into_predictions(synthetic_history, synthet
     a = base[(base["player_id"] == 1) & (base["gw"] == 28)]["mean_v3"].iloc[0]
     b = out[(out["player_id"] == 1) & (out["gw"] == 28)]["mean_v3"].iloc[0]
     assert a == pytest.approx(b)
+
+
+def test_mid_p_value_exact_cases():
+    total = np.array([1, 2, 2, 3])
+    assert mid_p_value(total, 2.0) == pytest.approx(0.25 + 0.5 * 0.5)
+    assert mid_p_value(total, 3.0) == pytest.approx(0.75 + 0.5 * 0.25)
+    assert mid_p_value(total, 0.0) == 0.0
+    assert mid_p_value(total, 4.0) == 1.0
+
+
+def test_assist_scale_flag_shifts_p_assist(synthetic_history, synthetic_strengths):
+    base, _ = walk_forward_v3(synthetic_history, synthetic_strengths, **FAST)
+    scaled, _ = walk_forward_v3(synthetic_history, synthetic_strengths,
+                                assist_scale=True, **FAST)
+    # Direction-aware: on this fixture k may be < 1 (sparse assists vs xA).
+    k = compute_assist_scale(synthetic_history[synthetic_history["gw"] < FAST["start_gw"]])
+    assert k != pytest.approx(1.0)
+    if k > 1.0:
+        assert scaled["p_assist"].mean() > base["p_assist"].mean()
+    else:
+        assert scaled["p_assist"].mean() < base["p_assist"].mean()
+    # No assertion on other components: they share the RNG stream and may
+    # legitimately shift when the assist lambda changes.
 
 
 def _gate_frame(v3_beats: bool, cap_flip: bool, cov_inside: bool) -> pd.DataFrame:
