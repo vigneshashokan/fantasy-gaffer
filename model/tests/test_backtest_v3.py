@@ -191,24 +191,39 @@ def test_run_gate_dumps_both_frames_before_evaluating(tmp_path, synthetic_histor
 
 def _ens_gate_frame() -> pd.DataFrame:
     """SECONDARY-passing frame: the blend beats v1 MAE, matches its captaincy,
-    and half its blended intervals cover (coverage 0.5). v3 and v1 intervals
-    are set identical per row so the ensemble interval equals both."""
+    and half its blended intervals cover (coverage 0.5). The v3, v1, and
+    ensemble interval sets are deliberately DIFFERENT per row (v3-columns
+    coverage 0.0, v1-columns coverage 0.25, ens coverage 0.5) so a
+    p25_v3-or-p25_v1-for-p25_ens (or p75-equivalent) column typo in the
+    secondary block changes the coverage result and is caught."""
     rows = []
     for gw in (1, 2):
         for i in range(4):
             actual = 10.0 if i == 0 else 2.0
-            inside = i < 2
+            if i == 0:
+                # v3 misses above; v1 hits at the endpoint; ens covers.
+                p25_v3, p75_v3 = 11.0, 12.0
+                p25_v1, p75_v1 = 7.0, 10.0
+            elif i == 1:
+                # v3 misses above, v1 misses below; ens covers even though
+                # BOTH legs miss.
+                p25_v3, p75_v3 = 3.0, 4.0
+                p25_v1, p75_v1 = 0.0, 1.0
+            else:
+                # v3 and v1 agree; ens misses too.
+                p25_v3, p75_v3 = 3.0, 4.0
+                p25_v1, p75_v1 = 3.0, 4.0
             rows.append({
                 "player_id": i + 1, "gw": gw, "position": "MID",
                 "actual": actual, "xmin": 1.0, "hot3": float(i),
                 "base_form": 2.0,
                 "p50_v1": 8.0 if i == 0 else 1.0,
-                "p25_v1": actual - 1.0 if inside else actual + 1.0,
-                "p75_v1": actual + 1.0 if inside else actual + 2.0,
+                "p25_v1": p25_v1,
+                "p75_v1": p75_v1,
                 "mean_v3": actual - 0.5,
-                "p25_v3": actual - 1.0 if inside else actual + 1.0,
+                "p25_v3": p25_v3,
                 "p50_v3": actual,
-                "p75_v3": actual + 1.0 if inside else actual + 2.0,
+                "p75_v3": p75_v3,
                 "p_goal": 0.3, "p_assist": 0.2, "p_cs_pts": 0.1, "p_haul": 0.05,
             })
     df = pd.DataFrame(rows)
@@ -220,8 +235,9 @@ def _ens_gate_frame() -> pd.DataFrame:
 
 def test_evaluate_secondary_pass_path():
     # ens MAE 0.875 < v1 1.25; ens captains player 1 (ties v1, >= holds);
-    # ens coverage 0.5. A p25_v3-for-p25_ens column typo in the secondary
-    # block would break this.
+    # ens coverage 0.5 while v3-columns coverage is 0.0 and v1-columns
+    # coverage is 0.25 — a p25_v3-or-p25_v1-for-p25_ens column typo in the
+    # secondary block would flip coverage_ok_ens and break this.
     m = evaluate_v3(_ens_gate_frame())
     assert m["beats_v1_mae_ens"] and m["captaincy_ok_ens"] and m["coverage_ok_ens"]
     assert m["passes_gate_secondary"] is True
