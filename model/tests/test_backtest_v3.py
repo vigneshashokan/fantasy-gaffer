@@ -187,3 +187,41 @@ def test_run_gate_dumps_both_frames_before_evaluating(tmp_path, synthetic_histor
     assert os.path.exists(tmp_path / "results.minutes.csv")
     assert isinstance(metrics["passes_gate_primary"], bool)
     assert REPORT_MARKER_V3 in report.read_text()
+
+
+def _ens_gate_frame() -> pd.DataFrame:
+    """SECONDARY-passing frame: the blend beats v1 MAE, matches its captaincy,
+    and half its blended intervals cover (coverage 0.5). v3 and v1 intervals
+    are set identical per row so the ensemble interval equals both."""
+    rows = []
+    for gw in (1, 2):
+        for i in range(4):
+            actual = 10.0 if i == 0 else 2.0
+            inside = i < 2
+            rows.append({
+                "player_id": i + 1, "gw": gw, "position": "MID",
+                "actual": actual, "xmin": 1.0, "hot3": float(i),
+                "base_form": 2.0,
+                "p50_v1": 8.0 if i == 0 else 1.0,
+                "p25_v1": actual - 1.0 if inside else actual + 1.0,
+                "p75_v1": actual + 1.0 if inside else actual + 2.0,
+                "mean_v3": actual - 0.5,
+                "p25_v3": actual - 1.0 if inside else actual + 1.0,
+                "p50_v3": actual,
+                "p75_v3": actual + 1.0 if inside else actual + 2.0,
+                "p_goal": 0.3, "p_assist": 0.2, "p_cs_pts": 0.1, "p_haul": 0.05,
+            })
+    df = pd.DataFrame(rows)
+    df["point_ens"] = 0.5 * (df["mean_v3"] + df["p50_v1"])
+    for k in (25, 50, 75):
+        df[f"p{k}_ens"] = 0.5 * (df[f"p{k}_v3"] + df[f"p{k}_v1"])
+    return df
+
+
+def test_evaluate_secondary_pass_path():
+    # ens MAE 0.875 < v1 1.25; ens captains player 1 (ties v1, >= holds);
+    # ens coverage 0.5. A p25_v3-for-p25_ens column typo in the secondary
+    # block would break this.
+    m = evaluate_v3(_ens_gate_frame())
+    assert m["beats_v1_mae_ens"] and m["captaincy_ok_ens"] and m["coverage_ok_ens"]
+    assert m["passes_gate_secondary"] is True
