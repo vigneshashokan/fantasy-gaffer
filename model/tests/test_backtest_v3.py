@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from assist_scale import compute_assist_scale
+from backtest_v3 import mid_p_value
 from backtest_v3 import (REPORT_MARKER_V3, evaluate_v3, run_gate,
                          walk_forward_v3, write_report_v3)
 
@@ -20,7 +22,7 @@ def test_walk_forward_shapes_and_quantile_coherence(synthetic_history, synthetic
             "p25_v1", "p50_v1", "p75_v1",
             "mean_v3", "p25_v3", "p50_v3", "p75_v3",
             "p_goal", "p_assist", "p_cs_pts", "p_haul",
-            "point_ens", "p25_ens", "p50_ens", "p75_ens"}
+            "point_ens", "p25_ens", "p50_ens", "p75_ens", "u_mid"}
     assert need <= set(results.columns)
     assert len(results) > 0 and len(minutes_rows) > 0
     # Simulation quantiles are coherent per row BY CONSTRUCTION (same draws).
@@ -29,6 +31,7 @@ def test_walk_forward_shapes_and_quantile_coherence(synthetic_history, synthetic
     # Aggregate ordering (non-flaky) as the cross-column sanity check.
     assert results["p25_v3"].mean() < results["p75_v3"].mean()
     assert results["mean_v3"].notna().all()
+    assert results["u_mid"].between(0.0, 1.0).all()
 
 
 def test_walk_forward_is_deterministic(synthetic_history, synthetic_strengths):
@@ -62,6 +65,29 @@ def test_target_gw_stats_do_not_leak_into_predictions(synthetic_history, synthet
     a = base[(base["player_id"] == 1) & (base["gw"] == 28)]["mean_v3"].iloc[0]
     b = out[(out["player_id"] == 1) & (out["gw"] == 28)]["mean_v3"].iloc[0]
     assert a == pytest.approx(b)
+
+
+def test_mid_p_value_exact_cases():
+    total = np.array([1, 2, 2, 3])
+    assert mid_p_value(total, 2.0) == pytest.approx(0.25 + 0.5 * 0.5)
+    assert mid_p_value(total, 3.0) == pytest.approx(0.75 + 0.5 * 0.25)
+    assert mid_p_value(total, 0.0) == 0.0
+    assert mid_p_value(total, 4.0) == 1.0
+
+
+def test_assist_scale_flag_shifts_p_assist(synthetic_history, synthetic_strengths):
+    base, _ = walk_forward_v3(synthetic_history, synthetic_strengths, **FAST)
+    scaled, _ = walk_forward_v3(synthetic_history, synthetic_strengths,
+                                assist_scale=True, **FAST)
+    # Direction-aware: on this fixture k may be < 1 (sparse assists vs xA).
+    k = compute_assist_scale(synthetic_history[synthetic_history["gw"] < FAST["start_gw"]])
+    assert k != pytest.approx(1.0)
+    if k > 1.0:
+        assert scaled["p_assist"].mean() > base["p_assist"].mean()
+    else:
+        assert scaled["p_assist"].mean() < base["p_assist"].mean()
+    # No assertion on other components: they share the RNG stream and may
+    # legitimately shift when the assist lambda changes.
 
 
 def _gate_frame(v3_beats: bool, cap_flip: bool, cov_inside: bool) -> pd.DataFrame:
@@ -161,3 +187,57 @@ def test_run_gate_dumps_both_frames_before_evaluating(tmp_path, synthetic_histor
     assert os.path.exists(tmp_path / "results.minutes.csv")
     assert isinstance(metrics["passes_gate_primary"], bool)
     assert REPORT_MARKER_V3 in report.read_text()
+
+
+def _ens_gate_frame() -> pd.DataFrame:
+    """SECONDARY-passing frame: the blend beats v1 MAE, matches its captaincy,
+    and half its blended intervals cover (coverage 0.5). The v3, v1, and
+    ensemble interval sets are deliberately DIFFERENT per row (v3-columns
+    coverage 0.0, v1-columns coverage 0.25, ens coverage 0.5) so a
+    p25_v3-or-p25_v1-for-p25_ens (or p75-equivalent) column typo in the
+    secondary block changes the coverage result and is caught."""
+    rows = []
+    for gw in (1, 2):
+        for i in range(4):
+            actual = 10.0 if i == 0 else 2.0
+            if i == 0:
+                # v3 misses above; v1 hits at the endpoint; ens covers.
+                p25_v3, p75_v3 = 11.0, 12.0
+                p25_v1, p75_v1 = 7.0, 10.0
+            elif i == 1:
+                # v3 misses above, v1 misses below; ens covers even though
+                # BOTH legs miss.
+                p25_v3, p75_v3 = 3.0, 4.0
+                p25_v1, p75_v1 = 0.0, 1.0
+            else:
+                # v3 and v1 agree; ens misses too.
+                p25_v3, p75_v3 = 3.0, 4.0
+                p25_v1, p75_v1 = 3.0, 4.0
+            rows.append({
+                "player_id": i + 1, "gw": gw, "position": "MID",
+                "actual": actual, "xmin": 1.0, "hot3": float(i),
+                "base_form": 2.0,
+                "p50_v1": 8.0 if i == 0 else 1.0,
+                "p25_v1": p25_v1,
+                "p75_v1": p75_v1,
+                "mean_v3": actual - 0.5,
+                "p25_v3": p25_v3,
+                "p50_v3": actual,
+                "p75_v3": p75_v3,
+                "p_goal": 0.3, "p_assist": 0.2, "p_cs_pts": 0.1, "p_haul": 0.05,
+            })
+    df = pd.DataFrame(rows)
+    df["point_ens"] = 0.5 * (df["mean_v3"] + df["p50_v1"])
+    for k in (25, 50, 75):
+        df[f"p{k}_ens"] = 0.5 * (df[f"p{k}_v3"] + df[f"p{k}_v1"])
+    return df
+
+
+def test_evaluate_secondary_pass_path():
+    # ens MAE 0.875 < v1 1.25; ens captains player 1 (ties v1, >= holds);
+    # ens coverage 0.5 while v3-columns coverage is 0.0 and v1-columns
+    # coverage is 0.25 — a p25_v3-or-p25_v1-for-p25_ens column typo in the
+    # secondary block would flip coverage_ok_ens and break this.
+    m = evaluate_v3(_ens_gate_frame())
+    assert m["beats_v1_mae_ens"] and m["captaincy_ok_ens"] and m["coverage_ok_ens"]
+    assert m["passes_gate_secondary"] is True

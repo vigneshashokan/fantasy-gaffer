@@ -361,3 +361,110 @@ functional and coverage semantics together.
 | coverage within ±0.10 of 0.50 | **False** | **True** |
 
 **Verdict: ❌ FAIL — documented finding; #128 stays parked**
+
+<!-- xpts-v31-results -->
+
+# xPts model — v3.1 results (re-registration mini-cycle, #144)
+
+**Model version:** `v3.1` · single pre-registered candidate vs the
+in-run v1 benchmark on the same walk-forward (2025/26, GW 8→38, eval among
+heuristic xmin ≥ 0.5; n = 7373). Candidate = the #129 simulator + a
+strictly-prior global assist multiplier. Registered functionals: MAE on the
+simulated MEDIAN, captaincy ranking on the simulated MEAN. Coverage = mid-P
+PIT (discreteness-aware). Captaincy gate = beats the form baseline outright
+AND not significantly worse than v1 (paired bootstrap, N = 10000, seed
+20260707; fail iff q90 < 0). N_SIMS = 8000, seed-pinned per GW. Spec:
+`docs/superpowers/specs/2026-07-07-xpts-v31-reregistration-design.md`.
+In-run comparison only (live team strengths drift at the 4th decimal).
+
+## MAE (lower better)
+
+| variant | MAE |
+|---------|-----|
+| (a) v1 features | 2.0629 |
+| (b) v3.1 — simulated median (registered) | 2.0227 |
+| (c) v3.1 — simulated mean (diagnostic) | 2.2340 |
+| exp-decay form baseline | 2.4439 |
+
+Captaincy (mean-ranked): v3.1 177 · v1
+185 · form baseline 174.
+Bootstrap Σ(v3.1 − v1) per-GW captain deltas: q10 -46.0 · q50
+-8.0 · q90 +28.0 · P(worse) 0.605.
+Spearman: v3.1 0.361 · v1 0.302.
+Mid-P coverage: 0.494 (target 0.50 ± 0.10).
+GKP-only MAE (n = 637): v3.1 1.9050
+vs v1 1.9020.
+Uncapped population (n = 24167): v3.1 MAE
+0.8639 vs v1 0.8927.
+
+## Hot-streak diagnostic (top-decile last-3-GW points; n = 881)
+
+Mean signed error (pred − actual): v3.1 (mean) +0.604 ·
+v1 -1.103 · form baseline +2.017.
+
+## Diagnostics — gate redesign, assist fix, PIT, discipline
+<!-- hand-written subsection (2026-07-07): analyzes the DUMPED gate-run frames
+     (/tmp/xpts-v31/results*.csv). write_report_v31 truncates from the marker —
+     re-add this subsection if the section is ever regenerated. -->
+
+**Integrity:** the in-run v1 MAE (2.0629) reproduces #127/#138/#129 exactly (the
+FPL bootstrap is frozen post-season); n = 7373 matches every prior cycle.
+
+**The redesigned gate conditions measured what they were designed to measure —
+they did not hand the candidate a pass.** Coverage: mid-P 0.4936, while
+inclusive-endpoint counting on the *same* predictions scores 0.6402 (≈ #129's
+0.636, median interval width unchanged at 3.00) — #129's coverage miss was
+measurement semantics for a discrete distribution, not miscalibration. The
+u_mid PIT deciles are roughly uniform (0.066–0.143). Captaincy: 21/31 picks
+differ from v1 (18 with nonzero deltas), cumulative −8; bootstrap
+q10/q50/q90 = −46/−8/+28 with P(worse) = 0.605 — v1 leads in 60% of resamples
+but nowhere near the ≥90% confidence the condition requires to fail, i.e. the
+−8 is season-noise, exactly the case the redesign was calibrated to forgive.
+The naive floor C1 is a real constraint and cleared thinly: 177 vs the form
+baseline's 174.
+
+**Assist multiplier: mean bias closed, tail over-corrected.** Overall
+p_assist 0.0768 predicted vs 0.0735 observed (#129: 0.055 vs 0.074 — the −26%
+gap is gone, now +4% over). k_assist(t) runs 1.51 → 1.39 across the season,
+stable. But the correction is too blunt at the top: the highest decile
+predicts 0.263 vs 0.155 observed — a uniform multiplier over-scales high-xA
+players (the definitional broadening behind the gap — deflections, penalty
+wins — is closer to additive than proportional). Post-hoc cost vs the
+unscaled v3 (same seeds): median MAE 2.0227 vs 2.0111, captaincy 177 vs 178.
+A shrunk/additive correction is the follow-up lever — **not promotable
+post-hoc**; it would need its own registration if ever pursued.
+
+**Pick quality stays structurally sane** (the #125/#127/#138 pathology remains
+cured): minimum p60 among picks 0.689, positions MID 18 / FWD 9 / DEF 4, no
+GKP; B.Fernandes ×6 and Haaland ×5 lead the pick frequency; 24/31 picks
+identical to #129's v3.
+
+**Per-position median MAE** preserves #129's pattern: beats v1 in DEF
+(2.1348/2.1771), MID (1.9087/1.9609), FWD (2.1945/2.2116); GKP an effective
+tie (1.9050/1.9020). On the uncapped population v3.1 beats v1 outright
+(0.8639/0.8927) — the first model in the arc to do so.
+
+**Pre-registration discipline:** v3's post-hoc median (2.0111) was never
+registered and is not promotable; the candidate that passed is the registered
+one — simulator + assist multiplier, judged median-for-MAE / mean-for-
+captaincy / mid-P coverage — and **that exact configuration is the #128
+revival candidate**, as-is.
+
+**Consequences (ship policy unchanged):** #128/#130 revive — build the A→C
+Python serving designed in the v3 spec §9 (GitHub Actions batch →
+`projections_shadow` + intermediate-probability columns) for this candidate,
+plus the prospective eval harness. **v1 keeps serving**; promotion only after
+≥6 evaluated live GWs iff v3.1 leads v1 on cumulative MAE and is not behind
+on captaincy (in-season, next season). #123's GW1 freeze check and #131's
+snapshot accumulation are unaffected.
+
+## Gate
+
+| condition | v3.1 |
+|-----------|------|
+| beats v1 on MAE (median functional) | **True** |
+| captaincy C1 — beats form baseline | **True** |
+| captaincy C2 — bootstrap q90 ≥ 0 vs v1 | **True** |
+| mid-P coverage within ±0.10 of 0.50 | **True** |
+
+**Verdict: ✅ PASS — revive #128/#130 for this candidate (prospective validation before any promotion)**

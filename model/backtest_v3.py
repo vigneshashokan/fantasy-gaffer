@@ -1,7 +1,9 @@
 """Walk-forward backtest + pre-registered gate for xPts v3 (#129): the
 generative simulator (PRIMARY) and the 50/50 Vincentized v1 blend
 (SECONDARY) vs the in-run v1 benchmark. Spec (frozen registration §2):
-docs/superpowers/specs/2026-07-06-xpts-v3-decomposition-design.md."""
+docs/superpowers/specs/2026-07-06-xpts-v3-decomposition-design.md. #144 adds
+the assist_scale flag + u_mid emission (spec:
+docs/superpowers/specs/2026-07-07-xpts-v31-reregistration-design.md)."""
 from __future__ import annotations
 
 import os
@@ -12,6 +14,7 @@ import pandas as pd
 
 from backtest_v2 import hot3_points
 from baselines import baseline_form
+from assist_scale import compute_assist_scale
 from feature_spec_v21 import MINUTES_CUTOFF
 from feature_spec_v3 import MODEL_VERSION_V3, N_SIMS, V3_SEED_BASE
 from features import build_feature_row, build_samples
@@ -28,13 +31,24 @@ REPORT_MARKER_V3 = "<!-- xpts-v3-results -->"
 _SIM_KEYS = ("total", "goals", "assists", "cs")
 
 
+def mid_p_value(total: np.ndarray, actual: float) -> float:
+    """Mid-P PIT of `actual` under the empirical distribution of `total`
+    (#144 spec §2: P(draws < a) + 0.5·P(draws = a); exact for the
+    integer-valued draw arrays and integer-valued actuals we feed it)."""
+    return float((total < actual).mean() + 0.5 * (total == actual).mean())
+
+
 def walk_forward_v3(history: pd.DataFrame, team_strengths: dict,
                     start_gw: int = 8, end_gw: int = 38,
-                    n_sims: int = N_SIMS) -> tuple[pd.DataFrame, pd.DataFrame]:
+                    n_sims: int = N_SIMS,
+                    assist_scale: bool = False) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Returns (results, minutes_rows). results has one row per (player, gw):
     v1 columns aggregated by summing per-fixture quantile predictions (v1's
     existing DGW behavior), v3 columns from elementwise-summed draw arrays
-    (quantiles of the sum), ensemble columns from both."""
+    (quantiles of the sum), ensemble columns from both, and u_mid — the mid-P
+    PIT of the row's actual under its own simulated distribution (#144).
+    assist_scale=True applies the strictly-prior global assist multiplier
+    (#144 spec §3); False preserves #129 behavior."""
     preds = precompute_minutes_predictions(history)
     pred_map = {(int(r["player_id"]), int(r["gw"])):
                 (float(r["p_play"]), float(r["p60"]))
@@ -50,6 +64,7 @@ def walk_forward_v3(history: pd.DataFrame, team_strengths: dict,
             continue
         art_v1 = fit_models(s_v1)
         priors = position_rate_priors(past)
+        k_assist = compute_assist_scale(past) if assist_scale else 1.0
         rng = np.random.default_rng(V3_SEED_BASE + t)
         acc: dict[int, dict] = {}
         targets = history[history["gw"] == t].sort_values(["player_id", "fixture_id"])
@@ -74,14 +89,19 @@ def walk_forward_v3(history: pd.DataFrame, team_strengths: dict,
             l_ov = engine.league_baseline(ov, before_gw=t)
             m_sav = lam_against / l_ov if l_ov > 0 else 1.0
             player = build_player_rates(prior, pos, priors)
+            if assist_scale:
+                player = {**player, "rates": {**player["rates"],
+                                              "xa90": player["rates"]["xa90"] * k_assist}}
             sim = simulate_player_fixture(rng, pos, p_play, p60, player,
                                           lam_against, m_att, m_sav, n=n_sims)
             if pid in acc:
                 for k in _SIM_KEYS:
                     acc[pid][k] = acc[pid][k] + sim[k]
+                acc[pid]["actual_sum"] += float(target["total_points"])
             else:
                 acc[pid] = {k: sim[k] for k in _SIM_KEYS}
                 acc[pid]["position"] = pos
+                acc[pid]["actual_sum"] = float(target["total_points"])
             f1 = build_feature_row(prior, target, team_strengths)
             out_rows.append({
                 "player_id": pid, "gw": t, "position": pos,
@@ -102,6 +122,8 @@ def walk_forward_v3(history: pd.DataFrame, team_strengths: dict,
         for pid, arrs in acc.items():
             row = {"player_id": pid, "gw": t}
             row.update(summarize_draws(arrs, arrs["position"]))
+            row["u_mid"] = mid_p_value(arrs["total"], arrs["actual_sum"])
+            row["actual_sim"] = arrs["actual_sum"]
             sim_rows.append(row)
     df = pd.DataFrame(out_rows)
     mdf = pd.DataFrame(minutes_rows)
@@ -113,6 +135,11 @@ def walk_forward_v3(history: pd.DataFrame, team_strengths: dict,
     results = df.groupby(["player_id", "gw"], as_index=False).agg(agg)
     results = results.merge(pd.DataFrame(sim_rows), on=["player_id", "gw"],
                             how="inner", validate="one_to_one")
+    if not np.allclose(results["actual"], results["actual_sim"]):
+        raise AssertionError(
+            "walk_forward_v3: groupby-summed actual != draw-side actual_sum — "
+            "the two DGW aggregation paths have drifted")
+    results = results.drop(columns=["actual_sim"])
     results["point_ens"] = 0.5 * (results["mean_v3"] + results["p50_v1"])
     for k in (25, 50, 75):
         results[f"p{k}_ens"] = 0.5 * (results[f"p{k}_v3"] + results[f"p{k}_v1"])

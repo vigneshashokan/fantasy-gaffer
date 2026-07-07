@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from scipy.stats import poisson
 
-from feature_spec_v3 import M_FULL, SAVES_LAMBDA_CAP
+from feature_spec_v3 import LAMBDA_CAP, M_FULL, SAVES_LAMBDA_CAP
 from simulate_v3 import simulate_player_fixture, summarize_draws
 
 
@@ -86,3 +86,12 @@ def test_fwd_p_cs_pts_is_zero():
 def test_partial_bucket_never_earns_cs():
     out = sim(p_play=1.0, p60=0.0, lam_against=0.0)  # always partial, never concedes
     assert out["cs"].max() == 0
+
+
+def test_goal_lambda_capped_at_lambda_cap():
+    # Uncapped goal lambda = 9.0 * 1.0 * (85/90) = 8.5 — far above LAMBDA_CAP;
+    # the observed mean must sit at the CAP, not at 8.5.
+    out = sim(xg90=9.0, m_att=1.0, lam_against=0.0, n=200000)
+    sd = out["goals"].std()
+    assert out["goals"].mean() == pytest.approx(
+        LAMBDA_CAP, abs=4 * sd / math.sqrt(200000))

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from feature_spec_v3 import RATE_ALPHA
+from feature_spec_v3 import RATE_ALPHA, RATE_WINDOW
 from rates_v3 import build_player_rates, position_rate_priors
 
 
@@ -92,3 +92,17 @@ def test_position_rate_priors_pooled_math():
     past = frame([hrow(1, 90, xg=0.5, pid=1), hrow(1, 45, xg=0.25, pid=2)])
     priors = position_rate_priors(past)
     assert priors["MID"]["rates"]["xg90"] == pytest.approx(90.0 * 0.75 / 135.0)
+
+
+def test_rate_window_truncates_to_most_recent_played_rows():
+    # 8 played rows; the two OLDEST carry an absurd xG. Only the RATE_WINDOW
+    # most recent rows (gw 8..3, all xg=0.3, 90') may count.
+    rows = [hrow(g, 90, xg=(99.0 if g <= 2 else 0.3)) for g in range(1, 9)]
+    prior = frame(rows)
+    priors = position_rate_priors(prior)
+    out = build_player_rates(prior, "MID", priors)
+    w = RATE_ALPHA ** np.arange(RATE_WINDOW)
+    expected = 90.0 * float(np.dot(w, np.full(RATE_WINDOW, 0.3))) / float(
+        np.dot(w, np.full(RATE_WINDOW, 90.0)))
+    assert out["rates"]["xg90"] == pytest.approx(expected)  # = 0.3
+    assert out["rates"]["xg90"] < 1.0  # the 99.0 rows fell outside the window
