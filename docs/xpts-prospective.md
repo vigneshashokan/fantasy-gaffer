@@ -41,6 +41,12 @@ frozen prospective registration).
    never changes.
 4. **Rollback** = revert that PR. Nothing else moves.
 
+This eval is a **pre-promotion instrument**: after a promotion swap, v3.1's
+rows live in `projections` without the `mean` depth column, so a naive
+re-run would silently drop v3.1 from the captaincy pool. Do not re-run it
+post-swap without first revisiting the §7 semantics (and do not "fix" that
+by ranking v3.1 on `p50` — the registered ranking functional is the mean).
+
 ### Operator setup (one-time)
 
 1. Create the `DATABASE_URL` GitHub Actions secret — the Supabase

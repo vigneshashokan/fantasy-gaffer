@@ -99,8 +99,13 @@ def mae_summary(joint: pd.DataFrame) -> dict:
     }
 
 
-def ep_summary(ep: pd.DataFrame, actuals: pd.DataFrame) -> dict:
-    e = ep.merge(actuals, on=["player_id", "gw"], how="inner")
+def ep_summary(ep: pd.DataFrame, joint: pd.DataFrame) -> dict:
+    """ep_next benchmark computed on the same pool as the models (spec §7) —
+    merged onto the JOINT frame's (player_id, gw) keys, not the larger,
+    easier ep∩actuals pool (which would include never-played players where a
+    near-zero ep_next is trivially accurate)."""
+    e = ep.merge(joint[["player_id", "gw", "actual"]], on=["player_id", "gw"],
+                how="inner")
     return {"n": int(len(e)), "mae": _mae(e["ep_next"], e["actual"])}
 
 
@@ -119,7 +124,8 @@ def captain_picks(v31: pd.DataFrame, v1: pd.DataFrame, ep: pd.DataFrame,
             g = pool[pool["gw"] == gw]
             if len(g) == 0:
                 continue
-            pick = g.loc[g[col].idxmax()]
+            pick = g.sort_values([col, "player_id"],
+                                 ascending=[False, True]).iloc[0]
             pid = int(pick["player_id"])
             rows.append({"gw": int(gw), "model": model, "player_id": pid,
                          "pred": float(pick[col]),
@@ -197,8 +203,7 @@ def main(argv=None) -> int:
     joint = joint_frame(v31[v31["gw"].isin(gws)], v1[v1["gw"].isin(gws)],
                         frames["actuals"])
     mae = mae_summary(joint)
-    ep = ep_summary(frames["ep"][frames["ep"]["gw"].isin(gws)],
-                    frames["actuals"])
+    ep = ep_summary(frames["ep"], joint)
     picks = captain_picks(v31, v1, frames["ep"], frames["actuals"], gws)
     cap = (picks.groupby("model")["actual"].sum().to_dict()
            if len(picks) else {})

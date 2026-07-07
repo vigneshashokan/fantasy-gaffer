@@ -1,14 +1,16 @@
 """#130 prospective-eval tests: season cutoff, model_version split, joint
-frame, MAE pools, ex-ante captaincy (own-pool argmax; missing actual -> 0),
+frame, MAE pools, the ep_next benchmark on the joint pool, ex-ante captaincy
+(own-pool argmax with a deterministic tie-break; missing actual -> 0),
 promotion statuses, and the doc writer's marker semantics."""
 from datetime import datetime, timezone
 
 import pandas as pd
 import pytest
 
-from eval_prospective import (SCOREBOARD_MARKER, captain_picks, evaluated_gws,
-                              joint_frame, mae_summary, promotion_status,
-                              season_cutoff, split_by_model, write_doc)
+from eval_prospective import (SCOREBOARD_MARKER, captain_picks, ep_summary,
+                              evaluated_gws, joint_frame, mae_summary,
+                              promotion_status, season_cutoff, split_by_model,
+                              write_doc)
 
 
 def test_season_cutoff_is_july_first_of_start_year():
@@ -63,6 +65,49 @@ def test_mae_summary_pools():
     # starters pool: minutes >= 60 -> rows (1,1) and (1,2)
     assert m["starters"]["n"] == 2
     assert m["starters"]["v31"] == pytest.approx((3.0 + 3.0) / 2.0)
+
+
+def test_ep_summary_uses_joint_pool():
+    v31, v1 = split_by_model(_rows())
+    joint = joint_frame(v31, v1, _actuals())  # (1,1), (2,1), (1,2)
+    ep = pd.DataFrame([
+        {"player_id": 1, "gw": 1, "ep_next": 7.0},
+        {"player_id": 2, "gw": 1, "ep_next": 1.0},
+        {"player_id": 1, "gw": 2, "ep_next": 4.0},
+        {"player_id": 99, "gw": 1, "ep_next": 0.1},  # not in the joint pool
+    ])
+    s = ep_summary(ep, joint)
+    # the (99, 1) row is excluded even though it's a valid ep row -- it has
+    # no joint-pool entry (no matching model + actual row)
+    assert s["n"] == 3
+    # actuals: (1,1)=8.0, (2,1)=2.0, (1,2)=3.0 -> |7-8|,|1-2|,|4-3| -> mae 1.0
+    assert s["mae"] == pytest.approx(1.0)
+
+
+def test_captain_pick_tie_breaks_deterministically():
+    actuals = pd.DataFrame([
+        {"player_id": 5, "gw": 5, "actual": 1.0, "minutes": 90},
+        {"player_id": 3, "gw": 5, "actual": 2.0, "minutes": 90},
+    ])
+    ep_empty = pd.DataFrame(columns=["player_id", "gw", "ep_next"])
+    v31_empty = pd.DataFrame(
+        columns=["player_id", "gw", "p50", "mean", "model_version"])
+    # tied p50 at the top of the gw-5 pool; higher player_id row first
+    v1_high_first = pd.DataFrame([
+        {"player_id": 5, "gw": 5, "p50": 10.0, "mean": None,
+         "model_version": "v1.0.0"},
+        {"player_id": 3, "gw": 5, "p50": 10.0, "mean": None,
+         "model_version": "v1.0.0"},
+    ])
+    v1_low_first = v1_high_first.iloc[::-1].reset_index(drop=True)
+
+    picks_high_first = captain_picks(v31_empty, v1_high_first, ep_empty,
+                                     actuals, [5])
+    picks_low_first = captain_picks(v31_empty, v1_low_first, ep_empty,
+                                    actuals, [5])
+    # regardless of input row order, the tie-break picks the lower player_id
+    assert picks_high_first.set_index("model").loc["v1", "player_id"] == 3
+    assert picks_low_first.set_index("model").loc["v1", "player_id"] == 3
 
 
 def test_captain_picks_own_pool_and_missing_actual_zero():
