@@ -119,3 +119,123 @@ def test_serve_minutes_zero_sample_fallback():
     assert set(preds.keys()) == {1, 2}
     for p_play, p60 in preds.values():
         assert 0.0 < p_play < 1.0 and 0.0 < p60 <= p_play
+
+
+def _future_fixtures_from_history(history: pd.DataFrame, gws: list[int]) -> pd.DataFrame:
+    """Reconstruct a fixtures frame for the synthetic season's rows at `gws`
+    (one row per fixture_id, sides from the was_home flag)."""
+    rows = {}
+    for _, r in history[history["gw"].isin(gws)].iterrows():
+        fid = int(r["fixture_id"])
+        if fid in rows:
+            continue
+        h = int(r["team_id"]) if r["was_home"] else int(r["opponent_team"])
+        a = int(r["opponent_team"]) if r["was_home"] else int(r["team_id"])
+        rows[fid] = {"id": fid, "event": int(r["gw"]),
+                     "kickoff_time": pd.Timestamp("2026-02-01T15:00:00Z"),
+                     "team_h": h, "team_a": a, "finished": False}
+    return pd.DataFrame(list(rows.values()))
+
+
+def _t25_setup(synthetic_history, gws):
+    """Shared part-2 scaffolding: prior history, reconstructed fixtures, and
+    the fitted run-level components at t = 25."""
+    from assist_scale import compute_assist_scale
+    from match_engine import MatchEngine, build_team_fixtures
+    from rates_v3 import position_rate_priors
+    from serving import build_sim_inputs
+
+    t = 25
+    hist = synthetic_history[synthetic_history["gw"] < t]
+    priors = position_rate_priors(hist)
+    k = compute_assist_scale(hist)
+    engine = MatchEngine(build_team_fixtures(hist))
+    models = fit_serve_minutes(hist)
+    preds = serve_minutes_predictions(hist, models)
+    latest = latest_player_state(hist)
+    fixtures = _future_fixtures_from_history(synthetic_history, gws)
+    targets = build_targets(fixtures, latest, gws)
+    inputs = build_sim_inputs(hist, targets, preds, priors, engine, k,
+                              before_gw=t)
+    return {"hist": hist, "fixtures": fixtures, "k": k, "priors": priors,
+            "preds": preds, "inputs": inputs}
+
+
+def test_build_sim_inputs_matches_walk_forward_semantics(synthetic_history):
+    """Inputs must be computed exactly the way walk_forward_v3 computes them
+    (same rate build, same non-mutating scaled copy, same minutes source)."""
+    from rates_v3 import build_player_rates
+
+    s = _t25_setup(synthetic_history, [25])
+    inputs = s["inputs"]
+    assert len(inputs) > 0
+    by_key = {(i["player_id"], i["fixture_id"]): i for i in inputs}
+    key = sorted(by_key)[0]
+    i = by_key[key]
+    prior = s["hist"][s["hist"]["player_id"] == key[0]]
+    raw = build_player_rates(prior, i["position"], s["priors"])
+    assert i["player"]["rates"]["xa90"] == pytest.approx(
+        raw["rates"]["xa90"] * s["k"])
+    assert i["player"]["rates"]["xg90"] == pytest.approx(raw["rates"]["xg90"])
+    # non-mutation: a fresh build still yields the unscaled rate
+    assert raw["rates"]["xa90"] == pytest.approx(
+        build_player_rates(prior, i["position"], s["priors"])["rates"]["xa90"])
+    assert (i["p_play"], i["p60"]) == s["preds"][key[0]]
+    assert i["m_att"] > 0 and i["m_sav"] > 0 and i["lam_against"] >= 0
+
+
+def test_simulate_serve_row_shape_and_determinism(synthetic_history):
+    from serving import serve_rows
+    t = 25
+    hist = synthetic_history[synthetic_history["gw"] < t]
+    fixtures = _future_fixtures_from_history(synthetic_history, [25, 26, 27])
+    a, info_a = serve_rows(hist, fixtures, [25, 26, 27], n_sims=300)
+    b, _ = serve_rows(hist, fixtures, [25, 26, 27], n_sims=300)
+    pd.testing.assert_frame_equal(a, b)  # per-target seeding is deterministic
+    need = {"player_id", "gw", "p25", "p50", "p75", "mean",
+            "p_goal", "p_assist", "p_cs", "p_haul", "p60"}
+    assert need <= set(a.columns)
+    assert len(a) > 0 and info_a["n_rows"] == len(a)
+    assert (a["p25"] <= a["p50"]).all() and (a["p50"] <= a["p75"]).all()
+    for col, dp in (("p25", 1), ("mean", 2), ("p_goal", 3)):
+        assert (a[col] == a[col].round(dp)).all()
+    assert a["p60"].between(0, 1).all()
+
+
+def test_simulate_serve_per_target_seed_isolation(synthetic_history):
+    """Removing one player's TARGETS must not change any other player's row
+    (the spec §2 rationale for per-target seeding). Operates on the inputs
+    list so run-level components (k_assist, priors, minutes) are held fixed —
+    dropping history rows would legitimately change those for everyone."""
+    from serving import simulate_serve
+
+    s = _t25_setup(synthetic_history, [25])
+    inputs = s["inputs"]
+    drop_pid = inputs[0]["player_id"]
+    kept = [i for i in inputs if i["player_id"] != drop_pid]
+    assert len(kept) < len(inputs)
+    full = simulate_serve(inputs, n_sims=300)
+    reduced = simulate_serve(kept, n_sims=300)
+    merged = full[full["player_id"] != drop_pid].merge(
+        reduced, on=["player_id", "gw"], suffixes=("_a", "_b"))
+    assert len(merged) == len(reduced)
+    for c in ("p50", "mean", "p_goal", "p_assist"):
+        assert (merged[f"{c}_a"] == merged[f"{c}_b"]).all()
+
+
+def test_simulate_serve_dgw_sums_draws(synthetic_history):
+    from serving import serve_rows
+    t = 25
+    hist = synthetic_history[synthetic_history["gw"] < t]
+    single = _future_fixtures_from_history(synthetic_history, [25])
+    # duplicate player 1's fixture as a second GW-25 fixture (DGW)
+    row = single[single["team_h"].eq(hist[hist["player_id"] == 1]["team_id"].iloc[-1])
+                 | single["team_a"].eq(hist[hist["player_id"] == 1]["team_id"].iloc[-1])].iloc[0]
+    extra = row.copy(); extra["id"] = 9999
+    dgw = pd.concat([single, extra.to_frame().T], ignore_index=True)
+    a, _ = serve_rows(hist, single, [25], n_sims=300)
+    b, _ = serve_rows(hist, dgw, [25], n_sims=300)
+    pa = a[a["player_id"] == 1]["mean"].iloc[0]
+    pb = b[b["player_id"] == 1]["mean"].iloc[0]
+    assert len(b[b["player_id"] == 1]) == 1   # one row per (player, gw)
+    assert pb > pa                            # a double projects more than a single
