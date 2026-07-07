@@ -75,8 +75,11 @@ Flow, per run:
 7. **Simulate → aggregate → upsert** into the `XPTS_SERVE_TABLE` target (default
    `projections_shadow`; §6/§8), `on_conflict (player_id, gw)`, one row per (player, gw):
    `p25/p50/p75` (numeric(4,1) — round to 1 dp like v1's writer), `model_version='v3.1'`, depth
-   columns `mean, p_goal, p_assist, p_cs, p_haul, p60` (always written by this writer; nullable only
-   so v1's writer can share the table after a promotion swap).
+   columns `mean, p_goal, p_assist, p_cs, p_haul, p60` — **written iff the target table is
+   `projections_shadow`** (only that table carries them; post-promotion the writer emits contract
+   columns to `projections`, and continuing depth production is part of the separate
+   depth-exposure product decision). The target table is validated against the allowlist
+   `{projections_shadow, projections}` before any SQL is built.
 8. **Summary line:** `[serve-v31] season=2026/27 gws=[2,3,4] players=... rows=...` — the workflow
    log is the observability surface.
 
@@ -154,9 +157,11 @@ lives in `player_gw_snapshots`).
 
 - **Evaluated GW:** a GW enters the scoreboard when its history rows exist (finished + captured) and
   both models have projection rows for it.
-- **Join unit:** (player_id, gw) within the current season — shadow (v3.1) × `projections` (the v1
-  family: `model_version like 'v1%'` — the Deno writer stamps `'v1.0.0'`) × summed actual points
-  from history × snapshot `ep_next`.
+- **Join unit:** (player_id, gw) within the current season — the eval **unions both projection
+  tables and splits strictly by `model_version`** (`'v3.1'` vs `like 'v1%'` — the Deno writer stamps
+  `'v1.0.0'`), never by table identity, so it survives the promotion swap unchanged; projection rows
+  count only when `computed_at ≥ July 1 of the season's start year` (guards stale rows under reused
+  season-scoped element ids) × summed actual points from history × snapshot `ep_next`.
 - **MAE (the promotion metric):** each model's shipped point estimate — v1 `p50` vs v3.1 `p50`
   (= simulated median) — over the **full joint population** (rows where both models emitted and an
   actual exists, played or not). **Starters-only MAE** (actual minutes ≥ 60) reported as a
