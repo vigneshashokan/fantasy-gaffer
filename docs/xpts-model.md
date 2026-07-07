@@ -266,3 +266,98 @@ weighting.
 - Coverage within ±0.10 of 0.50: **True**
 
 **Verdict: ❌ FAIL — documented finding; #128 stays parked**
+
+<!-- xpts-v3-results -->
+
+# xPts model — v3 results (event decomposition, #129)
+
+**Model version:** `v3` · pre-registered gate vs v1 on the same
+walk-forward (2025/26, GW 8→38, eval among heuristic xmin ≥ 0.5;
+n = 7373). PRIMARY = the generative simulator (point estimate =
+simulated mean); SECONDARY = 50/50 Vincentized blend with v1. N_SIMS = 8000,
+seed-pinned per GW. Spec:
+`docs/superpowers/specs/2026-07-06-xpts-v3-decomposition-design.md`.
+In-run comparison only (live team strengths drift at the 4th decimal).
+
+## MAE (lower better)
+
+| variant | MAE |
+|---------|-----|
+| (a) v1 features | 2.0629 |
+| (b) PRIMARY — v3 simulator | 2.2062 |
+| (c) SECONDARY — 50/50 v3+v1 blend | 2.0786 |
+| exp-decay form baseline | 2.4439 |
+
+Captaincy: v3 178 · ensemble 168
+· v1 185.
+Spearman: v3 0.360 · ensemble 0.360
+· v1 0.302.
+Coverage of [p25, p75]: v3 0.636 · ensemble
+0.469 (target 0.50 ± 0.10).
+GKP-only MAE (n = 637): v3 2.1021
+vs v1 1.9020.
+Uncapped population (n = 24167): v3 MAE
+1.0050 vs v1 0.8927.
+
+## Hot-streak diagnostic (top-decile last-3-GW points; n = 881)
+
+Mean signed error (pred − actual): v3 +0.480 ·
+v1 -1.103 · form baseline +2.017.
+
+## Diagnostics — point estimate, captain flips, calibration, coverage
+<!-- hand-written subsection (2026-07-06): analyzes the DUMPED gate-run frames
+     (/tmp/xpts-v3/results*.csv). write_report_v3 truncates from the marker —
+     re-add this subsection if the section is ever regenerated. -->
+
+**The MAE miss is the registered functional, not the signal.** The simulated
+mean is near-unbiased (signed error **+0.04** vs v1's **−0.98**) but loses
+under L1 scoring, where the optimal point estimate is the median: the
+simulated median `p50_v3` scores MAE **2.0111** (post-hoc, NOT gate-eligible)
+— beating v1's 2.0629 by −2.5%, the best MAE of anything tested in this arc
+(#127 2.0497, #138 2.0440), and beating v1 in **three of four positions**
+(DEF 2.1181/2.1771 · MID 1.8976/1.9609 · FWD 2.1918/2.2116; GKP an
+effective tie, 1.9027 vs 1.9020). Spearman 0.360 vs 0.302 is the best ranking signal ever
+recorded here.
+
+**The captaincy pathology is structurally cured.** 25/31 flips, cumulative
+delta **−7** (178 vs 185); **zero pathological picks** — no GKP captain, no
+`p60 < 0.5` pick (minimum p60 among v3 picks: 0.765). v3 captains premium
+attackers (Haaland, Saka, Foden, Palmer, Wirtz); v1's 185 leans on mid-price
+quantile-fit picks (Garner ×4, Anderson ×4, B.Fernandes ×9) that happened to
+land. Median-ranked captaincy scores only 157 — integer-granular medians
+destroy ranking resolution — so the mean is the right *ranking* stat even
+though the median is the right *MAE* stat.
+
+**Components are broadly calibrated** (deciles, predicted vs observed):
+`p_goal` 0.079 vs 0.077 overall (top decile 0.31 vs 0.26, mildly over);
+`p_cs_pts` 0.200 vs 0.190 (top decile 0.40 vs 0.34 — the independent-Poisson
+clean-sheet optimism; the Dixon-Coles lever); `p_assist` **0.055 vs 0.074 —
+under by ~26%**, because FPL's assist definition is broader than xA
+(deflections, penalty/free-kick won, etc.). Per-GW aggregate level: predicted
+2.890 vs actual 2.854 points/player (corr 0.584).
+
+**The coverage miss (0.636) is substantially a discreteness artifact.**
+**42.8% of eval rows land exactly on an interval endpoint** — integer draws
+produce integer quantiles, and inclusive endpoints then over-cover a discrete
+distribution by construction. v3's intervals are not wider than v1's (median
+width 3.00 vs 3.16; v1 covers 0.489 with continuous predictions). The ±0.10
+band was designed for continuous quantile predictions.
+
+**Reading:** the first architecture in the arc whose failure decomposes into
+named, individually fixable causes — (1) registered mean vs L1-optimal median,
+(2) FPL-assist definition gap in the xA rate, (3) independent-Poisson CS tail,
+(4) discrete-interval coverage semantics — rather than an unfixable structural
+ceiling. Per pre-registration discipline all fixes are a new candidate
+requiring its own registered run; even with (1) alone, captaincy 178 < 185
+would still gate-fail, so a follow-up cycle should address the captaincy
+functional and coverage semantics together.
+
+## Gate
+
+| condition | PRIMARY (v3) | SECONDARY (ensemble) |
+|-----------|--------------|----------------------|
+| beats v1 on MAE | **False** | **False** |
+| captaincy ≥ v1 | **False** | **False** |
+| coverage within ±0.10 of 0.50 | **False** | **True** |
+
+**Verdict: ❌ FAIL — documented finding; #128 stays parked**
