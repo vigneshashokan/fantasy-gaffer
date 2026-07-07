@@ -106,7 +106,9 @@ availability is the minutes model's job.
   `RATE_WINDOW` prior **played** rows, smoothed with `BONUS_PSEUDO = 2` pseudo-observations of the position-level
   distribution (from all played `gw < t` rows), then normalized.
 - **Safety clip:** every final per-fixture component λ (after fixture adjustment and minutes
-  scaling) is clipped to `[0, LAMBDA_CAP = 3.0]`.
+  scaling) is clipped to `[0, LAMBDA_CAP = 3.0]` — **except the saves λ, which is clipped to
+  `[0, SAVES_LAMBDA_CAP = 8.0]`**: keepers average ~3 saves/match and busy ones exceed 6, so a
+  3.0 cap would bind in ordinary play (spec amendment during plan-writing, 2026-07-06).
 
 ### 3c. Fixture coupling (where the engine enters)
 
@@ -221,7 +223,8 @@ before). Scripts stay scratch; findings are durable.
 New (all under `model/`, Python toolchain, excluded from repo TS/jest tooling):
 
 - `feature_spec_v3.py` — constants: `RATE_WINDOW=6, RATE_ALPHA=0.85, MIN_DECAYED_MINUTES=60,
-  M_PART=30, M_FULL=85, BONUS_PSEUDO=2, LAMBDA_CAP=3.0, N_SIMS=8000, V3_SEED_BASE=20260706`,
+  M_PART=30, M_FULL=85, BONUS_PSEUDO=2, LAMBDA_CAP=3.0, SAVES_LAMBDA_CAP=8.0, N_SIMS=8000,
+  V3_SEED_BASE=20260706`,
   DC thresholds, and the points-table constants imported by `points_rules.py`.
 - `points_rules.py` — the table + `points_from_events(position, events) -> int` (vectorized
   variant for the simulator).
