@@ -16,7 +16,8 @@ _HISTORY_COLUMNS = [
     "goals_conceded", "bonus", "bps", "total_points", "expected_goals",
     "expected_assists", "expected_goal_involvements", "expected_goals_conceded",
     "ict_index", "influence", "creativity", "threat", "defensive_contribution",
-    "value",
+    "value", "saves", "penalties_saved", "penalties_missed", "yellow_cards",
+    "red_cards", "own_goals",
 ]
 
 

@@ -22,6 +22,8 @@ MODEL_VERSION_AUG = "v21-aug"
 
 
 def evaluate_aug(results: pd.DataFrame, min_xmin: float = 0.5) -> dict:
+    if len(results) == 0:
+        raise ValueError("evaluate_aug: results frame is empty — no walk-forward rows")
     df = results[results["xmin"] >= min_xmin].copy()
     v1_mae = mae(df["p50_v1"], df["actual"])
     aug_mae = mae(df["p50_aug"], df["actual"])

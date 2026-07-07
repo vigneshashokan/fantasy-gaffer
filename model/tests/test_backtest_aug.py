@@ -103,3 +103,8 @@ def test_run_gate_dumps_frames_and_writes_report(tmp_path, synthetic_history,
     assert m["n_eval"] > 0 and isinstance(m["passes_gate"], bool)
     content = report.read_text()
     assert REPORT_MARKER_AUG in content and "## Gate" in content
+
+
+def test_evaluate_aug_raises_on_empty_frame():
+    with pytest.raises(ValueError, match="results frame is empty"):
+        evaluate_aug(pd.DataFrame())

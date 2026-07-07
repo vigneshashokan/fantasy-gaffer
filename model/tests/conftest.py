@@ -1,6 +1,8 @@
-"""Shared deterministic fixtures for v2.1 tests: 8 players (2 per position)
+"""Shared deterministic fixtures for v2.1/v3 tests: 8 players (2 per position)
 x 30 GWs with rotation patterns and within-position stat variation, giving every
-position both hurdle label classes (rotation benching + sub-60 cameos). No RNG."""
+position both hurdle label classes (rotation benching + sub-60 cameos); now
+carries the full v3 column set (goals/assists/CS/GC/bonus/saves/pens/cards/OG).
+No RNG."""
 import pandas as pd
 import pytest
 
@@ -30,6 +32,17 @@ def synthetic_history() -> pd.DataFrame:
                 "influence": 4.0 * pid + 0.1 * gw,
                 "bps": 10 + pid + (gw % 11),
                 "defensive_contribution": pid + (gw % 3),
+                "goals_scored": 1 if (minutes >= 60 and (gw + pid) % 6 == 0) else 0,
+                "assists": 1 if (minutes >= 1 and (gw + pid) % 7 == 0) else 0,
+                "clean_sheets": 1 if (minutes >= 60 and gw % 4 == 0) else 0,
+                "goals_conceded": (gw + pid) % 3 if minutes else 0,
+                "bonus": (3 if (gw + pid) % 11 == 0 else 1) if (minutes and (gw + pid) % 5 == 0) else 0,
+                "saves": (3 + gw % 4) if (pos == "GKP" and minutes) else 0,
+                "penalties_saved": 1 if (pos == "GKP" and minutes and gw % 13 == 0) else 0,
+                "penalties_missed": 1 if (pos == "FWD" and minutes and gw % 12 == 0) else 0,
+                "yellow_cards": 1 if (minutes and (gw + 2 * pid) % 8 == 0) else 0,
+                "red_cards": 1 if (minutes and (gw + pid) % 19 == 0) else 0,
+                "own_goals": 1 if (minutes and (gw + pid) % 23 == 0) else 0,
             })
     return pd.DataFrame(rows)
 
