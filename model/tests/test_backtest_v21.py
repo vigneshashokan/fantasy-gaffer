@@ -124,3 +124,12 @@ def test_calibration_buckets_are_readable_ranges():
         # raw pd.Interval reprs look like "(0.0989, 0.341]" — we want plain
         # "0.099–0.341" ranges in the report table.
         assert "(" not in b["bucket"] and "]" not in b["bucket"]
+
+
+def test_walk_forward_aggregate_quantile_ordering(synthetic_history, synthetic_strengths):
+    # Per-row p25<=p75 is flaky by design under raw QuantReg crossing; the
+    # aggregate ordering is the non-flaky guard for a 0.25/0.75 arg swap
+    # (triaged minor from #140).
+    results, _ = walk_forward_v21(synthetic_history, synthetic_strengths,
+                                  start_gw=25, end_gw=28)
+    assert results["p25_aug"].mean() < results["p75_aug"].mean()
