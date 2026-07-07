@@ -96,7 +96,7 @@ The app's expected-points number is now a **real owned model**, not the old `xPt
 - **Roadmap / status:**
   - **Decision layer — SHIPPED (Phase 3):** captain/best-XI/bench optimizer (#31/#32, PR #103), transfer suggestions (#33, PR #105), chip advice (#34, PR #106); Top Picks model ranking (#35, closed). All **advisory** — see the Decision layer section.
   - **Ongoing per-GW capture — SHIPPED (PR #104):** `fpl-ingest?source=history` self-healing daily cron keeps `player_gw_history` fresh through the season (was the v1 fast-follow).
-  - **v2 model — five cycles complete; the fifth (#144 v3.1) PASSED its gate (first in the arc) — v1 STILL keeps serving per the ship policy; #128/#130 revived to build the v3.1 shadow serving + prospective eval; has its own section below** (`## xPts v2 (#107)`): the old lever list here (external xG, factor set, xGI fix, minutes classifier, GBM, Approach C) was decomposed into a designed, issue-tracked arc — see that section for the destination architecture, ship policy, the gate verdicts, and per-issue status.
+  - **v2 model — the arc is in its off-season END-STATE: five cycles complete (#144 v3.1 ✅ PASSED, first in arc); the #128/#130 revival is BUILT + DEPLOYED (PR #148) — v1 STILL serving, v3.1 shadow-armed (nightly GH Actions batch → `projections_shadow`, off-season no-op), prospective eval + strict promotion runbook registered pre-season; promotion decision earliest ~Oct 2026; has its own section below** (`## xPts v2 (#107)`): the old lever list here (external xG, factor set, xGI fix, minutes classifier, GBM, Approach C) was decomposed into a designed, issue-tracked arc — see that section for the destination architecture, ship policy, the gate verdicts, and per-issue status.
   - **Monetization instrumentation (likely Phase 4):** PostHog usage tracking on the now-free decision features → find the "aha" feature → data-driven paywall placement (see Monetization strategy). PostHog also gives feature-flags for the wall + A/B.
   - Serving-side p-value flooring/calibration (a documented v2 lever — now v2.2, see the xPts v2 section).
 
@@ -120,12 +120,11 @@ the living index** of the whole arc — read it for current status before touchi
   never changes.
 - **Issue map:** v2.0 = #123 snapshotter (**SHIPPED**; open only as the GW1 validation tracker) · #125
   match engine + backtest gate (**DONE — merged `36810e5`/PR #135, CLOSED, gate verdict ❌ FAIL**, see the
-  verdict bullet) · #128 shadow serving (**REVIVED 2026-07-07 — #144's v3.1 candidate PASSED**; builds
-  the **A→C Python serving designed in the v3 spec §9** (GH Actions batch → `projections_shadow` +
-  intermediate-probability columns), NOT the old Deno port, for the **frozen registered v3.1
-  configuration**; spec/plan cycle in progress) ·
-  #130 eval harness + promotion runbook (**REVIVED with #128**; scores shadow vs v1 vs the #123-frozen
-  live `ep_next`; earliest promotion ~Oct 2026). v2.1 = #127 minutes classifier (**DONE — merged PR #137 `b6c4e29`, CLOSED, gate
+  verdict bullet) · #128 shadow serving (**DONE — merged `a3ec4a6`/PR #148, CLOSED: the A→C Python
+  serving BUILT + DEPLOYED**, see the serving-revival bullet; one operator step pending — the
+  `DATABASE_URL` secret + validation workflow_dispatch, tracked on the issue) ·
+  #130 eval harness + promotion runbook (**DONE — PR #148, CLOSED**, see the serving-revival bullet;
+  scoreboard empty until 2026/27 GWs finish; earliest promotion ~Oct 2026). v2.1 = #127 minutes classifier (**DONE — merged PR #137 `b6c4e29`, CLOSED, gate
   verdict ❌ FAIL**, see the v2.1 verdict bullet; the minutes model itself is VALIDATED reusable infra) ·
   #138 **augment mini-cycle** (**DONE — merged `e470f1d`/PR #140, CLOSED, gate verdict ❌ FAIL**, see the
   #138 verdict bullet; the cheap v1-upgrade lever is now exhausted) · #126 external xG
@@ -283,6 +282,37 @@ the living index** of the whole arc — read it for current status before touchi
   Full analysis: `docs/xpts-model.md` (NOTE: the **diagnostics subsection is hand-written inside the
   generated v3.1 section** — `write_report_v31` truncates at its marker; re-add if regenerated. Same
   caveat as every prior cycle).
+- **#128/#130 serving revival — BUILT + MERGED (`a3ec4a6`/PR #148, both CLOSED, 2026-07-07).** Spec:
+  `docs/superpowers/specs/2026-07-07-xpts-serving-revival-design.md` (**§7 = the frozen prospective
+  registration**, pinned pre-season). The build: **`model/serving.py`** (pure pipeline COMPOSING the
+  frozen v3.1 modules — never reimplementing; sim-input builder mirrors `walk_forward_v3` line-for-line;
+  **per-target seeding** `default_rng((V3_SEED_BASE, gw, player_id, fixture_id))` — set-robust, unlike
+  the backtest's shared per-GW stream, deliberately: one player entering/leaving cannot shift another's
+  draws) · **`model/serve_v3.py`** (DB-only CLI — ZERO FPL API calls; allowlisted `XPTS_SERVE_TABLE`;
+  depth columns written **iff** target is `projections_shadow`; off-season/pre-GW1 no-op guards;
+  `--as-of-gw t` filters history to `gw<t` AND drives target selection) · **`projections_shadow`**
+  migration (contract cols + nullable depth `mean/p_goal/p_assist/p_cs/p_haul/p60`; no FK;
+  RLS-no-policies = service-role only; deployed to prod via CI) · **`.github/workflows/xpts-serve.yml`**
+  (nightly 04:30 UTC, after v1's 04:00 `fpl-project` cron; `workflow_dispatch`; promotion = flip
+  `XPTS_SERVE_TABLE` here) · **`model/eval_prospective.py` + `docs/xpts-prospective.md`** (#130): eval
+  splits a UNION of both projection tables strictly by `model_version` (survives the promotion swap);
+  `computed_at ≥ July 1` season cutoff; promotion MAE = full joint pool (starters-≥60′ diagnostic only);
+  ex-ante own-pool captaincy (v1 by p50, v3.1 by its registered **mean**; deterministic tie-break);
+  `ep_next` benchmark on the same pool, `ep_next=0` excluded; bootstrap context-only; **strict promotion
+  bar (user decision): ≥6 evaluated GWs ∧ MAE lead ∧ captaincy not behind** → PROMOTE-ELIGIBLE/HOLD; doc
+  writer replaces only below `<!-- xpts-prospective-scoreboard -->` (runbook above survives). **The key
+  evidence: serve-path parity vs the gate-validated walk-forward at 2025/26 GW30 — 820/820 targets, zero
+  set-diff, zero position drift, zero input mismatches** (input-parity by design, NOT draw-parity — the
+  backtest's shared stream would make set differences shift draws spuriously; env-gated test
+  `XPTS_PARITY=1`, several minutes, needs the local 2025/26 DB). **Operator steps pending (runbook §):**
+  seed the `DATABASE_URL` Actions secret (Supabase **session-pooler** URI — GH runners are IPv4-only) +
+  one validation `workflow_dispatch` (expected: green `skipped: no unfinished fixtures`). **Serving-cycle
+  gotchas:** the eval is a **pre-promotion instrument** — post-swap re-runs would silently empty v3.1's
+  captaincy pool (`mean` is null for `projections` rows; documented in the runbook; do NOT "fix" via a
+  p50 fallback — the registered ranking functional is the mean) · local-dev DB restore recipe covers
+  history ONLY — `clubs`/`fixtures` need their own restore (fresh clone hits a loud IndexError in the
+  parity fixture; follow-up: add recipe to `model/README.md`) · `k_assist` at gw<30 = 1.4234 is genuine
+  (gws-28/29 assist spike, verified snapshot==DB exactly) — don't chase it as divergence.
 - **Gotchas already learned (spec/plan review + execution):**
   - `MatchEngine` default args **bind at definition time** — hyperparam grids must pass `rating_params`
     explicitly; patching module constants silently does nothing.
@@ -347,16 +377,18 @@ the living index** of the whole arc — read it for current status before touchi
     `/tmp/xpts-v31/results.csv`); unused numpy import in `test_assist_scale.py`.
 - **v2.2 needs NOTHING captured now (audited):** every input either persists (history, scores) or is
   already being frozen by v2.0's infra — the deadline-freeze tables ARE the future calibration dataset.
-- **Execution state / next: five cycles complete — #125/#127/#138/#129 FAIL, #144 v3.1 ✅ PASS (the
-  arc's first)** — findings recorded on all five (all closed); snapshotter live+armed (#123 open only
-  for the ~mid-Aug GW1 freeze check). **Next: the #128/#130 revival cycle** — build the A→C Python
-  serving pinned in the v3 spec §9 (GH Actions nightly batch → `projections_shadow` + depth columns)
-  for the **frozen registered v3.1 candidate** (simulator + assist multiplier; p50 = simulated
-  median), plus #130's prospective eval harness + promotion runbook (spec/plan cycle started
-  2026-07-07). **v1 keeps serving untouched** — promotion only after ≥6 evaluated live GWs next season
-  (earliest ~Oct 2026), iff v3.1 leads on cumulative MAE and is not behind on captaincy. #126 parked
-  (team-level re-scope; engine leg not binding); #131 waits for snapshot data (~GW10+). Monetization
-  stance unchanged: **v2 deepens premium; it is not the wall.**
+- **Execution state: THE ARC IS IN ITS OFF-SEASON END-STATE (2026-07-07).** Five gate cycles complete
+  (#125/#127/#138/#129 FAIL, #144 v3.1 ✅ PASS — the arc's first); the #128/#130 revival is BUILT +
+  DEPLOYED (PR #148). Standing configuration: **v1 serves `projections` untouched · v3.1 shadow-serves
+  `projections_shadow` nightly (off-season no-op until 2026/27 GW1) · the prospective eval + strict
+  promotion runbook are registered pre-season** (`docs/xpts-prospective.md`). Everything that remains is
+  calendar- or operator-gated, NOT design-gated: **operator now** = `DATABASE_URL` secret + validation
+  dispatch (closes #128's pending step) · **~mid-Aug** = #123 GW1 snapshot freeze check · **in-season** =
+  run `eval_prospective.py` every few GWs · **~Oct earliest** = promotion decision per the strict bar ·
+  **~GW10+** = #131 becomes backtestable. #126 parked (team-level re-scope; engine leg not binding). Any
+  new model candidate (assist-correction refinement, Dixon-Coles, v2.2 levers) requires its own frozen
+  registration + gate run — nothing is promotable post-hoc. Monetization stance unchanged: **v2 deepens
+  premium; it is not the wall.**
 
 ## Decision layer (Phase 3) — shipped, the monetization surface
 
