@@ -1,0 +1,30 @@
+# #128: nightly v3.1 shadow serving (spec §6). 04:30 UTC — after the 03:00
+# bootstrap, 03:30 history, and 04:00 fpl-project (v1) crons, so both models
+# project the same night on the same data. Promotion (#130 runbook) flips
+# XPTS_SERVE_TABLE to `projections` in ONE line here.
+name: xpts-serve
+
+on:
+  schedule:
+    - cron: '30 4 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: xpts-serve
+
+jobs:
+  serve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: model/requirements.txt
+      - run: pip install -r model/requirements.txt
+      - run: python model/serve_v3.py
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          XPTS_SERVE_TABLE: projections_shadow
