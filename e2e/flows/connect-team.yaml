@@ -1,0 +1,31 @@
+# Flow 2 — fresh account connects an FPL team and sees the populated squad.
+appId: com.fantasygaffer.app
+---
+- runFlow:
+    file: subflows/signin.yaml
+    env:
+      EMAIL: ${EMAIL_B}
+      PASSWORD: ${PASSWORD}
+- extendedWaitUntil:
+    visible:
+      id: "connect-team-cta"
+    timeout: 90000
+- tapOn:
+    id: "connect-team-cta"
+- tapOn:
+    id: "team-id-input"
+- inputText: ${ENTRY_ID}
+- hideKeyboard
+- tapOn:
+    id: "connect-team-submit"
+- extendedWaitUntil:
+    visible:
+      id: "connect-team-confirm"
+    timeout: 60000
+- tapOn:
+    id: "connect-team-confirm"
+- extendedWaitUntil:
+    visible:
+      id: "gw-carousel"
+    timeout: 90000
+- assertVisible: ${PLAYER_NAME}

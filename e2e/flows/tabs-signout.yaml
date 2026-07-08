@@ -1,0 +1,55 @@
+# Flow 3 — tab sweep, legal doc, session persistence across relaunch, sign-out.
+appId: com.fantasygaffer.app
+---
+- runFlow:
+    file: subflows/signin.yaml
+    env:
+      EMAIL: ${EMAIL_A}
+      PASSWORD: ${PASSWORD}
+- extendedWaitUntil:
+    visible:
+      id: "gw-carousel"
+    timeout: 90000
+- tapOn:
+    id: "tab-top-picks"
+- extendedWaitUntil:
+    visible:
+      id: "top-picks-list"
+    timeout: 60000
+- assertVisible: ${GK_NAME}
+- tapOn:
+    id: "tab-transfer"
+- extendedWaitUntil:
+    visible:
+      id: "transfer-suggestions"
+    timeout: 60000
+- tapOn:
+    id: "tab-account"
+- tapOn:
+    id: "account-menu-settings"
+# Settings is a ScrollView; the More card with Privacy Policy sits below the
+# Appearance/Preferences cards and is off-screen on launch.
+- scrollUntilVisible:
+    element:
+      text: "Privacy Policy"
+    direction: DOWN
+- tapOn: "Privacy Policy"
+- extendedWaitUntil:
+    visible: "Fantasy Gaffer"
+    timeout: 30000
+# Relaunch WITHOUT clearState: session + persisted cache must survive a cold
+# start (regression net for the Map-persister crash class), then sign out.
+- launchApp
+- openLink: "fplgafferreactnativeapp://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081"
+- extendedWaitUntil:
+    visible:
+      id: "gw-carousel"
+    timeout: 120000
+- tapOn:
+    id: "tab-account"
+- tapOn:
+    id: "account-menu-signout"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-signin-link"
+    timeout: 60000

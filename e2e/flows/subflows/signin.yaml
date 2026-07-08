@@ -1,0 +1,23 @@
+# Shared: cold-start the app (cleared state), attach to Metro, sign in.
+# clearState wipes the dev client's pinned Metro URL too — the openLink
+# re-attach below MUST come after launchApp (spec §8).
+appId: com.fantasygaffer.app
+---
+- launchApp:
+    clearState: true
+- openLink: "fplgafferreactnativeapp://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081"
+- extendedWaitUntil:
+    visible:
+      id: "onboarding-signin-link"
+    timeout: 180000
+- tapOn:
+    id: "onboarding-signin-link"
+- tapOn:
+    id: "signin-email"
+- inputText: ${EMAIL}
+- tapOn:
+    id: "signin-password"
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: "signin-submit"
