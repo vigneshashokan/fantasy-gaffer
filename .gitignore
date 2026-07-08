@@ -45,3 +45,6 @@ example
 
 # brainstorming session artifacts (visual-companion mockups)
 .superpowers/
+
+# E2E generated artifacts (transformed fixtures, cached app, logs)
+e2e/.artifacts/
