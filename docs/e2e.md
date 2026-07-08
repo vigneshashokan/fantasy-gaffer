@@ -220,6 +220,38 @@ The next `./e2e/run.sh` will notice the empty cache and download the newest fini
   drives a compiled simulator app over its own protocol and never touches jest, watchman, or
   the haste map. If jest hangs, that's the pre-existing `npm start`-leaves-watchman-recrawling
   gotcha documented in this project's `CLAUDE.md`, unrelated to E2E.
+- **"Maestro driver timed out during snapshot call … main thread busy for 30.0s."** Seen
+  once during the shakeout, inside the sign-in dismiss loop right after an optional "Reload"
+  tap: the tap triggers a dev-client JS re-bundle, and while the bundle (re)loads the app's
+  main thread can stay busy long enough that Maestro's 30s snapshot deadline expires — which
+  fails the *current command*, not just an assertion. It's a transient environmental flake
+  (CPU contention: sim + Metro + Docker on one machine), so first response is simply re-run.
+  The `times: 60` caps on the dismiss loops mean a recurrence fails red with this exact
+  message rather than hanging. If it ever becomes frequent, the known fix direction is to
+  gate the "Reload" tap behind a check that the dev-client *launcher* screen is actually
+  showing (so the loop stops re-triggering re-bundles), not to raise timeouts.
+
+## Future hardening (recorded at the #48 final review, deliberately not built)
+
+None of these block anything today; fold each in when its file is next touched:
+
+- **`e2e/dataset-info.mjs --sh` output is `eval`'d by `run.sh`.** The values come from the
+  trusted committed capture, but shell-escaping the emitted values (`printf %q`-style) would
+  remove the eval-of-data pattern outright.
+- **`EXPO_NO_DOTENV=1` neutralises `.env` but not shell-profile exports.** A developer with
+  `EXPO_PUBLIC_POSTHOG_KEY`/`EXPO_PUBLIC_SENTRY_DSN` exported globally would leak them into
+  the Metro run. Repo convention keeps keys in `.env`, so this is a corner; prefixing the
+  `npx expo start` invocation with `env -u EXPO_PUBLIC_POSTHOG_KEY -u EXPO_PUBLIC_SENTRY_DSN`
+  closes it.
+- **The `picks-gw{t+1}` synthesis in `transform.mjs` lives in `run()` (I/O glue) and has no
+  unit test** — the pure transforms are tested and every suite run exercises it live.
+  Cheapest meaningful cover: extract `synthesizeUpcomingPicks(livePicks, t)` as a pure
+  export, and/or assert the synthesized route exists in `fixture-server.test.mjs` (its
+  `before()` already runs the transform).
+- **`fixture-server.test.mjs`'s element-summary fallback test** compares body equality but
+  would pass vacuously (`undefined == undefined`) if the template file were ever absent —
+  unreachable today (capture always writes it); add an `assert.ok` truthiness guard when
+  next editing the test.
 - **A `text:`/`assertVisible:` on a name that's clearly on screen "fails to be visible".**
   Maestro text selectors are **full-string** regexes — they must match the element's *entire*
   accessibility label, not a substring. Anything wrapped in a `Pressable`/touchable groups its
