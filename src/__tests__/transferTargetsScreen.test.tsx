@@ -21,16 +21,22 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 jest.mock('@/components/ui/Icon', () => ({ __esModule: true, Icon: () => null }));
 
-const HAALAND = { id: '401', name: 'Haaland', pos: 'FWD', club: 'MCI', p: 14.2, f: 8.4, tp: 175, own: 62.3, gw: 9.1, capt: true };
-const WOOD = { id: '500', name: 'Wood', pos: 'FWD', club: 'NEW', p: 7.5, f: 6.7, tp: 120, own: 21.0, gw: 7.0 };
+const HAALAND: Player = {
+  id: '401', name: 'Haaland', pos: 'FWD', club: 'MCI', p: 14.2, f: 8.4, tp: 175, own: 62.3, gw: 9.1, capt: true,
+  status: 'a', news: '', chanceNext: null, ict: 0, bps: 0,
+};
+const WOOD: Player = {
+  id: '500', name: 'Wood', pos: 'FWD', club: 'NEW', p: 7.5, f: 6.7, tp: 120, own: 21.0, gw: 7.0,
+  status: 'a', news: '', chanceNext: null, ict: 0, bps: 0,
+};
 
 jest.mock('@/api/squad', () => ({
   __esModule: true,
-  useSquad: () => ({ data: { starters: [HAALAND], bench: [] }, isPending: false }),
+  useSquad: () => ({ data: { starters: [HAALAND], bench: [] } satisfies { starters: SquadPlayer[]; bench: SquadPlayer[] }, isPending: false }),
 }));
 jest.mock('@/api/players', () => ({
   __esModule: true,
-  useTopPicks: () => ({ data: { GKP: [], DEF: [], MID: [], FWD: [HAALAND, WOOD] }, isPending: false }),
+  useTopPicks: () => ({ data: { GKP: [], DEF: [], MID: [], FWD: [HAALAND, WOOD] } satisfies Record<Position, TopPickPlayer[]>, isPending: false }),
 }));
 jest.mock('@/api/clubs', () => ({
   __esModule: true,
@@ -43,6 +49,8 @@ jest.mock('@/api/fixtures', () => ({
 }));
 
 import TransferTargetsScreen from '@/app/(home)/transfer-targets/[id]';
+import type { Player, Position, TopPickPlayer } from '@/types/fpl';
+import type { SquadPlayer } from '@/api/squad';
 
 describe('TransferTargetsScreen', () => {
   beforeEach(() => { mockBack.mockReset(); mockPush.mockReset(); mockParams = { id: '401' }; });

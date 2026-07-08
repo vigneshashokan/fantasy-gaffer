@@ -27,7 +27,9 @@ interface FplHistoryCurrent {
   rank: number;
 }
 
-interface FplHistory {
+// Exported so tests can pin hand-mocked `useManagerHistory` fixtures against
+// the real shape (see #155).
+export interface FplHistory {
   current?: FplHistoryCurrent[];
   chips: Array<{ name: string; event: number }>;
 }

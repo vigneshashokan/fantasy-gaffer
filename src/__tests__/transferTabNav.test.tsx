@@ -14,7 +14,7 @@ jest.mock('@/api/squad', () => ({
       transfer: {
         nextGw: 24, deadline: '', squadValue: 100, freeTransfers: 1, inBank: 0,
         transferSuggestions: [], pitch: [[]],
-      },
+      } satisfies Partial<ApexTeamData['transfer']>,
     },
     isPending: false, isError: false, noTeam: false,
   }),
@@ -44,6 +44,7 @@ jest.mock('@/components/transfer/TransferPitch', () => {
 });
 
 import TransferTab from '@/app/(home)/(tabs)/transfer';
+import type { ApexTeamData } from '@/api/squad';
 
 describe('Transfer tab navigation', () => {
   beforeEach(() => mockPush.mockReset());

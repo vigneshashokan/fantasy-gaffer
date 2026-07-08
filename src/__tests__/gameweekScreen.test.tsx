@@ -19,7 +19,7 @@ jest.mock('@/components/team/ApplyAllCard', () => ({ __esModule: true, ApplyAllC
 
 let mockLiveGw = 30;
 let mockLiveFinished = false;
-const makeTeam = (gw: number) => ({
+const makeTeam = (gw: number): ApexTeamData => ({
   teamName: 'Test FC', gw, liveGw: mockLiveGw, liveGwFinished: mockLiveFinished,
   liveGwDataChecked: true, gwPts: 50, totalPoints: 1200, gwFinished: false,
   gwDataChecked: false, avgPoints: 45, highestPoints: 90,
@@ -37,6 +37,7 @@ jest.mock('@/api/squad', () => ({
 }));
 
 import { GameweekScreen } from '@/components/team/GameweekScreen';
+import type { ApexTeamData } from '@/api/squad';
 
 const baseProps = {
   width: 320, height: 640,

@@ -17,21 +17,24 @@ jest.mock('@/store/themeStore', () => ({
 jest.mock('@/components/ui/Kit', () => ({ __esModule: true, Kit: () => null }));
 jest.mock('@/components/ui/Icon', () => ({ __esModule: true, Icon: () => null }));
 
-const PLAYER = {
+const PLAYER: Player = {
   id: '401', name: 'Haaland', pos: 'FWD', club: 'MCI',
   p: 14.2, f: 8.4, tp: 175, own: 62.3, gw: 9.1,
   status: 'a', news: '', chanceNext: null, ict: 312.4, bps: 640,
 };
-let mockPlayers: { data: unknown; isPending: boolean } = { data: [PLAYER], isPending: false };
+let mockPlayers: { data: Player[] | undefined; isPending: boolean } = { data: [PLAYER], isPending: false };
 jest.mock('@/api/players', () => ({ __esModule: true, usePlayers: () => mockPlayers }));
 jest.mock('@/api/clubs', () => ({
   __esModule: true,
-  useClubs: () => ({ data: { MCI: { name: 'Man City', kit: '#fff', kit2: '#fff', ink: '#000' } } }),
-  useClubCodeByTeamId: () => ({ data: { 1: 'ARS', 13: 'MCI' } }),
+  useClubs: () => ({ data: { MCI: { name: 'Man City', kit: '#fff', kit2: '#fff', ink: '#000' } } satisfies Partial<Record<ClubCode, Club>> }),
+  useClubCodeByTeamId: () => ({ data: { 1: 'ARS', 13: 'MCI' } satisfies Record<number, ClubCode> }),
 }));
 
+// history rows are deliberately partial in several fixtures below — this
+// screen only exercises a subset of SummaryHistoryRow per test.
+type SummaryFixture = { history: Partial<SummaryHistoryRow>[]; fixtures: SummaryFixtureRow[] };
 let mockSummary: {
-  isPending: boolean; isError: boolean; refetch: jest.Mock; data: unknown;
+  isPending: boolean; isError: boolean; refetch: jest.Mock; data: SummaryFixture | undefined;
 };
 jest.mock('@/api/playerSummary', () => {
   const actual = jest.requireActual('@/api/playerSummary');
@@ -39,8 +42,10 @@ jest.mock('@/api/playerSummary', () => {
 });
 
 import PlayerDetail from '@/app/(home)/player/[id]';
+import type { Player, Club, ClubCode } from '@/types/fpl';
+import type { SummaryHistoryRow, SummaryFixtureRow } from '@/api/playerSummary';
 
-const freshSummary = () => ({
+const freshSummary = (): { isPending: boolean; isError: boolean; refetch: jest.Mock; data: SummaryFixture } => ({
   isPending: false,
   isError: false,
   refetch: jest.fn(),

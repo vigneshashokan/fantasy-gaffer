@@ -8,7 +8,7 @@ jest.mock('@/lib/auth/account-deletion', () => ({
 jest.mock('@/api/notificationPrefs', () => ({
   __esModule: true,
   useNotificationPrefs: () => ({
-    data: { deadlines: false, prices: false, gwConfirm: false, transfer: false },
+    data: { deadlines: false, prices: false, gwConfirm: false, transfer: false } satisfies NotificationPrefs,
     isPending: false,
   }),
   useUpdateNotificationPrefs: () => ({ mutate: jest.fn(), isError: false }),
@@ -30,6 +30,7 @@ jest.mock('@/store/authStore', () => ({
 }));
 
 import React from 'react';
+import type { NotificationPrefs } from '@/api/notificationPrefs';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Icon } from '@/components/ui/Icon';
 import { PosTag } from '@/components/ui/PosTag';

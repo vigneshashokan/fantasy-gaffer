@@ -41,6 +41,11 @@ interface PicksResponse {
 
 export type SquadPlayer = Player & { multiplier?: number };
 
+// The `useApexTeam().data` shape — derived rather than hand-declared so it can
+// never drift from `buildApexTeam`'s actual return. Exported so tests can pin
+// hand-mocked `useApexTeam` fixtures against the real shape (see #155).
+export type ApexTeamData = ReturnType<typeof buildApexTeam>;
+
 export function squadFromPicks(
   picks: PicksResponse,
   players: Player[],

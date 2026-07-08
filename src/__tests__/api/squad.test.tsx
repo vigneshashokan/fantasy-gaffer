@@ -4,7 +4,10 @@ import { renderHook, waitFor } from '@testing-library/react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { squadFromPicks, useSquad, transferChipsFromHistory, useApexTeam } from '@/api/squad';
 import { makeTestQueryClient } from '../utils/renderWithProviders';
-import type { Player } from '@/types/fpl';
+import type { Player, TeamInfo } from '@/types/fpl';
+import type { CurrentGameweek, SeasonFixtures } from '@/api/fixtures';
+import type { FplHistory } from '@/api/manager';
+import type { ProjectionStat } from '@/api/projections';
 
 jest.mock('@/api/fpl-client', () => ({ fplGet: jest.fn() }));
 jest.mock('@/api/profile',    () => ({ useProfile: jest.fn() }));
@@ -93,7 +96,7 @@ describe('transferChipsFromHistory', () => {
 describe('useSquad', () => {
   it('fetches when fpl_team_id and currentGw are both set', async () => {
     (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 12345 }, isSuccess: true });
-    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false }, isSuccess: true });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false } satisfies CurrentGameweek, isSuccess: true });
     (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE, isSuccess: true });
     (fplGet as jest.Mock).mockResolvedValueOnce(PICKS_FIXTURE);
 
@@ -109,7 +112,7 @@ describe('useSquad', () => {
 
   it('stays idle when fpl_team_id is null', async () => {
     (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: null }, isSuccess: true });
-    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false }, isSuccess: true });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false } satisfies CurrentGameweek, isSuccess: true });
     (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE, isSuccess: true });
 
     const client = makeTestQueryClient();
@@ -159,19 +162,19 @@ const ADVICE_PICKS = {
 describe('useApexTeam advice wiring', () => {
   it('fills captainPicks and suggestions from the optimizer', async () => {
     (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 99 }, isPending: false, isError: false, error: null });
-    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false }, isPending: false, isError: false, error: null, isSuccess: true });
-    (useEventStats as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 50, highestPoints: 99, finished: false, dataChecked: false } });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false } satisfies CurrentGameweek, isPending: false, isError: false, error: null, isSuccess: true });
+    (useEventStats as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 50, highestPoints: 99, finished: false, dataChecked: false } satisfies CurrentGameweek });
     (useEventLive as jest.Mock).mockReturnValue({ data: undefined });
     (useFixturesByGw as jest.Mock).mockReturnValue({ data: { MCI: { opp: 'LIV', h: true } } });
     (usePlayers as jest.Mock).mockReturnValue({ data: ADVICE_PLAYERS, isSuccess: true });
-    (useManager as jest.Mock).mockReturnValue({ data: { name: 'Test FC', gw: 24, gwPoints: 50, totalPoints: 1200, rank: 1000 }, isPending: false, isError: false, error: null });
-    (useManagerHistory as jest.Mock).mockReturnValue({ data: { current: [], chips: [] }, isPending: false, isError: false, error: null });
+    (useManager as jest.Mock).mockReturnValue({ data: { name: 'Test FC', gw: 24, gwPoints: 50, totalPoints: 1200, rank: 1000, bank: 0 } satisfies TeamInfo, isPending: false, isError: false, error: null });
+    (useManagerHistory as jest.Mock).mockReturnValue({ data: { current: [], chips: [] } satisfies FplHistory, isPending: false, isError: false, error: null });
     (useProjections as jest.Mock).mockReturnValue({
       data: new Map([
         ['13', { p25: 4, p50: 7, p75: 11 }], // F1 — best, wide band
         ['8',  { p25: 4, p50: 6, p75: 8 }],  // M1
         ['14', { p25: 3, p50: 6, p75: 8 }],  // F2
-      ]),
+      ]) satisfies Map<string, ProjectionStat>,
     });
     (fplGet as jest.Mock).mockResolvedValueOnce(ADVICE_PICKS);
 
@@ -196,14 +199,14 @@ describe('useApexTeam transfer wiring', () => {
   it('fills transferSuggestions from the engine and threads bank', async () => {
     const candidate: Player = { id: '99', name: 'Upgrade', pos: 'DEF', club: 'BHA', p: 4.5, f: 5, tp: 50, own: 10, gw: 2, status: 'a', news: '', chanceNext: null, ict: 80, bps: 130 };
     (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 99 }, isPending: false, isError: false, error: null });
-    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false }, isPending: false, isError: false, error: null, isSuccess: true });
-    (useEventStats as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 50, highestPoints: 99, finished: false, dataChecked: false } });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false } satisfies CurrentGameweek, isPending: false, isError: false, error: null, isSuccess: true });
+    (useEventStats as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 50, highestPoints: 99, finished: false, dataChecked: false } satisfies CurrentGameweek });
     (useEventLive as jest.Mock).mockReturnValue({ data: undefined });
     (useFixturesByGw as jest.Mock).mockReturnValue({ data: { BHA: { opp: 'LIV', h: true } } });
     (usePlayers as jest.Mock).mockReturnValue({ data: [...ADVICE_PLAYERS, candidate], isSuccess: true });
-    (useManager as jest.Mock).mockReturnValue({ data: { name: 'Test FC', gw: 24, gwPoints: 50, totalPoints: 1200, rank: 1000, bank: 2.0 }, isPending: false, isError: false, error: null });
-    (useManagerHistory as jest.Mock).mockReturnValue({ data: { current: [], chips: [] }, isPending: false, isError: false, error: null });
-    (useProjections as jest.Mock).mockReturnValue({ data: new Map([['99', { p25: 4, p50: 5, p75: 6 }]]) });
+    (useManager as jest.Mock).mockReturnValue({ data: { name: 'Test FC', gw: 24, gwPoints: 50, totalPoints: 1200, rank: 1000, bank: 2.0 } satisfies TeamInfo, isPending: false, isError: false, error: null });
+    (useManagerHistory as jest.Mock).mockReturnValue({ data: { current: [], chips: [] } satisfies FplHistory, isPending: false, isError: false, error: null });
+    (useProjections as jest.Mock).mockReturnValue({ data: new Map([['99', { p25: 4, p50: 5, p75: 6 }]]) satisfies Map<string, ProjectionStat> });
     (fplGet as jest.Mock).mockResolvedValueOnce(ADVICE_PICKS);
 
     const client = makeTestQueryClient();
@@ -224,20 +227,20 @@ describe('useApexTeam transfer wiring', () => {
 describe('useApexTeam chip wiring', () => {
   it('attaches a Bench Boost tip from a scheduled double gameweek', async () => {
     // ADVICE_PLAYERS clubs incl. MCI (D2 id4, M3 id10, F1 id13). Give MCI a double in GW25.
-    const seasonFixtures = new Map<number, Record<string, { count: number; fdrs: number[] }>>([
+    const seasonFixtures: SeasonFixtures = new Map([
       [24, { MCI: { count: 1, fdrs: [3] } }],
       [25, { MCI: { count: 2, fdrs: [2, 3] } }],
     ]);
     (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 99 }, isPending: false, isError: false, error: null });
-    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false }, isPending: false, isError: false, error: null, isSuccess: true });
-    (useEventStats as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 50, highestPoints: 99, finished: false, dataChecked: false } });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false } satisfies CurrentGameweek, isPending: false, isError: false, error: null, isSuccess: true });
+    (useEventStats as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 50, highestPoints: 99, finished: false, dataChecked: false } satisfies CurrentGameweek });
     (useEventLive as jest.Mock).mockReturnValue({ data: undefined });
     (useFixturesByGw as jest.Mock).mockReturnValue({ data: {} });
     (useAllFixtures as jest.Mock).mockReturnValue({ data: seasonFixtures });
     (usePlayers as jest.Mock).mockReturnValue({ data: ADVICE_PLAYERS, isSuccess: true });
-    (useManager as jest.Mock).mockReturnValue({ data: { name: 'Test FC', gw: 24, gwPoints: 50, totalPoints: 1200, rank: 1000, bank: 0 }, isPending: false, isError: false, error: null });
-    (useManagerHistory as jest.Mock).mockReturnValue({ data: { current: [], chips: [] }, isPending: false, isError: false, error: null });
-    (useProjections as jest.Mock).mockReturnValue({ data: new Map() });
+    (useManager as jest.Mock).mockReturnValue({ data: { name: 'Test FC', gw: 24, gwPoints: 50, totalPoints: 1200, rank: 1000, bank: 0 } satisfies TeamInfo, isPending: false, isError: false, error: null });
+    (useManagerHistory as jest.Mock).mockReturnValue({ data: { current: [], chips: [] } satisfies FplHistory, isPending: false, isError: false, error: null });
+    (useProjections as jest.Mock).mockReturnValue({ data: new Map() satisfies Map<string, ProjectionStat> });
     (fplGet as jest.Mock).mockResolvedValueOnce(ADVICE_PICKS);
 
     const client = makeTestQueryClient();
