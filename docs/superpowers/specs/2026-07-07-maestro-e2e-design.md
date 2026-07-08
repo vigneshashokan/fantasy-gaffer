@@ -205,6 +205,15 @@ localhost). Idempotent reset-and-create on every suite run:
 
 ## 8. Flows
 
+> **Post-shakeout note (2026-07-08):** three §8/§9 mechanisms were superseded during the
+> live shakeout by strictly better ones — the shipped shape is documented in `docs/e2e.md`
+> and is the design of record for the harness internals. Specifically: the first-screen
+> `extendedWaitUntil` became a bounded poll-dismiss loop (the dev client intermittently
+> shows overlays that never auto-close); "PostHog/Sentry forced empty" became
+> `EXPO_NO_DOTENV=1` (PostHog's constructor rejects an empty-string key with a
+> LogBox-surfacing error); and the warm-up open became a direct Metro bundle-URL curl.
+> Do not "restore" the mechanisms as written below.
+
 Every flow: `launchApp` with `clearState: true` (wipes AsyncStorage — no session or
 persisted-query-cache bleed), then **`openLink` on the dev-client deep link**
 (`fplgafferreactnativeapp://expo-development-client/?url=<metro-url>`) — the order

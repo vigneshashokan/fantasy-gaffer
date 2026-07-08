@@ -56,7 +56,10 @@ appId: com.fantasygaffer.app
 # Same dev-client "developer menu" race as the sign-in subflow — poll-dismiss
 # both variants ("Continue" hint / "Reload" full menu) until the team carousel is
 # back (session persists, so we land straight on it).
+# times caps the loop (see subflows/signin.yaml) so a dead relaunch fails red
+# instead of hanging.
 - repeat:
+    times: 60
     while:
       notVisible:
         id: "gw-carousel"

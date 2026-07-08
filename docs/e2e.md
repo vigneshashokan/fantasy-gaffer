@@ -209,6 +209,13 @@ The next `./e2e/run.sh` will notice the empty cache and download the newest fini
   plain `http` in normal dev use, so this is not expected to occur — but if it does, add
   `NSAllowsLocalNetworking` under `ios.infoPlist` in `app.config.ts` (see the design spec's
   §12) and cut one new `development-simulator` build.
+- **All three flows fail waiting for "Maybe later".** The sign-in subflow assumes the
+  simulator's notification permission is `undetermined` (a fresh sim's default), which makes
+  the push soft-ask sheet appear after every `clearState` sign-in. Tapping "Maybe later"
+  never *decides* the permission, so the suite is self-sustaining — but if you manually
+  granted/denied notifications on that simulator, the sheet stops appearing and the wait
+  times out. Reset with `xcrun simctl privacy "iPhone 16 Pro" reset notifications
+  com.fantasygaffer.app` (or erase the sim).
 - **jest hangs after running this suite, or vice versa.** They don't interact — Maestro
   drives a compiled simulator app over its own protocol and never touches jest, watchman, or
   the haste map. If jest hangs, that's the pre-existing `npm start`-leaves-watchman-recrawling

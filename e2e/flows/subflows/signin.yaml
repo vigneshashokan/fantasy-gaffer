@@ -17,7 +17,10 @@ appId: com.fantasygaffer.app
 # taps are harmless no-ops while the JS bundle is compiling, and full-string text
 # matching means "Continue"/"Reload" can't hit the app's own buttons. The loop
 # exits the instant the sign-in link is visible.
+# times caps the loop so a never-rendering bundle (Metro crash, dead sim) fails
+# red instead of hanging forever — the tapOn after the loop then fails loudly.
 - repeat:
+    times: 60
     while:
       notVisible:
         id: "onboarding-signin-link"

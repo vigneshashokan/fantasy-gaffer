@@ -8,6 +8,7 @@ import {
 } from '@/api/teamPreview';
 import { makeTestQueryClient } from '../utils/renderWithProviders';
 import type { Player } from '@/types/fpl';
+import type { CurrentGameweek } from '@/api/fixtures';
 import { FplFetchError } from '@/api/fpl-client';
 
 jest.mock('@/api/fpl-client', () => ({
@@ -64,8 +65,9 @@ const PICKS_FIXTURE = {
 // The REAL useCurrentGameweek().data shape (CurrentGameweek object, not a bare
 // gw number) — mocking `{ data: 24 }` here is what let the [object Object]
 // picks-URL regression ship (PR #84 changed the hook's shape; the old mock
-// kept this suite green).
-const GW_FIXTURE = { gw: 24, avgPoints: 52, highestPoints: 118, finished: false, dataChecked: false };
+// kept this suite green). The type annotation makes tsc break on the next
+// shape drift — jest.mock erases types, so the literal alone wouldn't.
+const GW_FIXTURE: CurrentGameweek = { gw: 24, avgPoints: 52, highestPoints: 118, finished: false, dataChecked: false };
 
 const PLAYERS_FIXTURE: Player[] = Array.from({ length: 15 }, (_, i) => ({
   id: String(i + 1),
