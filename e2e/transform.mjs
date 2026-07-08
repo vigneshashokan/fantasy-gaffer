@@ -71,6 +71,21 @@ export async function run(
     if (name === 'bootstrap-static' || name === 'fixtures') continue;
     await writeFile(`${outDir}/${name}.json`, JSON.stringify(await loadRaw(rawDir, name)));
   }
+  // Synthesize the UPCOMING gameweek's picks (t+1) from the live GW's. The team
+  // carousel's upcoming page fetches /entry/{id}/event/{t+1}/picks/, but the
+  // capture only holds the live + prior GW — so t+1 would 404 and that page
+  // (with its chip-tips / captain advice, the only place isUpcoming decision
+  // surfaces render) never leaves its loading skeleton. This is faithful to FPL:
+  // once the current GW is finished, a future GW's squad carries over from it
+  // (same 15, no auto-subs yet, no active chip) until transfers are made.
+  const livePicks = await loadRaw(rawDir, `picks-gw${t}`);
+  const upcomingPicks = {
+    ...livePicks,
+    active_chip: null,
+    automatic_subs: [],
+    entry_history: { ...livePicks.entry_history, event: t + 1 },
+  };
+  await writeFile(`${outDir}/picks-gw${t + 1}.json`, JSON.stringify(upcomingPicks));
   return { t, entry: meta.entry };
 }
 

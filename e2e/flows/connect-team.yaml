@@ -15,7 +15,10 @@ appId: com.fantasygaffer.app
 - tapOn:
     id: "team-id-input"
 - inputText: ${ENTRY_ID}
-- hideKeyboard
+# No hideKeyboard here: the team-id field uses a NUMERIC keypad (no return key),
+# and Maestro's iOS hideKeyboard can't reliably dismiss that (it fails outright).
+# The "Continue" submit button renders above the keypad and is tappable directly,
+# and the keypad dismisses on its own once the screen advances to the confirm view.
 - tapOn:
     id: "connect-team-submit"
 - extendedWaitUntil:
@@ -28,4 +31,6 @@ appId: com.fantasygaffer.app
     visible:
       id: "gw-carousel"
     timeout: 90000
-- assertVisible: ${PLAYER_NAME}
+# Pitch cards group badge + name ("1, Elanga"); Maestro text is a full-string
+# regex, so match the name within the grouped label.
+- assertVisible: ".*${PLAYER_NAME}.*"

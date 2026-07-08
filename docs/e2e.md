@@ -20,13 +20,25 @@ Install these once per machine:
   default; open Xcode → Settings → Platforms if it's missing, or set `E2E_SIM_NAME` to a
   simulator you do have).
 - **The `supabase` CLI** (`brew install supabase/tap/supabase`).
-- **Maestro**, via the official installer:
+- **A JDK** — the Maestro CLI is JVM-based and will not run without one. macOS ships only a
+  Java *stub* (`/usr/bin/java` prints "Unable to locate a Java Runtime"), so install a real
+  JDK, e.g. `brew install openjdk` (keg-only). Because it's keg-only, every shell that runs
+  Maestro (or `./e2e/run.sh`) needs it on `PATH`:
+  ```bash
+  export JAVA_HOME="$(brew --prefix openjdk)"
+  export PATH="$JAVA_HOME/bin:$HOME/.maestro/bin:$PATH"
+  ```
+  Verified working with **OpenJDK 26.0.1** (any modern JDK 17+ should do). Newer JDKs print a
+  wall of `WARNING: … has been mutated reflectively …` lines from Maestro's bundled libs —
+  those are harmless noise, not errors.
+- **Maestro**, via the official installer (installs to `~/.maestro/bin`):
   ```bash
   curl -Ls "https://get.maestro.mobile.dev" | bash
   ```
   Record the version you install (the runner echoes `maestro --version` at the top of every
   run) — upgrade deliberately, not as a side effect of some other `brew upgrade`. Maestro
-  version drift is a known flake source for this kind of suite.
+  version drift is a known flake source for this kind of suite. Verified working with
+  **Maestro 2.6.1**.
 - **`jq`** (`brew install jq`) — the runner uses it to parse `eas build:list --json` output.
 - **`eas-cli`** (`npm i -g eas-cli`) + `eas login`, but only the *first* time you run the
   suite on a machine with no cached app artifact. Once `e2e/.artifacts/app/*.app` exists,
@@ -83,12 +95,17 @@ Docker stack (`supabase start`, not the production project), and FPL reads go th
 `e2e/fixture-server.mjs` on `:4004` instead of `fantasy.premierleague.com` — the app's only
 awareness of this is one env var, `EXPO_PUBLIC_FPL_BASE_URL`, which `fpl-client.ts` reads
 through the same `??`-fallback seam `supabase.ts` already used for its own URL/key. PostHog
-and Sentry are handed empty keys by the runner, which both modules already treat as
-"disabled" by their existing design — no E2E-specific branching was added to either. The
-practical effect: the suite is green in July and in January, during FPL API downtime, and
-fully offline once the app artifact and Docker images are cached locally. See the design
-spec's §4 (Architecture) and §12 (Risks & mitigations) for the full picture, including why
-PostHog/Sentry need no special-casing and how ATS/cleartext-to-localhost is handled if it
+and Sentry are neutralised by starting Metro with **`EXPO_NO_DOTENV=1`**: that skips loading
+`.env` entirely, so a developer's real PostHog key / Sentry DSN never enter the run, and the
+analytics config resolves to `undefined` — the app's own disabled-no-op path
+(`new PostHog(KEY ?? 'phc_disabled', { disabled: !KEY })` / `Sentry.init({ enabled: !!DSN })`).
+The runner supplies the Supabase + FPL vars it *does* need inline, so nothing is lost by
+skipping `.env`. (Handing PostHog an empty *string* key instead — the earlier approach — did
+not work: its constructor rejects `""` with a `console.error`, which the dev bundle renders as
+a full-screen LogBox that blocks every flow's first tap.) The practical effect: the suite is
+green in July and in January, during FPL API downtime, and fully offline once the app artifact
+and Docker images are cached locally. See the design spec's §4 (Architecture) and §12 (Risks &
+mitigations) for the full picture, including how ATS/cleartext-to-localhost is handled if it
 ever becomes a problem.
 
 ## Test accounts
@@ -123,10 +140,10 @@ To add a flow:
    depends on a network round-trip or off-screen content — never a fixed `sleep`.
 3. Iterate with the single-flow runner invocation above rather than the full three-flow
    suite; it's the same stack cost either way, but only running your flow.
-4. If a new Maestro env var is needed beyond the existing `EMAIL_A`/`EMAIL_B`/`PASSWORD`/
-   `ENTRY_ID`/`PLAYER_NAME`/`GK_NAME`, add it to both the flow's `${VAR}` reference and the
-   `maestro test -e VAR=...` list in `e2e/run.sh` — Maestro fails fast on an unresolved
-   `${VAR}`, so a mismatch surfaces immediately.
+4. If a new Maestro env var is needed beyond the existing `DEV_CLIENT_URL`/`EMAIL_A`/
+   `EMAIL_B`/`PASSWORD`/`ENTRY_ID`/`PLAYER_NAME`/`GK_NAME`, add it to both the flow's
+   `${VAR}` reference and the `maestro test -e VAR=...` list in `e2e/run.sh` — Maestro fails
+   fast on an unresolved `${VAR}`, so a mismatch surfaces immediately.
 
 ## Re-capturing fixtures
 
@@ -170,12 +187,23 @@ The next `./e2e/run.sh` will notice the empty cache and download the newest fini
 
 - **The dev client shows its launcher screen instead of the app.** This means it never
   auto-attached to Metro. Check `e2e/.artifacts/metro.log` for a bundler crash first; if
-  Metro looks healthy, check that the `openLink` URL in `e2e/flows/subflows/signin.yaml`
-  (`fplgafferreactnativeapp://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081`)
-  still matches the port the runner started Metro on (`8081` by default). Every flow issues
-  this `openLink` itself after `launchApp: {clearState: true}` — wiping state also wipes the
-  dev client's pinned Metro URL, so the re-attach has to live inside the flow, not just in
-  the runner's simulator-warm-up step.
+  Metro looks healthy, check that the `DEV_CLIENT_URL` deep link the runner injects
+  (`fplgafferreactnativeapp://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A<port>`,
+  built in `e2e/run.sh` from the run's Metro port) reaches the flows — every flow issues
+  `openLink: ${DEV_CLIENT_URL}` itself after `launchApp: {clearState: true}`, because wiping
+  state also wipes the dev client's pinned Metro URL, so the re-attach has to live inside
+  the flow, not just in the runner's simulator-warm-up step.
+- **`FATAL: port 8081 is already in use by …` — another project's dev server is running.**
+  Don't kill it; run the suite beside it: `E2E_METRO_PORT=8082 ./e2e/run.sh`. The preflight
+  exists because the silent version of this failure is nasty: a taken port makes
+  non-interactive `expo start` *skip* launching Metro ("Use port X instead?" needs input),
+  while the runner's health check passes against the *foreign* Metro — the observed result
+  was the dev client loading the other project's bundle and RedBoxing mid-suite. For the
+  same reason the runner's cleanup only kills its own process tree, never
+  "whatever holds the port" (that once took out an unrelated project's dev server).
+- **A RedBox citing a file from a different repo.** Same root cause as above — the dev
+  client is attached to a foreign Metro. Check who owns the port (`lsof -i tcp:8081`), then
+  re-run with `E2E_METRO_PORT` set to a free port.
 - **A request to the app fails with an ATS/cleartext error.** Dev-client debug builds ship
   with dev-friendly App Transport Security, and the app already talks to local Supabase over
   plain `http` in normal dev use, so this is not expected to occur — but if it does, add
@@ -185,3 +213,32 @@ The next `./e2e/run.sh` will notice the empty cache and download the newest fini
   drives a compiled simulator app over its own protocol and never touches jest, watchman, or
   the haste map. If jest hangs, that's the pre-existing `npm start`-leaves-watchman-recrawling
   gotcha documented in this project's `CLAUDE.md`, unrelated to E2E.
+- **A `text:`/`assertVisible:` on a name that's clearly on screen "fails to be visible".**
+  Maestro text selectors are **full-string** regexes — they must match the element's *entire*
+  accessibility label, not a substring. Anything wrapped in a `Pressable`/touchable groups its
+  children into one label: a pitch card reads `"1, Elanga"`, a Top Picks row groups its stats
+  with the name, and a legal paragraph is one long sentence. So assert `".*Elanga.*"`, never
+  `"Elanga"`. Bare text only works when the element's label is exactly that string (e.g. a
+  `SettingsRow`, which sets an explicit `accessibilityLabel`). When in doubt, dump what Maestro
+  actually sees with `maestro hierarchy` (the app must be foregrounded on the screen) and grep
+  for the name's `accessibilityText`.
+- **A first-run modal (the push-notification soft-ask) blocks the first assertion.** Every flow
+  `clearState`s, which wipes `pushStore.primingShown`, so the `PushPrimingSheet` re-appears on
+  each run once you land on the home layout. It's a native RN `Modal`, so it renders in its own
+  window and **occludes the entire hierarchy beneath it** — even an element that's visually
+  behind it reads as not-visible. The shared `subflows/signin.yaml` dismisses it (`tapOn
+  "Maybe later"`) right after sign-in; any new modal that can auto-appear needs the same
+  treatment before the flow asserts on what's underneath.
+- **Maestro runs the three top-level flows, not the subflow.** `maestro test e2e/flows`
+  (directory mode, used by the default `./e2e/run.sh`) is **non-recursive** — it discovers
+  `*.yaml` in that directory but not in `subflows/`. That's why `subflows/signin.yaml` (which
+  references `${EMAIL}`, supplied only via `runFlow: env:`) is never executed standalone. Keep
+  shared `runFlow` fragments under `subflows/` and they stay out of the suite automatically; no
+  workspace `config.yaml` is needed.
+- **The team carousel's upcoming-GW page (and its chip/captain advice) 404s / stays a skeleton.**
+  Each carousel page fetches `/entry/{id}/event/{gw}/picks/` for *its* gameweek, including the
+  upcoming one (`liveGw+1`). The capture only holds the live + prior GW, so `transform.mjs`
+  **synthesizes `picks-gw{t+1}`** from the live GW's picks (faithful to FPL: a future GW's squad
+  carries over until transfers). If you re-capture a different GW `t`, this stays automatic. A
+  404 for a *past* off-screen GW (`picks-gw28` etc., pre-rendered by FlatList windowing) is
+  harmless — those pages are never asserted on.
