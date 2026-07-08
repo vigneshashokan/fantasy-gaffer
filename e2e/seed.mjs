@@ -6,7 +6,8 @@ import { readFileSync } from 'node:fs';
 const URL_ = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY not set — run via e2e/run.sh');
-if (!/^http:\/\/(127\.0\.0\.1|localhost)(:|\/)/.test(URL_))
+const u = new URL(URL_);
+if (u.protocol !== 'http:' || (u.hostname !== '127.0.0.1' && u.hostname !== 'localhost'))
   throw new Error(`[seed] REFUSING non-local Supabase URL: ${URL_}`);
 
 const DIR = process.env.E2E_FIXTURES_DIR ?? 'e2e/.artifacts/fixtures';

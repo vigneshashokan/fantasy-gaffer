@@ -26,7 +26,7 @@ test('entry routes only answer for the captured entry', () => {
 test('live falls back to empty elements; element-summary falls back to template', () => {
   assert.deepEqual(JSON.parse(lookup('/event/2/live/')), { elements: [] });
   assert.ok(lookup(`/event/${meta.gw}/live/`).length > 100);
-  assert.ok(lookup('/element-summary/999999/'));
+  assert.equal(lookup('/element-summary/999999/'), lookup('/element-summary/' + meta.templateElement + '/'));
 });
 
 test('unknown routes are null (404)', () => {
