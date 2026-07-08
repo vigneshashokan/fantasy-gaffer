@@ -304,9 +304,12 @@ the living index** of the whole arc — read it for current status before touchi
   evidence: serve-path parity vs the gate-validated walk-forward at 2025/26 GW30 — 820/820 targets, zero
   set-diff, zero position drift, zero input mismatches** (input-parity by design, NOT draw-parity — the
   backtest's shared stream would make set differences shift draws spuriously; env-gated test
-  `XPTS_PARITY=1`, several minutes, needs the local 2025/26 DB). **Operator steps pending (runbook §):**
-  seed the `DATABASE_URL` Actions secret (Supabase **session-pooler** URI — GH runners are IPv4-only) +
-  one validation `workflow_dispatch` (expected: green `skipped: no unfinished fixtures`). **Serving-cycle
+  `XPTS_PARITY=1`, several minutes, needs the local 2025/26 DB). **Operator validation DONE
+  (2026-07-07):** `DATABASE_URL` Actions secret seeded (Supabase **session-pooler** URI — GH runners are
+  IPv4-only; **the password must be percent-encoded in the URI** — a raw `@`/`:`-class character makes
+  psycopg parse a password fragment as the hostname, symptom `failed to resolve host '<fragment>'`) +
+  the validation `workflow_dispatch` came back green with the off-season no-op → **the nightly chain is
+  fully live**, writing real rows automatically once 2026/27 fixtures are ingested. **Serving-cycle
   gotchas:** the eval is a **pre-promotion instrument** — post-swap re-runs would silently empty v3.1's
   captaincy pool (`mean` is null for `projections` rows; documented in the runbook; do NOT "fix" via a
   p50 fallback — the registered ranking functional is the mean) · local-dev DB restore recipe covers
@@ -382,8 +385,8 @@ the living index** of the whole arc — read it for current status before touchi
   DEPLOYED (PR #148). Standing configuration: **v1 serves `projections` untouched · v3.1 shadow-serves
   `projections_shadow` nightly (off-season no-op until 2026/27 GW1) · the prospective eval + strict
   promotion runbook are registered pre-season** (`docs/xpts-prospective.md`). Everything that remains is
-  calendar- or operator-gated, NOT design-gated: **operator now** = `DATABASE_URL` secret + validation
-  dispatch (closes #128's pending step) · **~mid-Aug** = #123 GW1 snapshot freeze check · **in-season** =
+  calendar-gated only, NOT design-gated (the operator validation dispatch is DONE — the serving chain is
+  live): **~mid-Aug** = #123 GW1 snapshot freeze check · **in-season** =
   run `eval_prospective.py` every few GWs · **~Oct earliest** = promotion decision per the strict bar ·
   **~GW10+** = #131 becomes backtestable. #126 parked (team-level re-scope; engine leg not binding). Any
   new model candidate (assist-correction refinement, Dixon-Coles, v2.2 levers) requires its own frozen
