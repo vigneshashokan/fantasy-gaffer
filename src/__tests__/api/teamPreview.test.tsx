@@ -61,6 +61,12 @@ const PICKS_FIXTURE = {
   ],
 };
 
+// The REAL useCurrentGameweek().data shape (CurrentGameweek object, not a bare
+// gw number) — mocking `{ data: 24 }` here is what let the [object Object]
+// picks-URL regression ship (PR #84 changed the hook's shape; the old mock
+// kept this suite green).
+const GW_FIXTURE = { gw: 24, avgPoints: 52, highestPoints: 118, finished: false, dataChecked: false };
+
 const PLAYERS_FIXTURE: Player[] = Array.from({ length: 15 }, (_, i) => ({
   id: String(i + 1),
   name: `P${i + 1}`,
@@ -118,7 +124,7 @@ describe('useTeamPreview', () => {
   });
 
   it('fetches both endpoints when ready and returns the composed preview', async () => {
-    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: 24 });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: GW_FIXTURE });
     (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE });
     (fplGet as jest.Mock)
       .mockResolvedValueOnce(ENTRY_FIXTURE)
@@ -138,7 +144,7 @@ describe('useTeamPreview', () => {
   });
 
   it('does not retry on failure (retry: false)', async () => {
-    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: 24 });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: GW_FIXTURE });
     (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE });
     const err = new FplFetchError('boom', 404);
     (fplGet as jest.Mock).mockRejectedValue(err);
