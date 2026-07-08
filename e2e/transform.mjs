@@ -1,6 +1,9 @@
 // e2e/transform.mjs — derive the run-time E2E dataset from the raw captures.
 // Pins GW t (from meta) as the live gameweek: t's deadline is 3 days in the
-// past (its matches played, awaiting data-check), t+1's is 4 days ahead.
+// past, t+1's is 4 days ahead. GW t's FIXTURES are played (finished, real
+// scores) while the EVENT keeps finished=false/data_checked=false — FPL's
+// real in-progress-GW state (matches played, awaiting data check);
+// event.finished only flips once FPL finalizes a gameweek.
 // Dates are run-relative, which is why output is generated per-run
 // (e2e/.artifacts/fixtures/, gitignored) instead of committed.
 import { mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
