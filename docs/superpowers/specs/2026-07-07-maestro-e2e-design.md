@@ -88,9 +88,15 @@ e2e/
   transform.test.mjs     # node --test unit tests for the transform
   fixture-server.mjs     # committed: static server over the transformed dataset
   seed.mjs               # committed: resets/creates users + reference tables
-  .artifacts/            # gitignored: transformed fixtures, cached .app artifact
-  .env.e2e               # committed: local-stack URLs/keys (the well-known local
-                         # demo keys only — nothing secret)
+  .artifacts/            # gitignored: transformed fixtures, cached .app artifact,
+                         # service logs
+```
+
+(No committed `.env.e2e`: the runner reads the live stack's URL + keys from
+`supabase status` at run time and exports them itself — they always match the
+running stack, and nothing key-shaped is committed.)
+
+```
 docs/e2e.md              # runbook
 ```
 
@@ -234,10 +240,11 @@ Sequential, fail-fast, one-line remediation printed per failed preflight:
    cache. `E2E_APP_PATH` env overrides.
 3. **Services:** `supabase start` (no-op if running) → `node transform.mjs` →
    `node seed.mjs` → `node fixture-server.mjs &` → health-check `:4004` and `:54321`.
-4. **Metro:** `npx expo start` in the background with the e2e env exported from
-   `e2e/.env.e2e` (`EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321`, local anon key,
-   `EXPO_PUBLIC_FPL_BASE_URL=http://127.0.0.1:4004`, PostHog/Sentry unset); wait for the
-   bundler to answer on `:8081`.
+4. **Metro:** `npx expo start` in the background with the e2e env exported inline by the
+   runner (`EXPO_PUBLIC_SUPABASE_URL` + anon key from `supabase status`,
+   `EXPO_PUBLIC_FPL_BASE_URL=http://127.0.0.1:4004`, PostHog/Sentry forced empty —
+   explicit env vars override any local `.env`); wait for the bundler to answer on
+   `:8081`.
 5. **Simulator:** boot `iPhone 16 Pro` (overridable `E2E_SIM_NAME`), `xcrun simctl
    install` the artifact, open the dev-client URL once as a warm-up so Metro compiles
    the bundle before the first flow's timeout starts (flows still re-attach themselves
