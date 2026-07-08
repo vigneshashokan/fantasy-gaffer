@@ -747,7 +747,11 @@ appId: com.fantasygaffer.app
     timeout: 90000
 - assertVisible: ${PLAYER_NAME}
 - assertVisible: ${GK_NAME}
-# Chips section lives on the Team tab (GameweekScreen), below the pitch.
+# Chips section renders only on an UPCOMING gameweek page (isUpcoming gate in
+# GameweekScreen) — one horizontal carousel page right of the live GW, then
+# scroll down within that page.
+- swipe:
+    direction: LEFT
 - scrollUntilVisible:
     element:
       id: "chip-tips"
