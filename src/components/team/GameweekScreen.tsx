@@ -151,7 +151,7 @@ export function GameweekScreen({
         />
 
         {isUpcoming && (
-          <View style={styles.section}>
+          <View style={styles.section} testID="chip-tips">
             <Text style={[styles.sectionLabel, { color: tk.faint }]}>Play a Chip</Text>
             <ChipsRow
               chips={at.transfer.chips}
