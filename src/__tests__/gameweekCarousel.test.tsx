@@ -19,8 +19,12 @@ jest.mock('@/components/team/LinkTeamCta', () => {
   return { __esModule: true, LinkTeamCta: () => <Text>Link your team</Text> };
 });
 
+// Partial<ApexTeamData>: this suite only asserts on the shell (header, paging,
+// season banner), not full team content — so the fixture only fills the
+// fields it actually reads. `Partial<>` still catches a rename/type change on
+// any field that IS specified (see #155).
 let mockTeam: {
-  data: unknown; isPending: boolean; isError: boolean; error: unknown; noTeam: boolean;
+  data: Partial<ApexTeamData> | null | undefined; isPending: boolean; isError: boolean; error: unknown; noTeam: boolean;
 };
 jest.mock('@/api/squad', () => ({
   __esModule: true,
@@ -35,9 +39,10 @@ jest.mock('@/api/fixtures', () => ({
 }));
 
 import TeamTab from '@/app/(home)/(tabs)/team';
+import type { ApexTeamData } from '@/api/squad';
 
 const liveTeam = (liveGw: number) => ({
-  data: { liveGw, liveGwFinished: false, captainApplied: '', teamName: 'Apex Pitch FC' },
+  data: { liveGw, liveGwFinished: false, captainApplied: '', teamName: 'Apex Pitch FC' } satisfies Partial<ApexTeamData>,
   isPending: false, isError: false, error: null, noTeam: false,
 });
 

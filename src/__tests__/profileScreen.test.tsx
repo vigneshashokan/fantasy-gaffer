@@ -56,7 +56,7 @@ jest.mock('@/api/profile', () => ({
       email: 'apex.gaffer@example.com',
       faceId: true,
       fplTeamId: null,
-    },
+    } satisfies ProfileData,
     isPending: false,
   }),
 }));
@@ -70,6 +70,7 @@ jest.mock('@/lib/auth/email', () => ({
 }));
 
 import Profile from '@/app/(home)/profile';
+import type { Profile as ProfileData } from '@/types/fpl';
 
 describe('Profile screen — Face ID row moved to Settings', () => {
   beforeEach(() => {

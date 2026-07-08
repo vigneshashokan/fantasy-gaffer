@@ -48,7 +48,7 @@ jest.mock('@/lib/external', () => ({
 jest.mock('@/api/notificationPrefs', () => ({
   __esModule: true,
   useNotificationPrefs: () => ({
-    data: { deadlines: true, prices: true, gwConfirm: true, transfer: false },
+    data: { deadlines: true, prices: true, gwConfirm: true, transfer: false } satisfies NotificationPrefs,
     isPending: false,
   }),
   useUpdateNotificationPrefs: () => ({ mutate: jest.fn(), isError: false }),
@@ -62,6 +62,7 @@ jest.mock('expo-router', () => ({
 
 import Settings from '@/app/(home)/settings';
 import { shareApp, sendFeedback } from '@/lib/external';
+import type { NotificationPrefs } from '@/api/notificationPrefs';
 
 describe('Settings screen — Face ID row', () => {
   beforeEach(() => {

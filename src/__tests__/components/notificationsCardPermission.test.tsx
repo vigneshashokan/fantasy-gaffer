@@ -4,9 +4,9 @@ import { Linking } from 'react-native';
 
 jest.mock('@/api/notificationPrefs', () => ({
   __esModule: true,
-  useNotificationPrefs: () => ({ data: { deadlines: true, prices: true, gwConfirm: true, transfer: false }, isPending: false }),
+  useNotificationPrefs: () => ({ data: { deadlines: true, prices: true, gwConfirm: true, transfer: false } satisfies NotificationPrefs, isPending: false }),
   useUpdateNotificationPrefs: () => ({ mutate: jest.fn(), isError: false }),
-  DEFAULT_PREFS: { deadlines: true, prices: true, gwConfirm: true, transfer: false },
+  DEFAULT_PREFS: { deadlines: true, prices: true, gwConfirm: true, transfer: false } satisfies NotificationPrefs,
 }));
 jest.mock('@/lib/notifications/usePushPermission', () => ({
   __esModule: true,
@@ -15,6 +15,7 @@ jest.mock('@/lib/notifications/usePushPermission', () => ({
 
 import { NotificationsCard } from '@/components/settings/NotificationsCard';
 import { apexTokens } from '@/constants/apexTokens';
+import type { NotificationPrefs } from '@/api/notificationPrefs';
 
 describe('NotificationsCard permission CTA', () => {
   it('shows an Enable-in-Settings CTA and opens settings when denied', () => {

@@ -8,20 +8,24 @@ jest.mock('@tanstack/react-query', () => ({
   useQuery: (opts: any) => mockUseQuery(opts),
 }));
 jest.mock('@/api/fpl-client', () => ({ fplGet: jest.fn() }));
-jest.mock('@/api/profile', () => ({ useProfile: () => ({ data: { fplTeamId: 123 } }) }));
+// Each mock below is intentionally a partial stand-in — useManager/useSquad
+// (the hooks actually under test here) only read the one field shown; see #155.
+jest.mock('@/api/profile', () => ({ useProfile: () => ({ data: { fplTeamId: 123 } satisfies Partial<Profile> }) }));
 jest.mock('@/api/fixtures', () => ({
-  useCurrentGameweek: () => ({ data: { gw: 5 } }),
+  useCurrentGameweek: () => ({ data: { gw: 5 } satisfies Partial<CurrentGameweek> }),
   useEventStats: jest.fn(),
   useEventLive: jest.fn(),
   useFixturesByGw: jest.fn(),
   useAllFixtures: jest.fn(() => ({ data: undefined })),
 }));
-jest.mock('@/api/players', () => ({ usePlayers: () => ({ data: [] }) }));
+jest.mock('@/api/players', () => ({ usePlayers: () => ({ data: [] as Player[] }) }));
 jest.mock('@/api/projections', () => ({ useProjections: () => ({ data: undefined }) }));
 
 import { renderHook } from '@testing-library/react-native';
 import { useManager } from '@/api/manager';
 import { useSquad } from '@/api/squad';
+import type { Profile, Player } from '@/types/fpl';
+import type { CurrentGameweek } from '@/api/fixtures';
 
 describe('FPL hook cadence (#80)', () => {
   beforeEach(() => mockUseQuery.mockClear());

@@ -22,10 +22,10 @@ jest.mock('expo-router', () => ({
 }));
 
 import ConnectTeam from '@/app/(onboarding)/connect-team';
-import { useTeamPreview } from '@/api/teamPreview';
+import { useTeamPreview, type Preview } from '@/api/teamPreview';
 import { useLinkTeam } from '@/api/linkTeam';
 
-const PREVIEW = {
+const PREVIEW: Preview = {
   teamName: 'Apex Pitch FC',
   managerName: 'Vignesh A.',
   rank: 142831,

@@ -10,6 +10,7 @@ import { fireEvent } from '@testing-library/react-native';
 import { renderWithProviders as render } from '../utils/renderWithProviders';
 import { AccountMenu } from '@/components/nav/AccountMenu';
 import TabsLayout from '@/app/(home)/(tabs)/_layout';
+import type { Profile, TeamInfo } from '@/types/fpl';
 
 const mockSignOut = jest.fn();
 
@@ -58,9 +59,9 @@ jest.mock('@/api/manager', () => ({
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseProfile.mockReturnValue({
-    data: { firstName: 'Vignesh', lastName: 'Ashokan', fplTeamId: 12345 },
+    data: { firstName: 'Vignesh', lastName: 'Ashokan', fplTeamId: 12345 } satisfies Partial<Profile>,
   });
-  mockUseManager.mockReturnValue({ data: { name: 'Doyle Dynamos' } });
+  mockUseManager.mockReturnValue({ data: { name: 'Doyle Dynamos' } satisfies Partial<TeamInfo> });
 });
 
 describe('AccountMenu identity', () => {
@@ -86,7 +87,7 @@ describe('AccountMenu identity', () => {
 
   it('omits the team line when no FPL team is connected', () => {
     mockUseProfile.mockReturnValue({
-      data: { firstName: 'Vignesh', lastName: 'Ashokan', fplTeamId: null },
+      data: { firstName: 'Vignesh', lastName: 'Ashokan', fplTeamId: null } satisfies Partial<Profile>,
     });
     mockUseManager.mockReturnValue({ data: undefined });
 
