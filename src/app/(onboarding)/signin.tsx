@@ -249,6 +249,7 @@ export default function SignIn() {
             accent={t.accent}
             text={t.text}
             textMuted={t.textMuted}
+            testID="signin-email"
           />
           {emailError && (
             <Text style={[styles.fieldError, { color: '#FF3B5C' }]}>{emailError}</Text>
@@ -265,6 +266,7 @@ export default function SignIn() {
             accent={t.accent}
             text={t.text}
             textMuted={t.textMuted}
+            testID="signin-password"
           />
           {passwordError && (
             <Text style={[styles.fieldError, { color: '#FF3B5C' }]}>{passwordError}</Text>
@@ -308,6 +310,7 @@ export default function SignIn() {
           onPress={onSubmit}
           accentInk={t.accentInk}
           style={styles.signInBtn}
+          testID="signin-submit"
         >
           {submitting ? 'Signing in…' : 'Sign in'}
         </PillBtn>

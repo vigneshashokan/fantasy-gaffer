@@ -19,6 +19,7 @@ interface FieldProps {
   accent: string;
   text: string;
   textMuted: string;
+  testID?: string;
 }
 
 export function Field({
@@ -35,6 +36,7 @@ export function Field({
   accent,
   text,
   textMuted,
+  testID,
 }: FieldProps) {
   const [focused, setFocused] = useState(false);
   const [revealed, setRevealed] = useState(false);
@@ -48,6 +50,7 @@ export function Field({
     >
       <Icon name={icon} color={textMuted} size={20} />
       <TextInput
+        testID={testID}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}

@@ -1,0 +1,83 @@
+# Flow 3 — tab sweep, legal doc, session persistence across relaunch, sign-out.
+appId: com.fantasygaffer.app
+---
+- runFlow:
+    file: subflows/signin.yaml
+    env:
+      EMAIL: ${EMAIL_A}
+      PASSWORD: ${PASSWORD}
+- extendedWaitUntil:
+    visible:
+      id: "gw-carousel"
+    timeout: 90000
+- tapOn:
+    id: "tab-top-picks"
+- extendedWaitUntil:
+    visible:
+      id: "top-picks-list"
+    timeout: 60000
+# Top Picks rows group their stats + name into one accessibility node; Maestro
+# text is a full-string regex, so match the name within the grouped label.
+- assertVisible: ".*${GK_NAME}.*"
+- tapOn:
+    id: "tab-transfer"
+# The suggestions card renders BELOW the transfer pitch inside a ScrollView —
+# off-screen on load. Wait for the pitch hint first (stable copy that only
+# renders once the transfer data has loaded), then scroll down to the card
+# (same pattern as the Settings "Privacy Policy" row).
+- extendedWaitUntil:
+    visible: "Tap on any player to see transfer targets"
+    timeout: 60000
+- scrollUntilVisible:
+    element:
+      id: "transfer-suggestions"
+    direction: DOWN
+- tapOn:
+    id: "tab-account"
+- tapOn:
+    id: "account-menu-settings"
+# Settings is a ScrollView; the More card with Privacy Policy sits below the
+# Appearance/Preferences cards and is off-screen on launch.
+- scrollUntilVisible:
+    element:
+      text: "Privacy Policy"
+    direction: DOWN
+- tapOn: "Privacy Policy"
+# "Fantasy Gaffer" appears only inside the legal doc's intro paragraph (a single
+# Text node), so it's a substring of a long accessibility label — match with .*…*
+# (a bare "Fantasy Gaffer" would need to be the WHOLE label to full-match).
+- extendedWaitUntil:
+    visible: ".*Fantasy Gaffer.*"
+    timeout: 30000
+# Relaunch WITHOUT clearState: session + persisted cache must survive a cold
+# start (regression net for the Map-persister crash class), then sign out.
+- launchApp
+- openLink: ${DEV_CLIENT_URL}
+# Same dev-client "developer menu" race as the sign-in subflow — poll-dismiss
+# both variants ("Continue" hint / "Reload" full menu) until the team carousel is
+# back (session persists, so we land straight on it).
+# times caps the loop (see subflows/signin.yaml) so a dead relaunch fails red
+# instead of hanging.
+- repeat:
+    times: 60
+    while:
+      notVisible:
+        id: "gw-carousel"
+    commands:
+      - tapOn:
+          text: "Continue"
+          optional: true
+      - tapOn:
+          text: "Reload"
+          optional: true
+- tapOn:
+    id: "tab-account"
+- tapOn:
+    id: "account-menu-signout"
+# Sign-out routes straight to the SIGN-IN screen ("Welcome, Gaffer!"), not the
+# first-run intro pager where onboarding-signin-link lives — assert the signed-
+# out state via the sign-in form itself.
+- extendedWaitUntil:
+    visible:
+      id: "signin-email"
+    timeout: 60000

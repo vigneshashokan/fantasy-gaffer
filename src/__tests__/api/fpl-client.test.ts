@@ -66,3 +66,34 @@ describe('fpl-client', () => {
     expect(global.fetch).toHaveBeenCalledTimes(3);
   });
 });
+
+describe('FPL_BASE resolution (E2E seam)', () => {
+  afterEach(() => {
+    jest.resetModules();
+    jest.dontMock('expo-constants');
+  });
+
+  it('uses the production base URL when extra.fplBaseUrl is unset', () => {
+    jest.doMock('expo-constants', () => ({
+      __esModule: true,
+      default: { expoConfig: { extra: {} } },
+    }));
+    let base = '';
+    jest.isolateModules(() => {
+      base = require('@/api/fpl-client').FPL_BASE;
+    });
+    expect(base).toBe('https://fantasy.premierleague.com/api');
+  });
+
+  it('uses extra.fplBaseUrl when set', () => {
+    jest.doMock('expo-constants', () => ({
+      __esModule: true,
+      default: { expoConfig: { extra: { fplBaseUrl: 'http://127.0.0.1:4004' } } },
+    }));
+    let base = '';
+    jest.isolateModules(() => {
+      base = require('@/api/fpl-client').FPL_BASE;
+    });
+    expect(base).toBe('http://127.0.0.1:4004');
+  });
+});

@@ -83,7 +83,7 @@ export default function TopPicksTab() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: tk.bg }}>
+    <View style={{ flex: 1, backgroundColor: tk.bg }} testID="top-picks-list">
       <TabHeader
         title="Top Picks"
         tk={tk}

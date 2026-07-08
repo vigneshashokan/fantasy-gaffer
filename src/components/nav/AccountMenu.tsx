@@ -107,7 +107,7 @@ export function AccountMenu({
           <Icon name="person" color={t.text} size={18} />
           <Text style={[styles.rowText, { color: t.text }]}>Profile</Text>
         </Pressable>
-        <Pressable style={styles.row} onPress={onSettings} accessibilityRole="button">
+        <Pressable style={styles.row} onPress={onSettings} accessibilityRole="button" testID="account-menu-settings">
           <Icon name="gear" color={t.text} size={18} />
           <Text style={[styles.rowText, { color: t.text }]}>Settings</Text>
         </Pressable>
@@ -119,6 +119,7 @@ export function AccountMenu({
             onSignOut();
           }}
           accessibilityRole="button"
+          testID="account-menu-signout"
         >
           <Icon name="signOut" color="#FF3B5C" size={18} />
           <Text style={[styles.rowText, { color: '#FF3B5C' }]}>Sign out</Text>

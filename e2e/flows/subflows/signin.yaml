@@ -1,0 +1,56 @@
+# Shared: cold-start the app (cleared state), attach to Metro, sign in.
+# clearState wipes the dev client's pinned Metro URL too — the openLink
+# re-attach below MUST come after launchApp (spec §8).
+appId: com.fantasygaffer.app
+---
+- launchApp:
+    clearState: true
+# DEV_CLIENT_URL is injected by run.sh (it carries the run's Metro port —
+# E2E_METRO_PORT-aware, so the suite can run beside another project's :8081).
+- openLink: ${DEV_CLIENT_URL}
+# The Expo dev client intermittently interrupts the openLink re-attach after a
+# clearState launch (which wiped its pinned Metro URL): it may show the
+# first-launch "developer menu" hint (dismissed with "Continue") OR the full dev
+# menu over its launcher (from which "Reload" loads the app off the connected
+# 127.0.0.1:8081). Both are native overlays that cover the sign-in screen and
+# never auto-close. Poll-dismiss until the real onboarding screen renders: both
+# taps are harmless no-ops while the JS bundle is compiling, and full-string text
+# matching means "Continue"/"Reload" can't hit the app's own buttons. The loop
+# exits the instant the sign-in link is visible.
+# times caps the loop so a never-rendering bundle (Metro crash, dead sim) fails
+# red instead of hanging forever — the tapOn after the loop then fails loudly.
+- repeat:
+    times: 60
+    while:
+      notVisible:
+        id: "onboarding-signin-link"
+    commands:
+      - tapOn:
+          text: "Continue"
+          optional: true
+      - tapOn:
+          text: "Reload"
+          optional: true
+- tapOn:
+    id: "onboarding-signin-link"
+- tapOn:
+    id: "signin-email"
+- inputText: ${EMAIL}
+- tapOn:
+    id: "signin-password"
+- inputText: ${PASSWORD}
+- hideKeyboard
+- tapOn:
+    id: "signin-submit"
+# First-run push soft-ask (PushPrimingSheet) pops once we land on the home
+# layout: pushStore.primingShown is wiped by every clearState, and the sim's
+# notification permission is `undetermined`, so it appears on every run. It's a
+# native RN Modal — it renders in its own window and OCCLUDES the whole screen
+# beneath it from Maestro (an assert on gw-carousel behind it fails). Dismiss it
+# here so all three flows inherit a clean home screen. onLater persists
+# primingShown, so it never re-appears within the run (incl. the tabs-signout
+# relaunch, which keeps state).
+- extendedWaitUntil:
+    visible: "Maybe later"
+    timeout: 30000
+- tapOn: "Maybe later"

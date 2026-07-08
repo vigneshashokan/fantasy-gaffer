@@ -55,6 +55,7 @@ export default function TabsLayout() {
                 return (
                   <Pressable
                     key={tab.name}
+                    testID={`tab-${tab.name}`}
                     accessibilityRole="tab"
                     accessibilityLabel={tab.label}
                     accessibilityState={{ selected: focused }}
@@ -89,6 +90,7 @@ export default function TabsLayout() {
               {/* Account opens the account menu popup rather than navigating to
                   a screen, so it carries no active indicator. */}
               <Pressable
+                testID="tab-account"
                 accessibilityRole="button"
                 accessibilityLabel="Account"
                 style={styles.tab}

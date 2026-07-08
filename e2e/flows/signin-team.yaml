@@ -1,0 +1,27 @@
+# Flow 1 — sign-in → My Team renders squad + advice from the fixture dataset.
+appId: com.fantasygaffer.app
+---
+- runFlow:
+    file: subflows/signin.yaml
+    env:
+      EMAIL: ${EMAIL_A}
+      PASSWORD: ${PASSWORD}
+- extendedWaitUntil:
+    visible:
+      id: "gw-carousel"
+    timeout: 90000
+# Pitch player cards are Pressables that GROUP the badge + name into one
+# accessibility node ("1, Elanga"). Maestro text selectors are full-string
+# regex, so a bare "Elanga" never matches "1, Elanga" — wrap in .*…* to match
+# the name within the grouped label.
+- assertVisible: ".*${PLAYER_NAME}.*"
+- assertVisible: ".*${GK_NAME}.*"
+# Chips section renders only on an UPCOMING gameweek page (isUpcoming gate in
+# GameweekScreen) — one horizontal carousel page right of the live GW, then
+# scroll down within that page.
+- swipe:
+    direction: LEFT
+- scrollUntilVisible:
+    element:
+      id: "chip-tips"
+    direction: DOWN

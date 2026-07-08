@@ -24,6 +24,7 @@ export function LinkTeamCta({ tk, variant }: LinkTeamCtaProps) {
         Paste your FPL team ID and we'll pull in your squad.
       </Text>
       <Pressable
+        testID="connect-team-cta"
         accessibilityRole="button"
         onPress={() => router.push('/(onboarding)/connect-team')}
         style={({ pressed }) => [

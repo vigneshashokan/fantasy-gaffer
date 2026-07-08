@@ -86,7 +86,7 @@ export function composePreview(
 export function useTeamPreview(teamId: number | null) {
   const players = usePlayers();
   const currentGw = useCurrentGameweek();
-  const gw = currentGw.data ?? null;
+  const gw = currentGw.data?.gw ?? null;
   const playersReady = Array.isArray(players.data);
 
   return useQuery<Preview, FplFetchError>({
