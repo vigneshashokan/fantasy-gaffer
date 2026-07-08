@@ -124,15 +124,17 @@ content; anchors must survive copy changes). Naming: kebab-case, stable, no indi
 entity ids. Anchors to add (final list confirmed during implementation; existing ones —
 `gw-carousel`, `gw-scroll`, `team-id-input`, `stats-{id}` — are kept):
 
-- Sign-in screen: `signin-email`, `signin-password`, `signin-submit`
-- Tab bar items: `tab-team`, `tab-top-picks`, `tab-transfer`
-- Team tab: `connect-team-cta` (the not-yet-linked empty state), pitch container
-  `team-pitch`
-- Connect-team: `connect-team-submit`
-- Settings: `settings-signout`, `settings-privacy`, and the header/profile entry point
-  used to reach Settings from the tabs
+- Sign-in screen: `signin-email`, `signin-password`, `signin-submit` (+
+  `onboarding-signin-link` on the landing screen's sign-in affordance)
+- Tab bar items: `tab-team`, `tab-top-picks`, `tab-transfer`, `tab-account`
+- Team tab: `connect-team-cta` (the not-yet-linked empty state); `chip-tips` on the
+  chips section in `GameweekScreen` (the chips UI lives on the Team tab since PR #61 —
+  not the Transfer tab); the existing `gw-carousel`/`gw-scroll` anchor the pitch
+- Connect-team: `connect-team-submit`, `connect-team-confirm`
+- Account menu (sign-out and Settings live in the AccountMenu popup, not the Settings
+  screen): `account-menu-settings`, `account-menu-signout`
 - Top Picks / Transfer: container-level anchors only (`top-picks-list`,
-  `transfer-suggestions`, `chip-tips`) — row content is asserted by text
+  `transfer-suggestions`) — row content is asserted by text
 
 `testID` additions are invisible to users, a11y, and snapshots; no behavior change.
 
@@ -212,19 +214,19 @@ happen inside the flow, after the wipe. Then `extendedWaitUntil` on the first ap
 sign-in steps live in `flows/subflows/signin.yaml` (parameterized by email/password via
 Maestro env).
 
-1. **`signin-team.yaml`** — user A signs in → Team tab → assert: pitch renders
-   (`team-pitch`), a known captured player name is visible, captain advice section
-   visible with a p50-driven pick, bench section present. This is the flow that would
-   have caught the `Map`-persister cold-start crash class.
+1. **`signin-team.yaml`** — user A signs in → Team tab → assert: the GW carousel
+   renders (`gw-carousel`), known captured player names are visible (a MID starter +
+   the GK), and the chips section (`chip-tips`) is reachable by scrolling. This is the
+   flow that would have caught the `Map`-persister cold-start crash class.
 2. **`connect-team.yaml`** — user B signs in → Team tab shows `connect-team-cta` → tap →
    connect-team screen → enter `E` into `team-id-input` → submit → preview/confirm →
    populated My Team (same pitch assertions as flow 1).
 3. **`tabs-signout.yaml`** — user A signs in → Top Picks tab: ranked rows render
    (`top-picks-list` + a captured player name) → Transfer tab: `transfer-suggestions`
-   and `chip-tips` present (chip copy asserts the honest "no DGW scheduled" state where
-   applicable) → Settings → open Privacy Policy (legal doc content visible; covers the
-   modal-presentation regression class) → back → sign out via `settings-signout` →
-   assert onboarding landing screen.
+   present → Account menu → Settings → open Privacy Policy (legal doc content visible;
+   covers the modal-presentation regression class) → relaunch without clearing state
+   (session + persisted cache survive a cold start) → sign out via
+   `account-menu-signout` → assert onboarding landing screen.
 
 Flake posture: assertions use Maestro's built-in wait semantics (`extendedWaitUntil` for
 the two network-dependent screens, generous but bounded timeouts); no `sleep`-style fixed

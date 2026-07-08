@@ -34,7 +34,9 @@
 - Modify: `src/components/nav/AccountMenu.tsx` (settings/sign-out rows)
 - Modify: `src/components/team/LinkTeamCta.tsx:26` (connect CTA)
 - Modify: `src/app/(home)/(tabs)/top-picks.tsx` (root container)
-- Modify: `src/app/(home)/(tabs)/transfer.tsx` (suggestions + chips containers)
+- Modify: `src/app/(home)/(tabs)/transfer.tsx` (suggestions container)
+- Modify: `src/components/team/GameweekScreen.tsx` (chips section — the chips UI lives
+  on the Team tab since PR #61, not the Transfer tab)
 - Test: `src/__tests__/api/fpl-client.test.ts` (extend)
 
 **Interfaces:**
@@ -142,7 +144,8 @@ and forward it on the `<TextInput>`:
 5. `src/components/team/LinkTeamCta.tsx:26` — the `<Pressable onPress={() => router.push('/(onboarding)/connect-team')}>`: `testID="connect-team-cta"`.
 6. `src/app/(onboarding)/connect-team.tsx` — the button that submits the entered team ID (the one guarded by `disabled={validating}`, around line 157): `testID="connect-team-submit"`; the confirming-stage button (`onPress={onContinue}`, around line 178): `testID="connect-team-confirm"`. Read the file to place these on the actual pressable elements (they may be `PillBtn`s — which now accept `testID`).
 7. `src/app/(home)/(tabs)/top-picks.tsx` — the screen's root `<View>` (the outermost element returned by `TopPicksTab`): `testID="top-picks-list"`.
-8. `src/app/(home)/(tabs)/transfer.tsx` — the `<View style={styles.suggestionsWrap}>` (line ~134): `testID="transfer-suggestions"`; the chips section container (read the file — the section rendering the chip cards/tips, near `styles.topGroup`): `testID="chip-tips"`.
+8. `src/app/(home)/(tabs)/transfer.tsx` — the `<View style={styles.suggestionsWrap}>` (line ~134): `testID="transfer-suggestions"`.
+9. `src/components/team/GameweekScreen.tsx` — the container element wrapping the chips section (ChipsRow / "Play a Chip" area): `testID="chip-tips"`.
 
 - [ ] **Step 7: Verify no regressions:**
 
@@ -744,6 +747,11 @@ appId: com.fantasygaffer.app
     timeout: 90000
 - assertVisible: ${PLAYER_NAME}
 - assertVisible: ${GK_NAME}
+# Chips section lives on the Team tab (GameweekScreen), below the pitch.
+- scrollUntilVisible:
+    element:
+      id: "chip-tips"
+    direction: DOWN
 ```
 
 - [ ] **Step 4: Write `e2e/flows/connect-team.yaml`:**
@@ -810,8 +818,6 @@ appId: com.fantasygaffer.app
     visible:
       id: "transfer-suggestions"
     timeout: 60000
-- assertVisible:
-    id: "chip-tips"
 - tapOn:
     id: "tab-account"
 - tapOn:
