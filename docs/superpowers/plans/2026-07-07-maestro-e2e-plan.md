@@ -907,7 +907,9 @@ say "app artifact: $APP_PATH"
 # ---------- dataset ----------
 node --test e2e/transform.test.mjs >/dev/null || die "transform self-test failed"
 node e2e/transform.mjs
-eval "$(node e2e/dataset-info.mjs --sh)"
+DATASET_ENV="$(node e2e/dataset-info.mjs --sh)" || die "dataset-info failed — is the transformed dataset present? (node e2e/transform.mjs)"
+[ -n "$DATASET_ENV" ] || die "dataset-info produced no output"
+eval "$DATASET_ENV"
 say "dataset: entry $E2E_ENTRY_ID, live GW $E2E_GW, players: $E2E_PLAYER_NAME / $E2E_GK_NAME"
 
 # ---------- supabase + seed ----------
