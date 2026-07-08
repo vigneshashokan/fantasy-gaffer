@@ -512,7 +512,10 @@ test('entry routes only answer for the captured entry', () => {
 test('live falls back to empty elements; element-summary falls back to template', () => {
   assert.deepEqual(JSON.parse(lookup('/event/2/live/')), { elements: [] });
   assert.ok(lookup(`/event/${meta.gw}/live/`).length > 100);
-  assert.ok(lookup('/element-summary/999999/'));
+  assert.equal(
+    lookup('/element-summary/999999/'),
+    lookup(`/element-summary/${meta.templateElement}/`),
+  );
 });
 
 test('unknown routes are null (404)', () => {
@@ -536,7 +539,10 @@ import { readFileSync } from 'node:fs';
 const URL_ = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!KEY) throw new Error('SUPABASE_SERVICE_ROLE_KEY not set — run via e2e/run.sh');
-if (!/^http:\/\/(127\.0\.0\.1|localhost)(:|\/)/.test(URL_))
+// Real URL parsing, not a prefix regex: userinfo syntax (http://127.0.0.1:x@evil.com)
+// bypasses prefix matching while fetch() targets the post-@ host.
+const u = new URL(URL_);
+if (u.protocol !== 'http:' || (u.hostname !== '127.0.0.1' && u.hostname !== 'localhost'))
   throw new Error(`[seed] REFUSING non-local Supabase URL: ${URL_}`);
 
 const DIR = process.env.E2E_FIXTURES_DIR ?? 'e2e/.artifacts/fixtures';
