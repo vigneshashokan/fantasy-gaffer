@@ -13,6 +13,7 @@ interface PillBtnProps {
   accentInk?: string;
   textColor?: string;
   borderColor?: string;
+  testID?: string;
 }
 
 export function PillBtn({
@@ -24,6 +25,7 @@ export function PillBtn({
   accentInk = '#06351E',
   textColor = '#74627E',
   borderColor = 'rgba(40,0,48,0.16)',
+  testID,
 }: PillBtnProps) {
   const containerStyle: ViewStyle = {
     ...styles.base,
@@ -43,6 +45,7 @@ export function PillBtn({
   const a11yLabel = typeof children === 'string' ? children : undefined;
   return (
     <Pressable
+      testID={testID}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={a11yLabel}

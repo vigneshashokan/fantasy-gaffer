@@ -73,6 +73,7 @@ const config: ExpoConfig = {
     posthogKey: process.env.EXPO_PUBLIC_POSTHOG_KEY,
     posthogHost: process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com',
     sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+    fplBaseUrl: process.env.EXPO_PUBLIC_FPL_BASE_URL,
     // Mirror of src/constants/links.ts (PRIVACY_URL / TERMS_URL). Inlined rather
     // than imported: the @expo/config loader can't resolve a relative .ts import
     // here. Keep these in sync with links.ts. Consumed by store submission (#45).

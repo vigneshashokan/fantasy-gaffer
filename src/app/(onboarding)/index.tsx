@@ -73,7 +73,7 @@ export default function Landing() {
         </View>
 
         <View style={styles.controls}>
-          <Pressable onPress={goSignIn} hitSlop={8} accessibilityRole="button">
+          <Pressable onPress={goSignIn} hitSlop={8} accessibilityRole="button" testID="onboarding-signin-link">
             <Text style={styles.skip}>Skip intro</Text>
           </Pressable>
 

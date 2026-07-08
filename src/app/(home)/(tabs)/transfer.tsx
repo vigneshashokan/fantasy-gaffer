@@ -131,7 +131,7 @@ export default function TransferTab() {
         </View>
 
         {!seasonOver && (
-          <View style={styles.suggestionsWrap}>
+          <View style={styles.suggestionsWrap} testID="transfer-suggestions">
             <TransferSuggestionsCard
               suggestions={tr.transferSuggestions}
               tk={tk}

@@ -175,6 +175,7 @@ export default function ConnectTeam() {
 
             <View style={styles.actions}>
               <Pressable
+                testID="connect-team-submit"
                 onPress={onContinue}
                 disabled={!validInput || validating}
                 accessibilityRole="button"
@@ -217,6 +218,7 @@ export default function ConnectTeam() {
 
             <View style={styles.actions}>
               <Pressable
+                testID="connect-team-confirm"
                 onPress={onLink}
                 disabled={link.isPending}
                 accessibilityRole="button"

@@ -4,7 +4,12 @@
 // When the optional fpl-proxy Edge Function lands, only the base URL here
 // changes; all hooks stay the same.
 
-const FPL_BASE = 'https://fantasy.premierleague.com/api';
+import Constants from 'expo-constants';
+
+// E2E/proxy seam: overridable via EXPO_PUBLIC_FPL_BASE_URL (forwarded through
+// app.config.ts extra — app code cannot read EXPO_PUBLIC_* directly).
+export const FPL_BASE: string =
+  Constants.expoConfig?.extra?.fplBaseUrl ?? 'https://fantasy.premierleague.com/api';
 const DEFAULT_TIMEOUT_MS = 8_000;
 const MAX_ATTEMPTS = 3;
 const BACKOFF_MS = [0, 300, 800]; // pre-attempt delay per attempt
