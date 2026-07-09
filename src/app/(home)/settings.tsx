@@ -14,6 +14,7 @@ import { BiometricCard } from '@/components/settings/BiometricCard';
 import { SettingsRow } from '@/components/settings/SettingsRow';
 import { FollowUsRow } from '@/components/settings/FollowUsRow';
 import { PrivacyCard } from '@/components/settings/PrivacyCard';
+import { useOnboardingStore } from '@/store/onboardingStore';
 import { supabase } from '@/lib/supabase';
 import { sendTestNotification } from '@/lib/notifications/sendTestNotification';
 import { shareApp, sendFeedback } from '@/lib/external';
@@ -24,6 +25,7 @@ export default function SettingsModal() {
   const { paletteKey, dark, setPaletteKey } = useThemeStore();
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
+  const resetOnboarding = useOnboardingStore((s) => s.resetAll);
 
   const heroFrom = t.primary;
   const heroTo = dark ? '#0C1018' : '#5B0F63';
@@ -84,6 +86,16 @@ export default function SettingsModal() {
             icon={<TermsIcon color={tk.faint} />}
             label="Terms of Service"
             onPress={() => router.push('/legal/terms')}
+            tk={tk}
+            showDivider
+          />
+          <SettingsRow
+            icon={<TutorialIcon color={tk.faint} />}
+            label="Replay tutorial"
+            onPress={() => {
+              resetOnboarding();
+              Alert.alert('Tutorial reset', "You'll see the tips again next time you open each tab.");
+            }}
             tk={tk}
             showDivider
           />
@@ -235,6 +247,20 @@ function PrivacyIcon({ color }: { color: string }) {
     <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
       <Path
         d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
+function TutorialIcon({ color }: { color: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M9 18h6M10 21h4M12 3a6 6 0 00-3.6 10.8c.6.45 1.1 1.2 1.1 2.2h5a2.6 2.6 0 011.1-2.2A6 6 0 0012 3z"
         stroke={color}
         strokeWidth={2}
         strokeLinecap="round"

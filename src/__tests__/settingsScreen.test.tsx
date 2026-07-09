@@ -25,6 +25,13 @@ jest.mock('@/store/biometricStore', () => ({
     }),
 }));
 
+const mockResetAll = jest.fn();
+jest.mock('@/store/onboardingStore', () => ({
+  __esModule: true,
+  useOnboardingStore: (selector: (s: { resetAll: () => void }) => unknown) =>
+    selector({ resetAll: mockResetAll }),
+}));
+
 jest.mock('@/store/themeStore', () => ({
   __esModule: true,
   useThemeStore: () => ({
@@ -104,6 +111,7 @@ describe('Settings screen — More actions', () => {
     (shareApp as jest.Mock).mockClear();
     (sendFeedback as jest.Mock).mockClear();
     mockPush.mockClear();
+    mockResetAll.mockClear();
     mockIsSupported.mockResolvedValue(false);
   });
 
@@ -129,5 +137,11 @@ describe('Settings screen — More actions', () => {
     const { getByText } = render(<Settings />);
     fireEvent.press(getByText('Privacy Policy'));
     expect(mockPush).toHaveBeenCalledWith('/legal/privacy');
+  });
+
+  it('resets onboarding tips when Replay tutorial is pressed', () => {
+    const { getByText } = render(<Settings />);
+    fireEvent.press(getByText('Replay tutorial'));
+    expect(mockResetAll).toHaveBeenCalled();
   });
 });

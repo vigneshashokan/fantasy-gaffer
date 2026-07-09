@@ -45,6 +45,11 @@ jest.mock('expo-router', () => {
   return { __esModule: true, Tabs, useRouter: () => ({ push: jest.fn() }) };
 });
 
+jest.mock('@/components/onboarding/TabCoachmark', () => ({
+  __esModule: true,
+  TabCoachmark: () => null,
+}));
+
 const mockUseProfile = jest.fn();
 const mockUseManager = jest.fn();
 jest.mock('@/api/profile', () => ({
