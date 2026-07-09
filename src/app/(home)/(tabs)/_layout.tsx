@@ -11,6 +11,7 @@ import { initialsOf } from '@/lib/name';
 import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import { MAX_FONT_SCALE } from '@/lib/a11y';
+import { TabCoachmark } from '@/components/onboarding/TabCoachmark';
 
 type TabName = 'top-picks' | 'team' | 'transfer';
 
@@ -42,6 +43,7 @@ export default function TabsLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: screenBg }}>
       <View style={{ height: insets.top, backgroundColor: screenBg }} />
+      <TabCoachmark tab={activeTab} />
       <Tabs
         initialRouteName="team"
         screenOptions={{ headerShown: false }}
