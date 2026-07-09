@@ -206,9 +206,10 @@ describe('<TabCoachmark />', () => {
     expect(r.queryByTestId('coachmark-team')).toBeNull();
   });
 
-  it('pressing "Got it" marks the tab seen in the store', () => {
+  it('pressing "Got it" marks the tab seen in the store', async () => {
     const r = render(<TabCoachmark tab="transfer" />);
     fireEvent.press(r.getByText('Got it'));
+    await act(async () => {});
     expect(useOnboardingStore.getState().seen.transfer).toBe(true);
   });
 
@@ -282,7 +283,7 @@ export function TabCoachmark({ tab }: { tab: TabKey }) {
       <Text style={[styles.text, { color: tk.text }]} maxFontSizeMultiplier={MAX_FONT_SCALE}>
         {message}
       </Text>
-      <Pressable onPress={() => markSeen(tab)} accessibilityRole="button" accessibilityLabel="Got it" hitSlop={8}>
+      <Pressable onPress={() => markSeen(tab)} accessibilityRole="button" hitSlop={8}>
         <Text style={[styles.dismiss, { color: tk.purple }]} maxFontSizeMultiplier={MAX_FONT_SCALE}>
           Got it
         </Text>
