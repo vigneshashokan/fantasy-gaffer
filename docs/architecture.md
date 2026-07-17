@@ -43,7 +43,7 @@ The `fpl-ingest` Edge Function reads `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_K
 ## Repo layout
 
 ```
-fpl-gaffer-react-native-app/
+fantasy-gaffer/
 ├─ supabase/
 │  ├─ config.toml
 │  ├─ seed.sql

@@ -248,7 +248,7 @@ If another dev server is already holding port 8081, run beside it with
 ## Repo layout
 
 ```
-fpl-gaffer-react-native-app/
+fantasy-gaffer/
 ├─ src/
 │  ├─ app/            # expo-router file-based routes ((onboarding), (home), legal)
 │  ├─ api/             # the only place Supabase/FPL HTTP calls happen; query hooks + keys
