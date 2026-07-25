@@ -1,106 +1,106 @@
-# Biometric Session Unlock
+# Biometric App Lock
 
-Implements [#18](https://github.com/vigneshashokan/fpl-gaffer-react-native-app/issues/18). Spec: `docs/superpowers/specs/2026-06-09-biometric-unlock-design.md`.
+Implements [#18](https://github.com/vigneshashokan/fpl-gaffer-react-native-app/issues/18) /
+[#73](https://github.com/vigneshashokan/fpl-gaffer-react-native-app/issues/73). Spec:
+`docs/superpowers/specs/2026-07-25-biometric-app-lock-design.md`.
+
+This is a **lock on an already-live session**, not a signed-out session restore. See
+"Why this is a lock, not a session restore" below for how it got here.
 
 ## How it works at runtime
 
-### Enrollment (via the SignIn checkbox)
+### Enrollment (via the Settings toggle)
 
 ```
-User types email + password (or taps Continue with Google)
+Signed-in user toggles "Face ID login" ON in Settings
   ↓
-User ticks "Remember to use Face ID" (only visible if device supports biometrics
-                                      and biometric is not already enabled)
+biometricStore.enable()
   ↓
-signInWithEmail / signInWithGoogle succeeds
-  ↓
-biometricStore.enable() runs (after the success branch, before navigation)
-  ↓
-capability.promptBiometric("Confirm Face ID to enable") — proves user
-  ↓
-supabase.auth.getSession() → current access + refresh tokens
-  ↓
-storage.saveSession(...) → expo-secure-store (single slot)
-AsyncStorage.setItem('biometric_enabled', 'true')
-  ↓
-(onboarding)/_layout sees the new session → routes home
-```
-
-Enrollment failure (user cancels biometric, no hardware, etc.) is logged via
-`console.warn` and never blocks the sign-in itself.
-
-### Enrollment (via the Profile toggle)
-
-Signed-in user toggles "Face ID login" ON in Profile → Security:
-
-```
-ToggleRow.onChange(true) → biometricStore.enable()
-  ↓
-capability.promptBiometric("Confirm Face ID to enable")
+capability.promptBiometric("Confirm Face ID to enable") — proves the user
   ↓ confirm
-storage.saveSession + AsyncStorage flag — same as above
+AsyncStorage.setItem('biometric_enabled', 'true')
 ```
 
-On cancel, the toggle bounces back to off (the toggle reads
-`biometricStore.enabled` directly; failed enable doesn't flip state).
+On cancel, the toggle bounces back to off (it reads `biometricStore.enabled`
+directly; a failed `enable()` never flips state). There is no sign-in-time
+enrollment path — the toggle is the only entry point.
 
-### Auto-unlock (next launch, signed-out scenario)
+### Cold start → lock resolution
 
 ```
 App cold-starts → fonts/theme/auth/biometric stores hydrate
   ↓
-useAuthStore.session is null AND biometricStore.enabled is true AND
-  biometricStore.justSignedOut is false
+AppGate calls biometricStore.resolveLock(!!session)
   ↓
-(onboarding)/_layout renders SignIn
+locked = enabled && hasSession   (computed once, then set)
   ↓
-SignIn useEffect fires attemptUnlock() automatically
+resolveLock is a no-op on any later call this launch (`resolved` guard) —
+a mid-run sign-in must never retroactively lock, and nothing re-locks later
+```
+
+`AppGate` (`src/app/_layout.tsx`) renders `null` while `locked === null` (the
+splash screen stays up, so no frame ever shows app content before the verdict
+is in), `<LockScreen/>` while `locked === true`, and the normal `<Stack/>`
+otherwise. Providers (`AnalyticsProvider`, `SafeAreaProvider`, etc.) stay
+mounted while locked; the `<Stack/>` itself does not mount, so no route or
+query fires behind the lock.
+
+`locked` only ever moves **one way after resolution**: to `false`, via
+`unlock()` (LockScreen success, or the unsupported-hardware fallback below) or
+a `SIGNED_OUT` auth event. Nothing sets it back to `true` mid-session — this
+is a launch-time gate, not a background-timeout re-lock (see Future work).
+
+### LockScreen
+
+```
+LockScreen mounts → attempt() fires automatically (guarded by an in-flight ref
+  so a second concurrent prompt can't stack)
   ↓
-storage.loadSession() → { access_token, refresh_token }
-  ↓ (no stored session → return no_session, skip prompt)
-capability.promptBiometric("Unlock Fantasy Gaffer with Face ID")
-  ↓ confirm
-supabase.auth.setSession({ access_token, refresh_token })
-  ↓ Supabase validates, rotates if needed
-session lands → onAuthStateChange → useAuthStore.session updates
-  ↓
-(onboarding)/_layout redirects to /(home)/(tabs)/team
+capability.isSupported() false? → disable() + unlock() — Face ID was turned
+  off or re-enrolled in iOS Settings since the flag was set, so the stored
+  preference can never be satisfied again; let the user through rather than
+  trap them behind an unsatisfiable prompt
+  ↓ (supported)
+capability.promptBiometric("Unlock Fantasy Gaffer")
+  ↓ success → unlock()
+  ↓ cancel/lockout → status message, "Unlock with Face ID" retry button,
+    and a "Sign out" escape (routes through useAuthStore.signOut(), which
+    fires SIGNED_OUT → biometricStore clears `locked`)
 ```
 
 ### Sign-out
 
 ```
-useAuthStore.signOut() (e.g. Profile → Sign out)
+useAuthStore.signOut() (from LockScreen's escape, or Settings)
   ↓
 Supabase clears the session → onAuthStateChange('SIGNED_OUT')
   ↓
-biometricStore listener sets justSignedOut = true
-SecureStore and the AsyncStorage flag are LEFT IN PLACE
+biometricStore sets locked = false
   ↓
-Next SignIn mount checks justSignedOut, calls consumeJustSignedOut(),
-  and skips auto-unlock that one render
-  ↓
-Subsequent renders / cold-starts auto-unlock normally
+AppGate re-renders the Stack, which (with no session) routes to onboarding
 ```
 
-To clear biometric, the user toggles Face ID OFF in Profile.
+`SIGNED_IN` is deliberately **not** subscribed to. Session-restore, app
+foreground, and token-refresh all emit `SIGNED_IN` too (see the
+`lastSignInUserId` note at `src/store/authStore.ts:15-17`) — unlocking on it
+would auto-unlock every cold start and defeat the feature entirely.
 
-### Auto-unlock failure → fallback
+To clear enrollment, the user toggles Face ID OFF in Settings.
 
-If `supabase.auth.setSession` rejects (refresh token expired beyond Supabase's
-60-day default TTL, or revoked via `signOut({ scope: 'others' })` from another
-device), `attemptUnlock` internally calls `disable()` and returns
-`{ ok: false, error: 'expired_link' }`. The SignIn screen shows the banner
-"Face ID session expired — sign in with your password to re-enable." The user
-signs in with their password; if they re-tick the checkbox, biometric is
-re-enrolled.
+## Why this is a lock, not a session restore
+
+The original design (`docs/superpowers/specs/2026-06-09-biometric-unlock-design.md`) stored the session in
+SecureStore and replayed it via `setSession` after sign-out. Verification for #73 proved that unreachable:
+**any** sign-out revokes the session server-side, including `scope: 'local'` — GoTrue returns
+`403 Session from session_id claim in JWT does not exist` for the stored access token, and `400` for the
+refresh token. See `docs/superpowers/specs/2026-07-25-biometric-app-lock-design.md`.
 
 ## Manual setup
 
 No external service required — this is fully on-device. But:
 
-1. Use a **dev build** or production build, not Expo Go. Custom URL schemes and
-   biometric prompts both require a real build to behave correctly.
+1. Use a **dev build** or production build, not Expo Go. Biometric prompts
+   require a real build to behave correctly.
 2. On the iOS simulator, set up Face ID: Features → Face ID → Enrolled. Then
    trigger matches via Features → Face ID → Matching Face / Non-matching Face.
 3. On Android emulator, set up fingerprint: Settings → Security → Fingerprint.
@@ -109,50 +109,39 @@ No external service required — this is fully on-device. But:
 ## Files
 
 - `src/lib/auth/biometric/capability.ts` — thin wrapper around
-  `expo-local-authentication`.
-- `src/lib/auth/biometric/storage.ts` — single-slot wrapper around
-  `expo-secure-store`.
-- `src/lib/auth/biometric/enrollment.ts` — orchestration: `enable`, `disable`,
-  `attemptUnlock`, `persistCurrentSession`. Defines `BiometricErrorKind`.
-- `src/lib/auth/biometric/index.ts` — public re-exports.
-- `src/store/biometricStore.ts` — Zustand store; subscribes to
-  `supabase.auth.onAuthStateChange` for token rotation and sign-out tracking.
-- `src/components/forms/Checkbox.tsx` — themed checkbox primitive (used by
-  SignIn's Remember-Face-ID opt-in).
+  `expo-local-authentication` (`isSupported`, `promptBiometric`).
+- `src/lib/auth/biometric/enrollment.ts` — orchestration: `enable`, `disable`.
+  Defines `BiometricErrorKind`.
+- `src/store/biometricStore.ts` — Zustand store; owns `enabled` (persisted
+  flag) and `locked` (per-launch verdict, resolved by `resolveLock`); subscribes
+  to `supabase.auth.onAuthStateChange` only for `SIGNED_OUT`.
+- `src/components/auth/LockScreen.tsx` — the lock UI: auto-prompts on mount,
+  retry, sign-out escape, unsupported-hardware fallback.
+- `src/app/_layout.tsx` — `AppGate` calls `resolveLock` on cold start and
+  renders `LockScreen` in place of the router while locked.
 
 ## Troubleshooting
 
-**Auto-unlock prompt appears even after I signed out**
-- Check that `biometricStore.justSignedOut` is being set. The store subscribes
-  to `supabase.auth.onAuthStateChange('SIGNED_OUT')` — if that event isn't
-  firing (some custom sign-out paths), the flag won't flip. Verify the sign-out
-  call goes through `supabase.auth.signOut()`.
+**Lock never appears even though Face ID is enabled**
+- `locked = enabled && hasSession` is only computed once, at `AppGate`'s
+  `resolveLock` call, and only when there IS a session. Confirm the toggle is
+  actually on (`biometricStore.enabled`) and that the app was truly cold-started
+  (not just reloaded) with a live session already present.
 
-**Unlock works but routes back to SignIn**
-- The session might be landing without the `(onboarding)/_layout.tsx` picking
-  it up. Confirm `useAuthStore.session` updates after `setSession`. If
-  `onAuthStateChange` is not firing on `setSession`, the layout won't see the
-  session change.
+**Lock appears then immediately clears**
+- Check for a stray `SIGNED_OUT` firing — it's the only auth event that clears
+  `locked`, so anything that calls `supabase.auth.signOut()` (directly or via
+  `useAuthStore.signOut()`) will dismiss the lock.
 
-**"Face ID session expired" appears immediately after enrollment**
-- Likely cause: `storage.saveSession` wrote the old (about-to-be-rotated)
-  tokens, and the very next refresh invalidated them. `biometricStore`'s
-  `TOKEN_REFRESHED` listener handles this, but if `getSession` is called before
-  the refresh completes, you may have a stale snapshot. This is rare in
-  practice but the fix is the listener already wired up in
-  `biometricStore`.
-
-**Checkbox is never visible**
+**Checkbox/toggle is never visible in Settings**
 - `capability.isSupported()` returned false. Likely the simulator/device
   doesn't have biometric enrolled (Settings → Face ID). On a real device,
   ensure the app has permission (Settings → Fantasy Gaffer → Face ID).
 
 ## Future work
 
-- **Background re-lock** — currently we only prompt at SignIn time. A common
-  upgrade is "biometric required after N minutes in the background" for
-  app-launch-style locking. Not in this scope.
-- **Multi-user biometric** — single slot for now. If we ever support multiple
-  Gaffer accounts on one device, this needs to grow.
+- **Background re-lock** — currently the lock is resolved once at cold start
+  only. "Re-lock after N minutes backgrounded" is a common upgrade for
+  app-launch-style locking but is out of scope here.
 - **Per-action biometric guards** — sensitive actions (transfer accept,
   account delete) could re-prompt. Not in scope here; spec-able as a follow-up.
