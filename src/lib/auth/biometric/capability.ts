@@ -1,7 +1,5 @@
 import * as LocalAuthentication from 'expo-local-authentication';
 
-export type BiometricKind = 'face' | 'fingerprint' | 'iris';
-
 export type PromptResult =
   | { ok: true }
   | { ok: false; error: 'cancel' | 'lockout' | 'unknown' };
@@ -15,21 +13,6 @@ export async function isSupported(): Promise<boolean> {
     return hardware && enrolled;
   } catch {
     return false;
-  }
-}
-
-export async function supportedTypes(): Promise<BiometricKind[]> {
-  try {
-    const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
-    const out: BiometricKind[] = [];
-    for (const t of types) {
-      if (t === LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION) out.push('face');
-      else if (t === LocalAuthentication.AuthenticationType.FINGERPRINT) out.push('fingerprint');
-      else if (t === LocalAuthentication.AuthenticationType.IRIS) out.push('iris');
-    }
-    return out;
-  } catch {
-    return [];
   }
 }
 

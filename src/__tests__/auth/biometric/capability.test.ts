@@ -16,11 +16,7 @@ jest.mock('expo-local-authentication', () => ({
   },
 }));
 
-import {
-  isSupported,
-  supportedTypes,
-  promptBiometric,
-} from '@/lib/auth/biometric/capability';
+import { isSupported, promptBiometric } from '@/lib/auth/biometric/capability';
 
 describe('isSupported', () => {
   beforeEach(() => {
@@ -49,37 +45,6 @@ describe('isSupported', () => {
   it('returns false when the OS call throws', async () => {
     mockHasHardware.mockRejectedValueOnce(new Error('boom'));
     expect(await isSupported()).toBe(false);
-  });
-});
-
-describe('supportedTypes', () => {
-  beforeEach(() => {
-    mockSupportedTypes.mockReset();
-  });
-
-  it('maps FACIAL_RECOGNITION (2) to "face"', async () => {
-    mockSupportedTypes.mockResolvedValueOnce([2]);
-    expect(await supportedTypes()).toEqual(['face']);
-  });
-
-  it('maps FINGERPRINT (1) to "fingerprint"', async () => {
-    mockSupportedTypes.mockResolvedValueOnce([1]);
-    expect(await supportedTypes()).toEqual(['fingerprint']);
-  });
-
-  it('maps IRIS (3) to "iris"', async () => {
-    mockSupportedTypes.mockResolvedValueOnce([3]);
-    expect(await supportedTypes()).toEqual(['iris']);
-  });
-
-  it('maps multiple types in order', async () => {
-    mockSupportedTypes.mockResolvedValueOnce([1, 2]);
-    expect(await supportedTypes()).toEqual(['fingerprint', 'face']);
-  });
-
-  it('returns [] when the OS call throws', async () => {
-    mockSupportedTypes.mockRejectedValueOnce(new Error('boom'));
-    expect(await supportedTypes()).toEqual([]);
   });
 });
 
