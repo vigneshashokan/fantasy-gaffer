@@ -121,6 +121,18 @@ run (deleted-then-recreated by email, so state never drifts between runs):
 Both are always freshly seeded, so a flow never depends on state a *previous* run left
 behind, and running the suite twice in a row is expected to be green both times.
 
+### Not covered: the biometric app-lock (#73)
+
+Maestro cannot drive the system Face ID sheet — it is a separate system window, and the simulator renders
+it with no Cancel affordance, so a non-matching face leaves it up indefinitely. Enabling the lock in
+Settings requires a *satisfied* prompt, so no unattended flow can even reach the locked state: `enabled`
+stays false and the app never locks.
+
+The lock gate is therefore **unit-tested only** (`src/__tests__/appGate.test.tsx`,
+`src/__tests__/components/auth/lockScreen.test.tsx`, `src/__tests__/biometricStore.test.ts`). The Face ID
+success, cancel and lockout paths need a manual on-device pass — see the acceptance-criteria table in
+`docs/superpowers/specs/2026-07-25-biometric-app-lock-design.md`.
+
 ## Adding a flow
 
 Anchor policy (from the design spec's §5.2, keep following it): **`testID` for

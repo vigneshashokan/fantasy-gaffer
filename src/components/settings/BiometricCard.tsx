@@ -43,7 +43,7 @@ export function BiometricCard({ tk }: BiometricCardProps) {
           <View style={{ flex: 1, minWidth: 0 }}>
             <Text style={[styles.label, { color: tk.text }]}>Face ID login</Text>
             <Text style={[styles.sub, { color: tk.faint }]}>
-              {enabled ? 'Biometric sign-in is on' : 'Use password to sign in'}
+              {enabled ? 'Face ID required to open the app' : 'App opens without Face ID'}
             </Text>
           </View>
           <Toggle

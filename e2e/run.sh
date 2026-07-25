@@ -117,6 +117,18 @@ xcrun simctl install "$SIM_NAME" "$APP_PATH"
 say "pre-bundling JS (first compile can take 1-2 min)…"
 curl -fsS "http://127.0.0.1:$METRO_PORT/node_modules/expo-router/entry.bundle?platform=ios&dev=true&minify=false" -o /dev/null || true
 
+# ---------- hold ----------
+# E2E_HOLD=1 stands the harness up and stops there, for manual/semi-automated
+# on-simulator validation that Maestro can't drive alone (e.g. #73's Face ID
+# plan, which needs Simulator ▸ Features ▸ Face ID menu clicks between steps).
+# Ctrl-C tears everything down via the trap above.
+if [ -n "${E2E_HOLD:-}" ]; then
+  say "HOLD — services up, app installed. Ctrl-C to tear down."
+  say "  metro :$METRO_PORT · fpl :$FPL_PORT · users e2e-a@/e2e-b@fantasygaffer.test pw e2e-password-1"
+  say "  deep link: fplgafferreactnativeapp://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A${METRO_PORT}"
+  while true; do sleep 3600; done
+fi
+
 # ---------- run ----------
 say "running maestro: $FLOW"
 maestro test \

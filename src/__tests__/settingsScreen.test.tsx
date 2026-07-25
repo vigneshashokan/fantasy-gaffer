@@ -95,14 +95,14 @@ describe('Settings screen — Face ID row', () => {
     mockBiometricEnabled = true;
     mockIsSupported.mockResolvedValueOnce(true);
     const { findByText } = render(<Settings />);
-    await findByText('Biometric sign-in is on');
+    await findByText('Face ID required to open the app');
   });
 
   it('reflects biometricStore.enabled = false in the toggle subtitle', async () => {
     mockBiometricEnabled = false;
     mockIsSupported.mockResolvedValueOnce(true);
     const { findByText } = render(<Settings />);
-    await findByText('Use password to sign in');
+    await findByText('App opens without Face ID');
   });
 });
 

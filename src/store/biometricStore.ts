@@ -4,7 +4,6 @@ import { supabase } from '@/lib/supabase';
 import {
   enable as runEnable,
   disable as runDisable,
-  persistCurrentSession,
   BIOMETRIC_ENABLED_KEY,
   type Result,
 } from '@/lib/auth/biometric/enrollment';
@@ -12,10 +11,13 @@ import {
 interface BiometricState {
   enabled: boolean;
   hydrated: boolean;
-  justSignedOut: boolean;
+  /** null = not yet resolved for this launch. Resolved once, then one-way to false. */
+  locked: boolean | null;
+  resolved: boolean;
   enable: () => Promise<Result>;
   disable: () => Promise<void>;
-  consumeJustSignedOut: () => void;
+  resolveLock: (hasSession: boolean) => void;
+  unlock: () => void;
 }
 
 export const useBiometricStore = create<BiometricState>((set, get) => {
@@ -24,21 +26,20 @@ export const useBiometricStore = create<BiometricState>((set, get) => {
     .then((v) => set({ enabled: v === 'true', hydrated: true }))
     .catch(() => set({ enabled: false, hydrated: true }));
 
-  // Keep stored tokens fresh on refresh; flag justSignedOut on sign-out.
+  // Sign-out clears the lock so LockScreen's sign-out escape reveals the router
+  // (which then routes to onboarding). This is the ONLY auth event we react to:
+  // SIGNED_IN is deliberately ignored because session-restore, foreground AND
+  // token-refresh all emit it (see the lastSignInUserId note in authStore.ts),
+  // so unlocking on it would auto-unlock every cold start and defeat the lock.
   supabase.auth.onAuthStateChange((event) => {
-    if (event === 'SIGNED_OUT') {
-      set({ justSignedOut: true });
-      return;
-    }
-    if ((event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && get().enabled) {
-      persistCurrentSession();
-    }
+    if (event === 'SIGNED_OUT') set({ locked: false });
   });
 
   return {
     enabled: false,
     hydrated: false,
-    justSignedOut: false,
+    locked: null,
+    resolved: false,
     enable: async () => {
       const r = await runEnable();
       if (r.ok) set({ enabled: true });
@@ -48,6 +49,13 @@ export const useBiometricStore = create<BiometricState>((set, get) => {
       await runDisable();
       set({ enabled: false });
     },
-    consumeJustSignedOut: () => set({ justSignedOut: false }),
+    // Resolved exactly once per launch: a mid-run sign-in must never lock the
+    // session the user just created, and a later re-evaluation must never
+    // re-lock. Only unlock() and SIGNED_OUT move `locked` after this.
+    resolveLock: (hasSession) => {
+      if (get().resolved) return;
+      set({ resolved: true, locked: get().enabled && hasSession });
+    },
+    unlock: () => set({ locked: false }),
   };
 });

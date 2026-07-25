@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
+import type { AuthChangeEvent, AuthError, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { identify, reset, track } from '@/lib/analytics';
 import { setSentryUser } from '@/lib/monitoring/sentry';
@@ -9,7 +9,12 @@ import { usePushStore } from '@/store/pushStore';
 interface AuthState {
   session: Session | null;
   hydrated: boolean;
-  signOut: () => Promise<void>;
+  // Returns the { error } supabase.auth.signOut() resolves with (never
+  // throws) so callers that care — currently only LockScreen's escape hatch
+  // — can detect a network failure that left the local session intact
+  // (supabase.auth.signOut() skips clearing local state when its remote
+  // call fails). Callers that don't care just await it, as before.
+  signOut: () => Promise<{ error: AuthError | null }>;
 }
 
 // Tracks the last user id for which we fired sign_in so that session-restore /
@@ -85,7 +90,7 @@ export const useAuthStore = create<AuthState>((set) => {
           /* swallow — proceed to sign out regardless */
         }
       }
-      await supabase.auth.signOut();
+      return await supabase.auth.signOut();
     },
   };
 });
