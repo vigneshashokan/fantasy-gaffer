@@ -1092,13 +1092,19 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 ---
 
-### Task 5: Settings copy, docs, and the E2E flow
+### Task 5: Settings copy and docs
 
 **Files:**
 - Modify: `src/components/settings/BiometricCard.tsx`
 - Modify: `src/__tests__/settingsScreen.test.tsx` (only if it asserts the changed sub-label)
 - Modify: `docs/auth-biometric.md`
-- Create: `e2e/flows/biometric-lock.yaml`
+- Modify: `docs/e2e.md`
+
+> **Decision (2026-07-25, pre-flight):** the planned `e2e/flows/biometric-lock.yaml` is **NOT** created.
+> Enabling the toggle requires a *satisfied* Face ID prompt, which Maestro cannot produce, so on relaunch
+> `enabled` is still false, no lock appears, and the flow's `assertVisible: "Locked"` fails. It could never
+> pass in the committed suite. The lock gate is unit-tested only; `docs/e2e.md` records why. Do not create
+> the flow file.
 
 **Interfaces:**
 - Consumes: everything from Tasks 1–4.
@@ -1150,86 +1156,26 @@ SecureStore and replayed it via `setSession` after sign-out. Verification for #7
 refresh token. See `docs/superpowers/specs/2026-07-25-biometric-app-lock-design.md`.
 ```
 
-- [ ] **Step 4: Add the E2E flow**
+- [ ] **Step 4: Record the E2E coverage gap in `docs/e2e.md`**
 
-Create `e2e/flows/biometric-lock.yaml`:
+Do NOT create an E2E flow for the lock gate. Add this to `docs/e2e.md`, in or adjacent to its section on
+what the suite covers:
 
-```yaml
-# Flow 4 — the app-lock gate. Maestro CANNOT satisfy the system Face ID sheet
-# (it is a separate system window, and the simulator renders it with no Cancel
-# affordance — a non-matching face leaves it up indefinitely). This flow is
-# driveable only because LockScreen carries a sign-out escape, which is reachable
-# without ever authenticating. It covers: enable → relaunch → locked → escape.
-#
-# Requires Face ID enrolled on the simulator (Features ▸ Face ID ▸ Enrolled),
-# otherwise the Settings row hides itself and the first tapOn fails loudly.
-appId: com.fantasygaffer.app
----
-- runFlow:
-    file: subflows/signin.yaml
-    env:
-      EMAIL: ${EMAIL_A}
-      PASSWORD: ${PASSWORD}
-- extendedWaitUntil:
-    visible:
-      id: "gw-carousel"
-    timeout: 90000
-- tapOn:
-    id: "tab-account"
-- tapOn:
-    id: "account-menu-settings"
-# Two nodes carry the label "Face ID login" — the row's Text and the Toggle.
-# index: 1 is the Toggle.
-- tapOn:
-    text: "Face ID login"
-    index: 1
-# Enabling prompts for Face ID. We cannot satisfy it from Maestro, so the flow
-# does not assert the toggle flipped — only that the app survives and the lock
-# gate behaves on relaunch. Enrollment state is asserted by unit tests instead.
-- launchApp
-- openLink: ${DEV_CLIENT_URL}
-- repeat:
-    times: 60
-    while:
-      notVisible: "Locked"
-    commands:
-      - tapOn:
-          text: "Continue"
-          optional: true
-      - tapOn:
-          text: "Reload"
-          optional: true
-- assertVisible: "Locked"
-- assertVisible: "Sign out"
-- tapOn: "Sign out"
-- extendedWaitUntil:
-    visible:
-      id: "signin-email"
-    timeout: 60000
+```markdown
+### Not covered: the biometric app-lock (#73)
+
+Maestro cannot drive the system Face ID sheet — it is a separate system window, and the simulator renders
+it with no Cancel affordance, so a non-matching face leaves it up indefinitely. Enabling the lock in
+Settings requires a *satisfied* prompt, so no unattended flow can even reach the locked state: `enabled`
+stays false and the app never locks.
+
+The lock gate is therefore **unit-tested only** (`src/__tests__/appGate.test.tsx`,
+`src/__tests__/components/auth/lockScreen.test.tsx`, `src/__tests__/biometricStore.test.ts`). The Face ID
+success, cancel and lockout paths need a manual on-device pass — see the acceptance-criteria table in
+`docs/superpowers/specs/2026-07-25-biometric-app-lock-design.md`.
 ```
 
-- [ ] **Step 5: Verify the flow's assumptions without running the whole suite**
-
-This flow only passes if the Settings toggle was actually enabled, which needs a satisfied Face ID prompt. Run it manually against a held-open harness and drive the prompt from the Simulator menu:
-
-```bash
-export JAVA_HOME="$(brew --prefix openjdk)"
-export PATH="$JAVA_HOME/bin:$HOME/.maestro/bin:$PATH"
-E2E_HOLD=1 ./e2e/run.sh    # in one shell; Ctrl-C to tear down
-```
-
-Then in another shell, enroll Face ID and run the flow, clicking Simulator ▸ Features ▸ Face ID ▸ Matching Face when the sheet appears:
-
-```bash
-maestro test \
-  -e DEV_CLIENT_URL="fplgafferreactnativeapp://expo-development-client/?url=http%3A%2F%2F127.0.0.1%3A8081" \
-  -e EMAIL_A="e2e-a@fantasygaffer.test" -e PASSWORD="e2e-password-1" \
-  e2e/flows/biometric-lock.yaml
-```
-
-If the flow proves unreliable because the enable-prompt cannot be satisfied unattended, **delete `e2e/flows/biometric-lock.yaml`** and record in `docs/e2e.md` that the lock gate is unit-tested only. A flaky flow in the committed suite is worse than no flow — the other three run unattended and must stay that way.
-
-- [ ] **Step 6: Run the full suite and typecheck**
+- [ ] **Step 5: Run the full suite and typecheck**
 
 Run: `npx jest --watchman=false --runInBand --forceExit`
 Expected: PASS.
@@ -1240,16 +1186,16 @@ Expected: no output.
 Run: `npm run lint`
 Expected: no errors. Note this auto-generates an untracked `eslint.config.js` — do not commit it.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add src/components/settings/BiometricCard.tsx docs/auth-biometric.md e2e/flows/biometric-lock.yaml
+git add src/components/settings/BiometricCard.tsx docs/auth-biometric.md docs/e2e.md
 git add src/__tests__/settingsScreen.test.tsx 2>/dev/null || true
 git commit -m "docs(auth): retarget biometric docs and copy at the app-lock model (#73)
 
 Settings copy now describes opening the app, not signing in. auth-biometric.md
-records why the session-restore model was abandoned. Adds an E2E flow that
-covers the lock gate via the sign-out escape, the only path Maestro can drive.
+records why the session-restore model was abandoned; e2e.md records why the
+lock gate is unit-tested only (Maestro cannot drive the system Face ID sheet).
 
 Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 ```
