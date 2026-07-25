@@ -101,7 +101,7 @@ src/store/biometricStore.ts          src/components/auth/           src/app/_lay
      locked = false                    (unchanged but for copy)
 
 src/lib/auth/biometric/
-  capability.ts   UNCHANGED (isSupported, supportedTypes, promptBiometric)
+  capability.ts   isSupported + promptBiometric kept; supportedTypes DELETED (dead)
   enrollment.ts   collapses to enable() / disable(); called only via store actions
   storage.ts      DELETED
   index.ts        barrel updated
@@ -109,8 +109,8 @@ src/lib/auth/biometric/
 
 `BiometricErrorKind` narrows to `'cancel' | 'lockout' | 'unsupported' | 'unknown'` — `'expired_link'` and
 `'no_session'` are deleted along with the code paths that produced them. `Result` and
-`BIOMETRIC_ENABLED_KEY` are unchanged. The barrel drops `attemptUnlock` and `persistCurrentSession`;
-`supportedTypes` currently has no consumer anywhere and may be dropped with it (see Follow-ups).
+`BIOMETRIC_ENABLED_KEY` are unchanged. The barrel drops `attemptUnlock`, `persistCurrentSession` and
+`supportedTypes` (the last has no consumer anywhere — deleted along with its `capability.test.ts` case).
 
 ### Lock resolution — resolved once per launch, one-way to unlocked
 
@@ -219,9 +219,8 @@ manual plan is rewritten to those three; its steps 3, 6 and 7 are deleted as mea
 - Encrypt the Supabase session at rest, if the UI-gate framing ever needs to become a real boundary.
 - Mention the Settings toggle in the #49 onboarding tutorial, to recover the discoverability the sign-in
   checkbox provided.
-- Drop `capability.supportedTypes()` — exported through the barrel but called from nowhere in `src/`. It
-  is dead either way; deleting it while the barrel is already being rewritten is free, keeping it costs a
-  test. Implementer's call, noted here so it is a decision rather than an oversight.
+- ~~Drop `capability.supportedTypes()`~~ — **decided 2026-07-25: delete it.** Exported through the barrel
+  but called from nowhere in `src/`. Moved into scope; its test case in `capability.test.ts` goes with it.
 
 ## Acceptance criteria mapping (issue #73)
 
