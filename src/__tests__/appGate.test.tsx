@@ -150,12 +150,17 @@ jest.mock('@/store/authStore', () => ({
 }));
 
 import { AppGate } from '@/app/_layout';
+// Imported (not re-declared) so assertions read the same jest.fn() instance
+// the mocked module above already hands to _layout.tsx — no new mock-prefixed
+// outer variable needed.
+import * as SplashScreen from 'expo-splash-screen';
 
 const READY = { fontsLoaded: true, themeHydrated: true, authHydrated: true };
 
 describe('AppGate — biometric lock', () => {
   beforeEach(() => {
     mockResolveLock.mockReset();
+    (SplashScreen.hideAsync as jest.Mock).mockClear();
     mockLocked = null;
     mockBiometricHydrated = true;
     mockSession = { user: { id: 'u1' } };
@@ -193,5 +198,23 @@ describe('AppGate — biometric lock', () => {
     const { getByText, queryByText } = render(<AppGate {...READY} />);
     expect(getByText('OFFLINE_BANNER')).toBeTruthy();
     expect(queryByText('LOCK_SCREEN')).toBeNull();
+  });
+
+  it('does not hide the splash while the lock verdict is undecided', () => {
+    mockLocked = null;
+    render(<AppGate {...READY} />);
+    expect(SplashScreen.hideAsync).not.toHaveBeenCalled();
+  });
+
+  it('hides the splash once the lock verdict resolves unlocked', () => {
+    mockLocked = false;
+    render(<AppGate {...READY} />);
+    expect(SplashScreen.hideAsync).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the splash once the lock verdict resolves locked', () => {
+    mockLocked = true;
+    render(<AppGate {...READY} />);
+    expect(SplashScreen.hideAsync).toHaveBeenCalledTimes(1);
   });
 });
