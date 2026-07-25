@@ -56,9 +56,7 @@ function RootLayout() {
   useEffect(() => {
     if (navRef) navigationIntegration.registerNavigationContainer(navRef);
   }, [navRef]);
-  useEmailAuthDeepLinks();
   useScreenTracking();
-  useNotificationDeepLinks();
 
   const queryClient = useMemo(
     () =>
@@ -89,6 +87,23 @@ function RootLayout() {
       />
     </PersistQueryClientProvider>
   );
+}
+
+// Side-effect components (render null) for the two navigation-imperative deep
+// link hooks. Both call `router.push`/`router.replace`, which throw if the
+// root <Stack> isn't mounted yet — so they must only mount once AppGate has
+// resolved to the unlocked branch, beside <Stack>, not in RootLayout (which
+// renders before the lock verdict is in). Linking.useURL() and
+// useLastNotificationResponse() both replay the pending value to a
+// late-mounting consumer, so no link/tap is lost — it's delivered on unlock.
+function EmailAuthDeepLinks() {
+  useEmailAuthDeepLinks();
+  return null;
+}
+
+function NotificationDeepLinks() {
+  useNotificationDeepLinks();
+  return null;
 }
 
 export function AppGate({
@@ -135,6 +150,8 @@ export function AppGate({
         ) : (
           <>
             <OfflineBanner />
+            <EmailAuthDeepLinks />
+            <NotificationDeepLinks />
             <Stack screenOptions={{ headerShown: false }}>
               {/* Legal screens are reached from the Settings modal ((home) stack)
                   and the signup screen. As root-level cards they render BEHIND the

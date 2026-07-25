@@ -88,14 +88,17 @@ jest.mock('@/lib/auth/authCacheClear', () => ({
   AuthCacheClear: () => null,
 }));
 
+const mockUseEmailAuthDeepLinks = jest.fn();
+const mockUseNotificationDeepLinks = jest.fn();
+
 jest.mock('@/lib/auth/deepLink', () => ({
   __esModule: true,
-  useEmailAuthDeepLinks: () => {},
+  useEmailAuthDeepLinks: () => mockUseEmailAuthDeepLinks(),
 }));
 
 jest.mock('@/lib/notifications/useNotificationDeepLinks', () => ({
   __esModule: true,
-  useNotificationDeepLinks: () => {},
+  useNotificationDeepLinks: () => mockUseNotificationDeepLinks(),
 }));
 
 jest.mock('@/lib/monitoring/sentry', () => ({
@@ -161,6 +164,8 @@ describe('AppGate — biometric lock', () => {
   beforeEach(() => {
     mockResolveLock.mockReset();
     (SplashScreen.hideAsync as jest.Mock).mockClear();
+    mockUseEmailAuthDeepLinks.mockReset();
+    mockUseNotificationDeepLinks.mockReset();
     mockLocked = null;
     mockBiometricHydrated = true;
     mockSession = { user: { id: 'u1' } };
@@ -216,5 +221,54 @@ describe('AppGate — biometric lock', () => {
     mockLocked = true;
     render(<AppGate {...READY} />);
     expect(SplashScreen.hideAsync).toHaveBeenCalledTimes(1);
+  });
+
+  // Regression coverage for the deep-link/notification crash: both hooks call
+  // router.push/replace, which throw if the root <Stack> isn't mounted. They
+  // must not run until AppGate has actually resolved to the unlocked branch.
+  it('does not run deep-link/notification navigation effects while the lock verdict is undecided', () => {
+    mockLocked = null;
+    render(<AppGate {...READY} />);
+    expect(mockUseEmailAuthDeepLinks).not.toHaveBeenCalled();
+    expect(mockUseNotificationDeepLinks).not.toHaveBeenCalled();
+  });
+
+  it('does not run deep-link/notification navigation effects while locked', () => {
+    mockLocked = true;
+    render(<AppGate {...READY} />);
+    expect(mockUseEmailAuthDeepLinks).not.toHaveBeenCalled();
+    expect(mockUseNotificationDeepLinks).not.toHaveBeenCalled();
+  });
+
+  it('runs deep-link/notification navigation effects once unlocked', () => {
+    mockLocked = false;
+    render(<AppGate {...READY} />);
+    expect(mockUseEmailAuthDeepLinks).toHaveBeenCalled();
+    expect(mockUseNotificationDeepLinks).toHaveBeenCalled();
+  });
+
+  it('starts the navigation effects only after the verdict transitions from undecided to unlocked', () => {
+    mockLocked = null;
+    const { rerender } = render(<AppGate {...READY} />);
+    expect(mockUseEmailAuthDeepLinks).not.toHaveBeenCalled();
+    expect(mockUseNotificationDeepLinks).not.toHaveBeenCalled();
+
+    mockLocked = false;
+    rerender(<AppGate {...READY} />);
+    expect(mockUseEmailAuthDeepLinks).toHaveBeenCalled();
+    expect(mockUseNotificationDeepLinks).toHaveBeenCalled();
+  });
+
+  it('resolves the lock with hasSession=false and unlocks when there is no session', () => {
+    mockSession = null;
+    // Simulates what the real biometricStore.resolveLock(false) always
+    // produces (`enabled && hasSession` with hasSession=false is always
+    // false) — biometricStore itself is mocked here, so we assert both
+    // halves: the boolean AppGate passes in, and the render given that verdict.
+    mockLocked = false;
+    const { getByText, queryByText } = render(<AppGate {...READY} />);
+    expect(mockResolveLock).toHaveBeenCalledWith(false);
+    expect(queryByText('LOCK_SCREEN')).toBeNull();
+    expect(getByText('OFFLINE_BANNER')).toBeTruthy();
   });
 });
