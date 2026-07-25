@@ -1,19 +1,12 @@
 const mockHasHardware = jest.fn();
 const mockIsEnrolled = jest.fn();
-const mockSupportedTypes = jest.fn();
 const mockAuthenticate = jest.fn();
 
 jest.mock('expo-local-authentication', () => ({
   __esModule: true,
   hasHardwareAsync: () => mockHasHardware(),
   isEnrolledAsync: () => mockIsEnrolled(),
-  supportedAuthenticationTypesAsync: () => mockSupportedTypes(),
   authenticateAsync: (opts: unknown) => mockAuthenticate(opts),
-  AuthenticationType: {
-    FINGERPRINT: 1,
-    FACIAL_RECOGNITION: 2,
-    IRIS: 3,
-  },
 }));
 
 import { isSupported, promptBiometric } from '@/lib/auth/biometric/capability';
