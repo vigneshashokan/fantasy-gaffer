@@ -19,6 +19,8 @@ import { useEffect, useMemo, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
+import { useBiometricStore } from '@/store/biometricStore';
+import { LockScreen } from '@/components/auth/LockScreen';
 import { useEmailAuthDeepLinks } from '@/lib/auth/deepLink';
 import { AuthErrorBoundary } from '@/lib/auth/authErrorBoundary';
 import { AuthCacheClear } from '@/lib/auth/authCacheClear';
@@ -89,7 +91,7 @@ function RootLayout() {
   );
 }
 
-function AppGate({
+export function AppGate({
   fontsLoaded,
   themeHydrated,
   authHydrated,
@@ -101,13 +103,26 @@ function AppGate({
   // Hold the splash until the persisted cache has rehydrated, so the first paint
   // already has data — no spinner flash when the cache is fresh.
   const isRestoring = useIsRestoring();
-  const ready = fontsLoaded && themeHydrated && authHydrated && !isRestoring;
+  const biometricHydrated = useBiometricStore((s) => s.hydrated);
+  const locked = useBiometricStore((s) => s.locked);
+  const resolveLock = useBiometricStore((s) => s.resolveLock);
+  const session = useAuthStore((s) => s.session);
+  const ready =
+    fontsLoaded && themeHydrated && authHydrated && biometricHydrated && !isRestoring;
 
+  // Resolve the lock exactly once per launch. resolveLock itself is idempotent,
+  // so re-runs from a later session change are no-ops.
   useEffect(() => {
-    if (ready) SplashScreen.hideAsync();
-  }, [ready]);
+    if (ready) resolveLock(!!session);
+  }, [ready, session, resolveLock]);
 
-  if (!ready) return null;
+  // Keep the splash up until the verdict is in, so no frame shows app content
+  // behind an unresolved lock.
+  useEffect(() => {
+    if (ready && locked !== null) SplashScreen.hideAsync();
+  }, [ready, locked]);
+
+  if (!ready || locked === null) return null;
 
   return (
     <AnalyticsProvider>
@@ -115,15 +130,21 @@ function AppGate({
       <AuthCacheClear />
       <SafeAreaProvider>
         <StatusBar style="light" />
-        <OfflineBanner />
-        <Stack screenOptions={{ headerShown: false }}>
-          {/* Legal screens are reached from the Settings modal ((home) stack)
-              and the signup screen. As root-level cards they render BEHIND the
-              Settings native modal on iOS; present them as modals so they
-              appear above it. Other routes auto-register with defaults. */}
-          <Stack.Screen name="legal/privacy" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="legal/terms" options={{ presentation: 'modal' }} />
-        </Stack>
+        {locked ? (
+          <LockScreen />
+        ) : (
+          <>
+            <OfflineBanner />
+            <Stack screenOptions={{ headerShown: false }}>
+              {/* Legal screens are reached from the Settings modal ((home) stack)
+                  and the signup screen. As root-level cards they render BEHIND the
+                  Settings native modal on iOS; present them as modals so they
+                  appear above it. Other routes auto-register with defaults. */}
+              <Stack.Screen name="legal/privacy" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="legal/terms" options={{ presentation: 'modal' }} />
+            </Stack>
+          </>
+        )}
       </SafeAreaProvider>
     </AnalyticsProvider>
   );
