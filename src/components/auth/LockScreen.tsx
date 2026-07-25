@@ -11,6 +11,7 @@ import { useA11yAnnounce } from '@/lib/a11y';
 
 const CANCELLED = 'Face ID cancelled. Try again, or sign out to use your password.';
 const LOCKED_OUT = 'Too many attempts. Sign out and use your password.';
+const SIGN_OUT_FAILED = "Couldn't sign out. Check your connection and try again.";
 
 export function LockScreen() {
   const { paletteKey, dark } = useThemeStore();
@@ -56,6 +57,15 @@ export function LockScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // supabase.auth.signOut() resolves { error } (never throws) and, on a
+  // network failure, leaves the local session intact — no SIGNED_OUT event
+  // fires, so `locked` never flips and this button would otherwise appear
+  // dead. Surface that through the same status line as the biometric prompt.
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) setStatus(SIGN_OUT_FAILED);
+  };
+
   return (
     <View style={[styles.wrap, { backgroundColor: t.bg }]}>
       <GafferLogo size={46} light={dark} variant="wordmark" />
@@ -81,7 +91,7 @@ export function LockScreen() {
       >
         Unlock with Face ID
       </PillBtn>
-      <PillBtn variant="ghost" onPress={signOut} textColor={t.textMuted} style={styles.btn}>
+      <PillBtn variant="ghost" onPress={handleSignOut} textColor={t.textMuted} style={styles.btn}>
         Sign out
       </PillBtn>
     </View>

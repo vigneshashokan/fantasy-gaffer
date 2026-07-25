@@ -33,8 +33,9 @@ jest.mock('@/store/authStore', () => {
   const stableSignOut = () => mockSignOut();
   return {
     __esModule: true,
-    useAuthStore: (selector: (s: { signOut: () => Promise<void> }) => unknown) =>
-      selector({ signOut: stableSignOut }),
+    useAuthStore: (
+      selector: (s: { signOut: () => Promise<{ error: unknown }> }) => unknown,
+    ) => selector({ signOut: stableSignOut }),
   };
 });
 
@@ -46,7 +47,7 @@ describe('LockScreen', () => {
     mockPromptBiometric.mockReset().mockResolvedValue({ ok: true });
     mockUnlock.mockReset();
     mockDisable.mockReset();
-    mockSignOut.mockReset();
+    mockSignOut.mockReset().mockResolvedValue({ error: null });
   });
 
   it('prompts exactly once on mount', async () => {
@@ -112,5 +113,19 @@ describe('LockScreen', () => {
       fireEvent.press(getByText('Sign out'));
     });
     expect(mockSignOut).toHaveBeenCalled();
+  });
+
+  it('surfaces a status message when sign-out fails instead of silently no-oping', async () => {
+    mockPromptBiometric.mockResolvedValue({ ok: false, error: 'cancel' });
+    mockSignOut.mockResolvedValue({ error: { message: 'network request failed' } });
+    const { findByText, getByText } = render(<LockScreen />);
+    await findByText(/Face ID cancelled/i);
+    await act(async () => {
+      fireEvent.press(getByText('Sign out'));
+    });
+    expect(mockSignOut).toHaveBeenCalled();
+    await findByText(/Couldn.t sign out/i);
+    // Still on the lock screen, escape hatch still offered.
+    expect(getByText('Sign out')).toBeTruthy();
   });
 });
