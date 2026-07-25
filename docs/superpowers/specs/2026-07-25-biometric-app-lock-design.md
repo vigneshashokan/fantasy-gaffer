@@ -45,9 +45,10 @@ this re-scope.
 The two other defects found (recorded on #73, both deleted by this design rather than fixed):
 
 - **B** — `attemptUnlock`'s failure path called the *module* `disable()`, which cleared storage but never
-  updated `biometricStore.enabled`. In-memory state stayed `true` while storage said disabled: the
-  checkbox stayed hidden and the mount effect kept re-firing (a third `attemptUnlock` began while the
-  second was still awaiting `setSession`). Self-corrected only on the next cold start.
+  updated `biometricStore.enabled`. (The store's own `disable` **action** was correct and tested — the bug
+  was bypassing it.) In-memory state stayed `true` while storage said disabled: the checkbox stayed hidden
+  and the mount effect kept re-firing (a third `attemptUnlock` began while the second was still awaiting
+  `setSession`). Self-corrected only on the next cold start.
 - **C** — the `expired_link` banner never rendered: `disable()` changed state → the mount effect re-ran →
   its cleanup set `cancelled = true` → the in-flight `.then()` bailed before `setBiometricBanner`. The
   user saw a prompt, then nothing at all.
@@ -163,18 +164,22 @@ guarded by an in-flight ref, so a second call while one is pending returns immed
 
 ## Testing
 
-The defects hid because of *how* the tests were written, so the test plan is part of the fix. Two
+The defects hid because of *how* the tests were written, so the test plan is part of the fix. Three
 mechanisms did the hiding: `signinScreen.test.tsx` mocks `@/store/biometricStore` wholesale (store
-desync unobservable), and `enrollment.test.ts` mocks `supabase` (server-side revocation unobservable).
-Same family as the mock-drift lesson from #155.
+desync unobservable), `enrollment.test.ts` mocks `supabase` (server-side revocation unobservable), and —
+the load-bearing one — **no test exercised the interaction between `attemptUnlock`'s failure path and the
+store**. `biometricStore.test.ts` does exist and its `disable()` action was correct and covered; defect B
+lived in `enrollment.attemptUnlock` calling the *module* `disable()` directly, which no store action
+wrapped, so the store was never notified. Unit-testing each side in isolation could not see it. Same
+family as the mock-drift lesson from #155.
 
-**New — `src/__tests__/store/biometricStore.test.ts`** (no such file exists today; its absence is exactly
-why defect B survived). Real store; mocks only `capability` and AsyncStorage.
+Under this design `attemptUnlock` is deleted outright, so defect B's mechanism has nowhere left to live.
 
-- `enable()` prompts, and on success sets `enabled` **and** persists the flag
-- `enable()` on cancel leaves `enabled` false and writes nothing
-- `enable()` when unsupported returns `'unsupported'` without prompting
-- `disable()` clears the persisted flag **and** in-memory state — direct defect-B regression
+**Extend — `src/__tests__/biometricStore.test.ts`** (existing file, at the top level of `__tests__/`, not
+under `store/`). Its `justSignedOut` and `persistCurrentSession` cases are deleted with the fields they
+cover; its enable/disable/hydration cases are retained as-is. Add:
+
+- `locked` starts `null` (undecided) and `resolved` starts `false`
 - `resolveLock` maps `(enabled, hasSession)` → `locked` across all four combinations
 - `resolveLock` is idempotent: a second call with different args does not change `locked`
 - `unlock()` clears `locked`; `SIGNED_OUT` clears `locked`
