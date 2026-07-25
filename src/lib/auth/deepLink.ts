@@ -27,7 +27,13 @@ export function parseAuthDeepLink(url: string): AuthDeepLink {
 
 export function useEmailAuthDeepLinks(): void {
   const hydrated = useAuthStore((s) => s.hydrated);
-  const initialUrl = Linking.useURL();
+  // useLinkingURL() (not the deprecated useURL()) is backed by the native
+  // ExpoLinkingRegistry, which is refreshed on every `application(_:open:)`
+  // call — cold launch AND a link tapped while the app is already running.
+  // useURL()'s initial value only reflects `launchOptions`, which iOS never
+  // populates for a warm open, so a link tapped while locked would be
+  // silently dropped instead of replayed once this effect mounts on unlock.
+  const initialUrl = Linking.useLinkingURL();
 
   useEffect(() => {
     if (!hydrated) return;

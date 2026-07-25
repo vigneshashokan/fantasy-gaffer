@@ -93,9 +93,29 @@ function RootLayout() {
 // link hooks. Both call `router.push`/`router.replace`, which throw if the
 // root <Stack> isn't mounted yet — so they must only mount once AppGate has
 // resolved to the unlocked branch, beside <Stack>, not in RootLayout (which
-// renders before the lock verdict is in). Linking.useURL() and
-// useLastNotificationResponse() both replay the pending value to a
-// late-mounting consumer, so no link/tap is lost — it's delivered on unlock.
+// renders before the lock verdict is in).
+//
+// They are deliberately preceding siblings of <Stack> (not descendants) so
+// they mount in the same commit <Stack> mounts. That's only safe because
+// neither navigates during that first effect flush: deepLink.ts's
+// Linking.useLinkingURL() does return its value synchronously on first
+// render (it's a lazy useState initializer reading the native registry),
+// but the effect that reads it only ever navigates from inside an async
+// `exchangeCodeForSession(...).then()/.catch()` callback — never
+// synchronously in the effect body — so any router call lands on a later
+// tick, after <Stack> has finished mounting. useLastNotificationResponse()
+// gets the same property a different way: it seeds in a layout effect, so
+// its value is still undefined on this first pass. A future hook that both
+// has a value on first render AND navigates synchronously from the effect
+// body (no async gate) would reintroduce the pre-AppGate crash this
+// structure was built to avoid.
+//
+// Replay semantics: useLinkingURL() (not the deprecated useURL()) reads the
+// native ExpoLinkingRegistry, which is refreshed on every
+// `application(_:open:)` call — cold launch AND a link tapped while the app
+// is already running — so a link tapped while locked (this component not
+// yet mounted) is still picked up once it mounts here on unlock. See the
+// comment in deepLink.ts for the verified source citations.
 function EmailAuthDeepLinks() {
   useEmailAuthDeepLinks();
   return null;

@@ -57,13 +57,20 @@ export function LockScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // supabase.auth.signOut() resolves { error } (never throws) and, on a
-  // network failure, leaves the local session intact — no SIGNED_OUT event
-  // fires, so `locked` never flips and this button would otherwise appear
-  // dead. Surface that through the same status line as the biometric prompt.
+  // supabase.auth.signOut() usually resolves { error } and, on a network
+  // failure, leaves the local session intact — no SIGNED_OUT event fires, so
+  // `locked` never flips and this button would otherwise appear dead.
+  // Surface that through the same status line as the biometric prompt. It
+  // can also *reject* (it awaits internal init/lock acquisition, either of
+  // which can throw on a lock timeout) rather than resolving with { error }
+  // — catch that case too, or the button goes dead the same way.
   const handleSignOut = async () => {
-    const { error } = await signOut();
-    if (error) setStatus(SIGN_OUT_FAILED);
+    try {
+      const { error } = await signOut();
+      if (error) setStatus(SIGN_OUT_FAILED);
+    } catch {
+      setStatus(SIGN_OUT_FAILED);
+    }
   };
 
   return (

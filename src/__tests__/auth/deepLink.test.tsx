@@ -20,7 +20,7 @@ jest.mock('@/lib/supabase', () => ({
 
 jest.mock('expo-linking', () => ({
   __esModule: true,
-  useURL: jest.fn(() => null),
+  useLinkingURL: jest.fn(() => null),
   addEventListener: (evt: string, cb: (e: { url: string }) => void) =>
     mockAddEventListener(evt, cb),
 }));

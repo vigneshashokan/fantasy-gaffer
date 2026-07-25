@@ -128,4 +128,21 @@ describe('LockScreen', () => {
     // Still on the lock screen, escape hatch still offered.
     expect(getByText('Sign out')).toBeTruthy();
   });
+
+  // supabase.auth.signOut() does not only resolve { error } — it awaits
+  // internal init and lock acquisition, either of which can REJECT (e.g. a
+  // lock timeout), as can the storage write. An unhandled rejection here
+  // renders no status at all, which is the exact dead-button symptom the
+  // { error } branch above exists to prevent.
+  it('surfaces a status message when sign-out rejects rather than resolving', async () => {
+    mockPromptBiometric.mockResolvedValue({ ok: false, error: 'cancel' });
+    mockSignOut.mockRejectedValue(new Error('lock acquisition timed out'));
+    const { findByText, getByText } = render(<LockScreen />);
+    await findByText(/Face ID cancelled/i);
+    await act(async () => {
+      fireEvent.press(getByText('Sign out'));
+    });
+    await findByText(/Couldn.t sign out/i);
+    expect(getByText('Sign out')).toBeTruthy();
+  });
 });
