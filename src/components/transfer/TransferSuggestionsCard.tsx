@@ -106,6 +106,7 @@ export function TransferSuggestionsCard({
                 onChange={() => onToggle(s.id)}
                 green={tk.green}
                 border={tk.cardBorder}
+                accessibilityLabel={`Apply transfer: ${s.out} out, ${s.in} in`}
               />
             )}
           </View>

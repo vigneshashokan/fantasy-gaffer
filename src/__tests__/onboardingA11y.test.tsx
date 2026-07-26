@@ -1,5 +1,5 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 
 // Same mock header as signupScreen.test.tsx
 const mockSignUp = jest.fn();
@@ -19,6 +19,7 @@ jest.mock('expo-router', () => ({
     back: () => mockBack(),
     push: (p: string) => mockPush(p),
   },
+  useRouter: () => ({ push: (p: string) => mockPush(p) }),
 }));
 
 jest.mock('@/store/themeStore', () => ({
@@ -27,11 +28,39 @@ jest.mock('@/store/themeStore', () => ({
 }));
 
 import Signup from '@/app/(onboarding)/signup';
+import Landing from '@/app/(onboarding)/index';
 
 describe('signup legal links a11y', () => {
   it('exposes Terms and Privacy as links', () => {
     const { getByText } = render(<Signup />);
     expect(getByText('Terms of Service').props.accessibilityRole).toBe('link');
     expect(getByText('Privacy Policy').props.accessibilityRole).toBe('link');
+  });
+});
+
+// #180: forgot-password's identical field announced its error; signin's and
+// signup's did not.
+describe('signup field errors a11y', () => {
+  it('marks field validation errors as assertive live regions', () => {
+    const { getAllByText, getByText } = render(<Signup />);
+    fireEvent.press(getByText('Create account'));
+    // "Required" fires for both name fields; the password rule is distinct.
+    for (const node of getAllByText('Required')) {
+      expect(node.props.accessibilityLiveRegion).toBe('assertive');
+    }
+    expect(getByText('At least 8 characters').props.accessibilityLiveRegion).toBe('assertive');
+  });
+});
+
+// #180: the dots were reachable buttons but never said which one was current.
+describe('onboarding pager dots a11y', () => {
+  it('marks the current slide selected', () => {
+    const { getByLabelText } = render(<Landing />);
+    expect(getByLabelText('Go to slide 1').props.accessibilityState?.selected).toBe(true);
+    expect(getByLabelText('Go to slide 2').props.accessibilityState?.selected).toBe(false);
+
+    fireEvent.press(getByLabelText('Go to slide 3'));
+    expect(getByLabelText('Go to slide 3').props.accessibilityState?.selected).toBe(true);
+    expect(getByLabelText('Go to slide 1').props.accessibilityState?.selected).toBe(false);
   });
 });

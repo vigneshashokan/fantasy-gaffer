@@ -36,6 +36,16 @@ export default function SignUp() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
   useA11yAnnounce(errors.form || null);
+  // First field error only: five separate announcements would talk over each
+  // other, and the live regions on each Text already cover Android.
+  useA11yAnnounce(
+    errors.firstName ||
+      errors.lastName ||
+      errors.email ||
+      errors.password ||
+      errors.confirmPassword ||
+      null,
+  );
 
   const clearForm = () => {
     setFirstName('');
@@ -128,7 +138,7 @@ export default function SignUp() {
             textMuted={t.textMuted}
           />
           {errors.firstName && (
-            <Text style={[styles.fieldError, { color: t.danger }]}>{errors.firstName}</Text>
+            <Text accessibilityLiveRegion="assertive" style={[styles.fieldError, { color: t.danger }]}>{errors.firstName}</Text>
           )}
           <Field
             icon="person"
@@ -143,7 +153,7 @@ export default function SignUp() {
             textMuted={t.textMuted}
           />
           {errors.lastName && (
-            <Text style={[styles.fieldError, { color: t.danger }]}>{errors.lastName}</Text>
+            <Text accessibilityLiveRegion="assertive" style={[styles.fieldError, { color: t.danger }]}>{errors.lastName}</Text>
           )}
           <Field
             icon="mail"
@@ -159,7 +169,7 @@ export default function SignUp() {
             textMuted={t.textMuted}
           />
           {errors.email && (
-            <Text style={[styles.fieldError, { color: t.danger }]}>{errors.email}</Text>
+            <Text accessibilityLiveRegion="assertive" style={[styles.fieldError, { color: t.danger }]}>{errors.email}</Text>
           )}
           <Field
             icon="lock"
@@ -175,7 +185,7 @@ export default function SignUp() {
             textMuted={t.textMuted}
           />
           {errors.password && (
-            <Text style={[styles.fieldError, { color: t.danger }]}>{errors.password}</Text>
+            <Text accessibilityLiveRegion="assertive" style={[styles.fieldError, { color: t.danger }]}>{errors.password}</Text>
           )}
           <Field
             icon="lock"
@@ -191,7 +201,7 @@ export default function SignUp() {
             textMuted={t.textMuted}
           />
           {errors.confirmPassword && (
-            <Text style={[styles.fieldError, { color: t.danger }]}>{errors.confirmPassword}</Text>
+            <Text accessibilityLiveRegion="assertive" style={[styles.fieldError, { color: t.danger }]}>{errors.confirmPassword}</Text>
           )}
         </View>
 

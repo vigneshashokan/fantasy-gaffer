@@ -94,6 +94,7 @@ export function CaptainPickCard({
                 onChange={(v) => v && onPick?.(p.name)}
                 green={tk.green}
                 border={tk.cardBorder}
+                accessibilityLabel={`Captain ${p.name}`}
               />
             )}
           </RowTag>

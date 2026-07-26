@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from './Icon';
 
 interface ScreenHeaderProps {
@@ -20,8 +21,11 @@ export function ScreenHeader({
   children,
   contentStyle,
 }: ScreenHeaderProps) {
+  // Was a hardcoded 52 — too much on a Touch-ID iPhone, too little on some
+  // Android devices. TransferTargetsHeader already read the inset.
+  const insets = useSafeAreaInsets();
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
       <LinearGradient
         colors={[gradFrom, gradTo]}
         start={{ x: 0.1, y: 0 }}
@@ -52,7 +56,6 @@ export function ScreenHeader({
 
 const styles = StyleSheet.create({
   container: {
-    paddingTop: 52,
     overflow: 'hidden',
   },
   titleRow: {

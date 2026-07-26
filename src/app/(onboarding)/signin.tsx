@@ -54,6 +54,10 @@ export default function SignIn() {
   const [googleError, setGoogleError] = useState<string | null>(null);
   useA11yAnnounce(submitError);
   useA11yAnnounce(googleError || null);
+  // Field-level validation was silent here while forgot-password's identical
+  // field announced. iOS needs the imperative announce; the live regions on
+  // the error Text nodes cover Android.
+  useA11yAnnounce(emailError || passwordError || null);
 
   const clearForm = () => {
     setEmail('');
@@ -177,7 +181,7 @@ export default function SignIn() {
             testID="signin-email"
           />
           {emailError && (
-            <Text style={[styles.fieldError, { color: t.danger }]}>{emailError}</Text>
+            <Text accessibilityLiveRegion="assertive" style={[styles.fieldError, { color: t.danger }]}>{emailError}</Text>
           )}
           <Field
             icon="lock"
@@ -194,7 +198,7 @@ export default function SignIn() {
             testID="signin-password"
           />
           {passwordError && (
-            <Text style={[styles.fieldError, { color: t.danger }]}>{passwordError}</Text>
+            <Text accessibilityLiveRegion="assertive" style={[styles.fieldError, { color: t.danger }]}>{passwordError}</Text>
           )}
         </View>
 

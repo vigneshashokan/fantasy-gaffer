@@ -62,7 +62,10 @@ export default function SettingsModal() {
               shareApp().catch(() => {});
             }}
             tk={tk}
-            trailing={<View />}
+            // Hands off to the system share sheet, so it reads as external —
+            // it used to render no trailing glyph at all, while "Send
+            // Feedback" (which leaves for the mail app) got an in-app chevron.
+            external
           />
           <FollowUsRow tk={tk} showDivider />
           <SettingsRow
@@ -73,6 +76,7 @@ export default function SettingsModal() {
               if (!ok) Alert.alert('No mail app', `Email us at ${FEEDBACK_EMAIL}`);
             }}
             tk={tk}
+            external
             showDivider
           />
           <SettingsRow

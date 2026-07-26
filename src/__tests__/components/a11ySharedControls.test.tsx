@@ -1,3 +1,10 @@
+// ScreenHeader reads the safe-area inset (#180); these are bare component
+// renders with no SafeAreaProvider above them.
+jest.mock('react-native-safe-area-context', () => ({
+  ...jest.requireActual('react-native-safe-area-context'),
+  useSafeAreaInsets: () => ({ top: 47, bottom: 34, left: 0, right: 0 }),
+}));
+
 import { render, fireEvent } from '@testing-library/react-native';
 import { PillBtn } from '@/components/ui/PillBtn';
 import { SocialBtn } from '@/components/forms/SocialBtn';

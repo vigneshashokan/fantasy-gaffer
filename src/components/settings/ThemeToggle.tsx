@@ -5,7 +5,8 @@ import { PaletteKey } from '@/constants/theme';
 
 const OPTIONS: { key: PaletteKey; label: string; grad: [string, string] }[] = [
   { key: 'classic',  label: 'Classic',  grad: ['#37003C', '#6A0060'] },
-  { key: 'electric', label: 'Fantasy',  grad: ['#1B0A3E', '#4A1B8C'] },
+  // Labelled "Fantasy" here but "Electric" in PALETTE and everywhere else.
+  { key: 'electric', label: 'Electric', grad: ['#1B0A3E', '#4A1B8C'] },
   { key: 'pitch',    label: 'Pitch',    grad: ['#06371F', '#0B6B38'] },
 ];
 
@@ -23,6 +24,10 @@ export function ThemeToggle({ palette, onSetPalette }: ThemeToggleProps) {
           <Pressable
             key={o.key}
             onPress={() => onSetPalette(o.key)}
+            // Same treatment as the tab bar and the AccountMenu segments:
+            // one-of-N selection, named by its own visible label.
+            accessibilityRole="button"
+            accessibilityState={{ selected: on }}
             style={[
               styles.btn,
               {

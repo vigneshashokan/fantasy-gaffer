@@ -16,13 +16,17 @@ export function SegmentedControl({
   tk,
 }: SegmentedControlProps) {
   return (
-    <View style={[styles.track, { backgroundColor: tk.track }]}>
+    <View accessibilityRole="tablist" style={[styles.track, { backgroundColor: tk.track }]}>
       {options.map((opt, i) => {
         const on = i === value;
         return (
           <Pressable
             key={opt}
             onPress={() => onChange(i)}
+            // Named by its own text, per the text-button convention in
+            // docs/a11y.md — only the role and selected state were missing.
+            accessibilityRole="tab"
+            accessibilityState={{ selected: on }}
             style={[
               styles.tab,
               on && { backgroundColor: tk.activeFill },

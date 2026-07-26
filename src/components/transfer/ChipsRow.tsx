@@ -85,6 +85,10 @@ function ChipTile({ chip, tk, selected, onToggle }: ChipTileProps) {
   return (
     <Pressable
       onPress={used ? undefined : onToggle}
+      // Named by the chip name + status text it already renders. `expanded`
+      // rather than `selected`: pressing it reveals the tip panel below.
+      accessibilityRole="button"
+      accessibilityState={{ expanded: sel, disabled: used }}
       style={containerStyle}
     >
       <Text
