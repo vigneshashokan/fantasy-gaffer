@@ -149,6 +149,12 @@ export default function CompleteProfile() {
                 value={dob ?? new Date(2000, 0, 1)}
                 mode="date"
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                // This is a native UIDatePicker, so left alone it colours
+                // itself from the DEVICE appearance while everything around it
+                // is painted from themeStore. A light app on a dark phone drew
+                // white digits on a light lavender sheet — unreadable. Drive it
+                // from our own flag so the two can't disagree.
+                themeVariant={dark ? 'dark' : 'light'}
                 maximumDate={new Date()}
                 onChange={(_event, selected) => {
                   // The Android dialog dismisses itself; the iOS spinner is
