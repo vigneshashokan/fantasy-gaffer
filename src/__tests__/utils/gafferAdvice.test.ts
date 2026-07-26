@@ -29,9 +29,14 @@ describe('availabilityFactor', () => {
     expect(availabilityFactor(sp('5', 'MID', { status: 'd', chanceNext: 25 }))).toBe(0.25);
     expect(availabilityFactor(sp('6', 'MID', { status: 'a', chanceNext: 75 }))).toBe(0.75);
   });
-  it('defaults to 1.0 for a non-hard-out status with no chance set', () => {
+  it('defaults to 1.0 for an available player with no chance set', () => {
     expect(availabilityFactor(sp('7', 'MID', { status: 'a', chanceNext: null }))).toBe(1);
-    expect(availabilityFactor(sp('8', 'MID', { status: 'd', chanceNext: null }))).toBe(1);
+  });
+  // #175 — this used to return 1.0, i.e. fully fit, while availability.ts
+  // bannered the very same input as a doubt. Two modules, one input, opposite
+  // answers.
+  it('discounts a doubtful player whose chance FPL has not published', () => {
+    expect(availabilityFactor(sp('8', 'MID', { status: 'd', chanceNext: null }))).toBe(0.75);
   });
 });
 
@@ -133,9 +138,13 @@ describe('captainPicksFrom', () => {
     const fixtures: Partial<Record<ClubCode, { opp: ClubCode; h: boolean }>> = {
       MCI: { opp: 'LIV', h: true },
     };
-    const note = captainPicksFrom(starters, proj, fixtures)[0].note;
-    expect(note).toContain('vs LIV (H)');
-    expect(note).toContain('ceiling 10.0'); // p75 = 10
+    const pick = captainPicksFrom(starters, proj, fixtures)[0];
+    expect(pick.note).toContain('vs LIV (H)');
+    // #175 — the ceiling is doubled like the headline xp it bounds. It used to
+    // print the raw p75 (10.0) next to a doubled xp of 18.0, so the "ceiling"
+    // read lower than the number it was supposed to cap.
+    expect(pick.note).toContain('ceiling 20.0'); // p75 10 x2
+    expect(pick.xp).toBe(18); // p50 9 x2 — strictly below the ceiling
   });
 
   it('falls back to ep_next and a fixture-only note when no projection exists', () => {
@@ -235,5 +244,44 @@ describe('computeAdvice', () => {
     const advice = computeAdvice({ squad, proj: new Map() });
     expect(advice.captainPicks).toHaveLength(3);
     expect(advice.optimalStarterIds).toHaveLength(11);
+  });
+});
+
+// #175 — the diff was paired purely by rank, so a bench GK and a benched
+// outfielder could be crossed over: "Bench DEF for GKP" maps to no legal FPL
+// substitution (a keeper can only ever be swapped for the other keeper).
+describe('subSuggestions keeps swaps legal (#175)', () => {
+  const proj = projMap({ d1: 1, g1: 2, m2: 5, g2: 8 });
+  const squad = {
+    starters: [sp('g1', 'GKP'), sp('d1', 'DEF'), sp('m1', 'MID')],
+    bench: [sp('g2', 'GKP'), sp('m2', 'MID')],
+  };
+  // Optimal XI drops the starting keeper and the defender, promoting both
+  // bench players. Ranked naively: outgoing [d1(1), g1(2)] against incoming
+  // [g2(8), m2(5)] pairs d1 with g2 and g1 with m2 — both illegal.
+  const optimalIds = ['g2', 'm1', 'm2'];
+
+  it('never pairs a goalkeeper with an outfielder', () => {
+    const out = subSuggestions(squad, optimalIds, proj);
+    for (const s of out) {
+      const [, outId, inId] = s.id.split('-');
+      const outPos = [...squad.starters, ...squad.bench].find((p) => p.id === outId)!.pos;
+      const inPos = [...squad.starters, ...squad.bench].find((p) => p.id === inId)!.pos;
+      expect(outPos === 'GKP').toBe(inPos === 'GKP');
+    }
+  });
+
+  it('pairs the keepers together and the outfielders together', () => {
+    const ids = subSuggestions(squad, optimalIds, proj).map((s) => s.id);
+    expect(ids).toContain('sub-g1-g2'); // keeper for keeper
+    expect(ids).toContain('sub-d1-m2'); // outfielder for outfielder
+  });
+
+  it('reports each pair’s own gain', () => {
+    const out = subSuggestions(squad, optimalIds, proj);
+    const gk = out.find((s) => s.id === 'sub-g1-g2')!;
+    const of = out.find((s) => s.id === 'sub-d1-m2')!;
+    expect(gk.gain).toBe('+6.0 pts'); // 8 − 2
+    expect(of.gain).toBe('+4.0 pts'); // 5 − 1
   });
 });

@@ -10,6 +10,7 @@ import type { ClubCode, Player, TransferChip } from '@/types/fpl';
 import type { SquadPlayer } from '@/api/squad';
 import type { ProjectionStat } from '@/api/projections';
 import type { SeasonFixtures } from '@/api/fixtures';
+import { availabilityFactor } from './gafferAdvice';
 
 export interface ChipTip {
   title: string;
@@ -58,7 +59,10 @@ export function benchBoostTip(
   const lines = [`${bestDoublers} of your players play twice in GW${bestGw}`];
   const offset = bestGw - upcomingGw;
   if (offset >= 0 && offset < projMaps.length) {
-    const benchPts = squad.bench.reduce((s, p) => s + (projMaps[offset].get(p.id)?.p50 ?? 0), 0);
+    const benchPts = squad.bench.reduce(
+      (s, p) => s + (projMaps[offset].get(p.id)?.p50 ?? 0) * availabilityFactor(p),
+      0,
+    );
     if (benchPts > 0) lines.push(`~${round1(benchPts)} projected from your bench`);
   }
   return { title: headline(bestGw, upcomingGw), lines };
@@ -103,10 +107,14 @@ export function wildcardTip(
   return { title: 'Hold', lines: ['Your fixtures look balanced'] };
 }
 
-// Summed p50 over the projection window (near-term asset strength). 0 when absent.
+// Summed availability-weighted p50 over the projection window (near-term asset
+// strength). 0 when absent. Weighting matters: on raw p50 an injured star still
+// drove Triple Captain and Bench Boost tips while the captain card on the same
+// screen had already zeroed him (#175).
 function sumWindowP50(p: Player, projMaps: Map<string, ProjectionStat>[]): number {
+  const av = availabilityFactor(p);
   let s = 0;
-  for (const m of projMaps) s += m.get(p.id)?.p50 ?? 0;
+  for (const m of projMaps) s += (m.get(p.id)?.p50 ?? 0) * av;
   return s;
 }
 

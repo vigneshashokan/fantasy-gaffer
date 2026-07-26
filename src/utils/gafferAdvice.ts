@@ -13,12 +13,24 @@ const HARD_OUT: ReadonlySet<string> = new Set(['i', 's', 'u', 'n']);
 
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 
+// The armband doubles a player's points.
+export const CAPTAIN_MULTIPLIER = 2;
+
+// FPL publishes status 'd' (doubtful) with no percentage for minor knocks.
+// Weighting that as fully fit contradicted availability.ts, which banners the
+// same input as a doubt — two modules disagreeing on one input (#175).
+// ponytail: 0.75 mirrors FPL's own coarse 25/50/75 buckets. It is a tuning
+// knob, not a derived value; revisit if the model ever learns a real prior.
+const UNQUANTIFIED_DOUBT = 0.75;
+
 // status → availability multiplier on the projection.
 //   hard-out ('i'|'s'|'u'|'n') → 0
+//   'd' with no published chance → UNQUANTIFIED_DOUBT
 //   otherwise: chanceNext != null ? chanceNext/100 : 1.0
 export function availabilityFactor(p: SquadPlayer): number {
   if (HARD_OUT.has(p.status)) return 0;
-  return p.chanceNext != null ? p.chanceNext / 100 : 1;
+  if (p.chanceNext != null) return p.chanceNext / 100;
+  return p.status === 'd' ? UNQUANTIFIED_DOUBT : 1;
 }
 
 function projOf(p: SquadPlayer, proj: Map<string, ProjectionStat>, q: 'p50' | 'p75'): number {
@@ -123,9 +135,14 @@ function captainNote(
 ): string {
   const fx = fixtureLabel(p, fixturesByClub);
   if (!proj.has(p.id)) return fx; // ep_next fallback — fixture only (may be empty)
-  const ceiling = adjusted(p, proj, 'p75');
-  const spread = ceiling - adjusted(p, proj, 'p50');
-  return [fx, `ceiling ${ceiling.toFixed(1)}`, tagFor(spread)].filter(Boolean).join(' · ');
+  // The headline xp is doubled for the armband, so the ceiling must be too —
+  // an undoubled p75 rendered *below* the number it is supposed to bound
+  // (#175). The tag still reads the raw band, whose thresholds are calibrated
+  // on undoubled points.
+  const p50 = adjusted(p, proj, 'p50');
+  const p75 = adjusted(p, proj, 'p75');
+  const ceiling = p75 * CAPTAIN_MULTIPLIER;
+  return [fx, `ceiling ${ceiling.toFixed(1)}`, tagFor(p75 - p50)].filter(Boolean).join(' · ');
 }
 
 export function captainPicksFrom(
@@ -134,7 +151,7 @@ export function captainPicksFrom(
   fixturesByClub?: Partial<Record<ClubCode, { opp: ClubCode; h: boolean }>>,
 ): CaptainPick[] {
   return starters
-    .map((p) => ({ p, score: adjusted(p, proj, 'p50') * 2 }))
+    .map((p) => ({ p, score: adjusted(p, proj, 'p50') * CAPTAIN_MULTIPLIER }))
     .sort((a, b) => b.score - a.score || b.p.gw - a.p.gw || a.p.id.localeCompare(b.p.id))
     .slice(0, 3)
     .map(({ p, score }) => ({
@@ -167,18 +184,26 @@ export function subSuggestions(
   proj: Map<string, ProjectionStat>,
 ): Suggestion[] {
   const optimalSet = new Set(optimalStarterIds);
-  const outgoing = squad.starters
-    .filter((p) => !optimalSet.has(p.id))
-    .sort((a, b) => adjusted(a, proj, 'p50') - adjusted(b, proj, 'p50')); // worst first
-  const incoming = squad.bench
-    .filter((p) => optimalSet.has(p.id))
-    .sort((a, b) => adjusted(b, proj, 'p50') - adjusted(a, proj, 'p50')); // best first
+  const outgoing = squad.starters.filter((p) => !optimalSet.has(p.id));
+  const incoming = squad.bench.filter((p) => optimalSet.has(p.id));
 
-  const n = Math.min(outgoing.length, incoming.length);
+  const worstFirst = (a: SquadPlayer, b: SquadPlayer) =>
+    adjusted(a, proj, 'p50') - adjusted(b, proj, 'p50');
+  const bestFirst = (a: SquadPlayer, b: SquadPlayer) =>
+    adjusted(b, proj, 'p50') - adjusted(a, proj, 'p50');
+
+  // Keepers and outfielders are paired independently. FPL only ever
+  // substitutes a goalkeeper for the other goalkeeper, so ranking the combined
+  // lists could cross them over and emit "Bench DEF for GKP" — a suggestion
+  // with a gain attached that maps to no applicable change (#175).
   const pairs: { out: SquadPlayer; in: SquadPlayer; gain: number }[] = [];
-  for (let i = 0; i < n; i++) {
-    const gain = adjusted(incoming[i], proj, 'p50') - adjusted(outgoing[i], proj, 'p50');
-    if (gain > 0) pairs.push({ out: outgoing[i], in: incoming[i], gain });
+  for (const keepers of [true, false]) {
+    const outs = outgoing.filter((p) => (p.pos === 'GKP') === keepers).sort(worstFirst);
+    const ins = incoming.filter((p) => (p.pos === 'GKP') === keepers).sort(bestFirst);
+    for (let i = 0; i < Math.min(outs.length, ins.length); i++) {
+      const gain = adjusted(ins[i], proj, 'p50') - adjusted(outs[i], proj, 'p50');
+      if (gain > 0) pairs.push({ out: outs[i], in: ins[i], gain });
+    }
   }
   pairs.sort((a, b) => b.gain - a.gain);
 
