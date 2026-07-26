@@ -36,12 +36,34 @@ jest.mock('@/lib/supabase', () => ({
   },
 }));
 
+import { createElement, type ReactNode } from 'react';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { act } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import { useProfileGate } from '../lib/useProfileGate';
 
 const fakeSession = { user: { id: 'u1' }, access_token: 't' };
+
+// A PostgREST failure resolves as { data: null, error } — it does not reject.
+// That is the whole reason #170 existed, so the fixtures model it exactly.
+const NETWORK_ERROR = {
+  message: 'TypeError: Network request failed',
+  details: '',
+  hint: '',
+  code: '',
+};
+
+// Fresh client per test so no verdict leaks across cases; retries off so a
+// failing case resolves immediately instead of sleeping through backoff.
+function renderGate() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+  });
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client }, children);
+  return renderHook(() => useProfileGate(), { wrapper });
+}
 
 describe('useProfileGate', () => {
   beforeEach(() => {
@@ -57,12 +79,12 @@ describe('useProfileGate', () => {
 
   it('stays loading while auth is unhydrated', () => {
     act(() => useAuthStore.setState({ session: null, hydrated: false }));
-    const { result } = renderHook(() => useProfileGate());
+    const { result } = renderGate();
     expect(result.current.status).toBe('loading');
   });
 
   it('stays loading when there is no session', async () => {
-    const { result } = renderHook(() => useProfileGate());
+    const { result } = renderGate();
     await new Promise((r) => setTimeout(r, 0));
     expect(result.current.status).toBe('loading');
     expect(mockFrom).not.toHaveBeenCalled();
@@ -72,7 +94,7 @@ describe('useProfileGate', () => {
     mockProfilesMaybeSingle.mockResolvedValue({ data: null, error: null });
     mockDeletionsMaybeSingle.mockResolvedValue({ data: null, error: null });
     act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
-    const { result } = renderHook(() => useProfileGate());
+    const { result } = renderGate();
     await waitFor(() => expect(result.current.status).toBe('missing'));
     expect(mockFrom).toHaveBeenCalledWith('profiles');
     expect(mockFrom).toHaveBeenCalledWith('account_deletions');
@@ -83,7 +105,7 @@ describe('useProfileGate', () => {
     mockProfilesMaybeSingle.mockResolvedValue({ data: { user_id: 'u1' }, error: null });
     mockDeletionsMaybeSingle.mockResolvedValue({ data: null, error: null });
     act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
-    const { result } = renderHook(() => useProfileGate());
+    const { result } = renderGate();
     await waitFor(() => expect(result.current.status).toBe('complete'));
   });
 
@@ -91,7 +113,7 @@ describe('useProfileGate', () => {
     mockProfilesMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
     mockDeletionsMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
     act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
-    const { result } = renderHook(() => useProfileGate());
+    const { result } = renderGate();
     await waitFor(() => expect(result.current.status).toBe('missing'));
     mockProfilesMaybeSingle.mockResolvedValueOnce({ data: { user_id: 'u1' }, error: null });
     mockDeletionsMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
@@ -106,7 +128,7 @@ describe('useProfileGate', () => {
       error: null,
     });
     act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
-    const { result } = renderHook(() => useProfileGate());
+    const { result } = renderGate();
     await waitFor(() => expect(result.current.status).toBe('pending_deletion'));
   });
 
@@ -117,7 +139,7 @@ describe('useProfileGate', () => {
       error: null,
     });
     act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
-    const { result } = renderHook(() => useProfileGate());
+    const { result } = renderGate();
     await waitFor(() => expect(result.current.status).toBe('pending_deletion'));
   });
 
@@ -130,18 +152,63 @@ describe('useProfileGate', () => {
     );
     mockDeletionsMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
     act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
-    const { result } = renderHook(() => useProfileGate());
+    const { result } = renderGate();
     await new Promise((r) => setTimeout(r, 0));
     expect(result.current.status).toBe('loading');
     resolveProfile({ data: null, error: null });
     await waitFor(() => expect(result.current.status).toBe('missing'));
   });
 
+  // ---- #170: a resolved-with-error read is not a verdict ----
+
+  it("reports 'error', not 'missing', when the profiles read fails", async () => {
+    mockProfilesMaybeSingle.mockResolvedValue({ data: null, error: NETWORK_ERROR });
+    mockDeletionsMaybeSingle.mockResolvedValue({ data: null, error: null });
+    act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
+    const { result } = renderGate();
+    await waitFor(() => expect(result.current.status).toBe('error'));
+  });
+
+  it("reports 'error', not 'complete', when the account_deletions read fails", async () => {
+    // The dangerous half: a pending-deletion user would otherwise sail past
+    // the restore gate the moment this one query hiccuped.
+    mockProfilesMaybeSingle.mockResolvedValue({ data: { user_id: 'u1' }, error: null });
+    mockDeletionsMaybeSingle.mockResolvedValue({ data: null, error: NETWORK_ERROR });
+    act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
+    const { result } = renderGate();
+    await waitFor(() => expect(result.current.status).toBe('error'));
+  });
+
+  it("reports 'error' when a query rejects outright", async () => {
+    mockProfilesMaybeSingle.mockRejectedValue(new Error('boom'));
+    mockDeletionsMaybeSingle.mockResolvedValue({ data: null, error: null });
+    act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
+    const { result } = renderGate();
+    await waitFor(() => expect(result.current.status).toBe('error'));
+  });
+
+  it('keeps the last verdict when a later refetch fails', async () => {
+    mockProfilesMaybeSingle.mockResolvedValueOnce({ data: { user_id: 'u1' }, error: null });
+    mockDeletionsMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
+    const { result } = renderGate();
+    await waitFor(() => expect(result.current.status).toBe('complete'));
+
+    mockProfilesMaybeSingle.mockResolvedValueOnce({ data: null, error: NETWORK_ERROR });
+    mockDeletionsMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
+    await act(async () => {
+      result.current.refetch();
+    });
+    expect(result.current.status).toBe('complete');
+  });
+
+  // ---- #171: identity, not object identity ----
+
   it('ignores a session-object swap for the same user (TOKEN_REFRESHED)', async () => {
     mockProfilesMaybeSingle.mockResolvedValue({ data: { user_id: 'u1' }, error: null });
     mockDeletionsMaybeSingle.mockResolvedValue({ data: null, error: null });
     act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
-    const { result } = renderHook(() => useProfileGate());
+    const { result } = renderGate();
     await waitFor(() => expect(result.current.status).toBe('complete'));
 
     mockFrom.mockClear();
@@ -161,7 +228,7 @@ describe('useProfileGate', () => {
     mockProfilesMaybeSingle.mockResolvedValue({ data: { user_id: 'u1' }, error: null });
     mockDeletionsMaybeSingle.mockResolvedValue({ data: null, error: null });
     act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
-    const { result } = renderHook(() => useProfileGate());
+    const { result } = renderGate();
     await waitFor(() => expect(result.current.status).toBe('complete'));
 
     mockFrom.mockClear();
@@ -170,16 +237,7 @@ describe('useProfileGate', () => {
         session: { user: { id: 'u2' }, access_token: 't' } as never,
       }),
     );
+    await waitFor(() => expect(mockProfilesEq).toHaveBeenCalledWith('user_id', 'u2'));
     expect(mockFrom).toHaveBeenCalledWith('profiles');
-    expect(mockProfilesEq).toHaveBeenCalledWith('user_id', 'u2');
-  });
-
-  it('stays loading if either query throws', async () => {
-    mockProfilesMaybeSingle.mockRejectedValueOnce(new Error('boom'));
-    mockDeletionsMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
-    act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
-    const { result } = renderHook(() => useProfileGate());
-    await new Promise((r) => setTimeout(r, 50));
-    expect(result.current.status).toBe('loading');
   });
 });
