@@ -210,7 +210,7 @@ export default function ConnectTeam() {
             {stage.kind === 'link_error' && (
               <Text
                 accessibilityLiveRegion="assertive"
-                style={styles.linkError}
+                style={[styles.linkError, { color: tk.danger }]}
               >
                 {stage.message}
               </Text>
@@ -270,5 +270,5 @@ const styles = StyleSheet.create({
   fetchErrorText: { fontFamily: 'Archivo_700Bold', fontSize: 14 },
   retryBtn: { paddingVertical: 10, borderRadius: 999, alignItems: 'center' },
   retryBtnText: { fontFamily: 'Archivo_700Bold', fontSize: 13.5, color: '#fff' },
-  linkError: { color: '#FF6B6B', fontFamily: 'Archivo_500Medium', fontSize: 13 },
+  linkError: { fontFamily: 'Archivo_500Medium', fontSize: 13 },
 });

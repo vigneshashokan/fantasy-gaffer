@@ -114,7 +114,7 @@ export function GameweekScreen({
   const totalChanges = (captainChanged ? 1 : 0) + suggestionCount;
 
   const heroFrom = t.primary;
-  const heroTo = dark ? '#0C1018' : '#5B0F63';
+  const heroTo = tk.heroBg2;
 
   const activeChip = at.transfer.chips.find((c) => c.playedGw === gw);
 
@@ -140,7 +140,6 @@ export function GameweekScreen({
         )}
 
         <HeroCard
-          tk={tk}
           totalPoints={at.totalPoints}
           gwPts={at.gwPts}
           avgPoints={at.avgPoints}

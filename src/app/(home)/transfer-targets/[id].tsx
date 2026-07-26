@@ -67,7 +67,7 @@ export default function TransferTargetsScreen() {
         pos={out.pos}
         nextGw={nextGw}
         gradFrom={t.primary}
-        gradTo={dark ? '#0C1018' : '#5B0F63'}
+        gradTo={tk.heroBg2}
         onBack={() => router.back()}
       />
       <ScrollView

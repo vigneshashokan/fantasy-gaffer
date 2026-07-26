@@ -341,12 +341,9 @@ describe('ApexPitch', () => {
 
 // ── HeroCard ──────────────────────────────────────────────────
 describe('HeroCard', () => {
-  const tk = apexTokens(true, 'classic');
-
   it('shows centered GW points with the vs-avg pill and the stat row, no chip section', () => {
     const { getByText, queryByText } = render(
       <HeroCard
-        tk={tk}
         totalPoints={1452}
         gwPts={64}
         avgPoints={52}

@@ -28,7 +28,7 @@ export default function SettingsModal() {
   const resetOnboarding = useOnboardingStore((s) => s.resetAll);
 
   const heroFrom = t.primary;
-  const heroTo = dark ? '#0C1018' : '#5B0F63';
+  const heroTo = tk.heroBg2;
 
   return (
     <View style={{ flex: 1, backgroundColor: tk.bg }}>

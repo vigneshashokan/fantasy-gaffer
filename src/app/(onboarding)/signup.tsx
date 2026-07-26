@@ -128,7 +128,7 @@ export default function SignUp() {
             textMuted={t.textMuted}
           />
           {errors.firstName && (
-            <Text style={[styles.fieldError, { color: '#FF3B5C' }]}>{errors.firstName}</Text>
+            <Text style={[styles.fieldError, { color: t.danger }]}>{errors.firstName}</Text>
           )}
           <Field
             icon="person"
@@ -143,7 +143,7 @@ export default function SignUp() {
             textMuted={t.textMuted}
           />
           {errors.lastName && (
-            <Text style={[styles.fieldError, { color: '#FF3B5C' }]}>{errors.lastName}</Text>
+            <Text style={[styles.fieldError, { color: t.danger }]}>{errors.lastName}</Text>
           )}
           <Field
             icon="mail"
@@ -159,7 +159,7 @@ export default function SignUp() {
             textMuted={t.textMuted}
           />
           {errors.email && (
-            <Text style={[styles.fieldError, { color: '#FF3B5C' }]}>{errors.email}</Text>
+            <Text style={[styles.fieldError, { color: t.danger }]}>{errors.email}</Text>
           )}
           <Field
             icon="lock"
@@ -175,7 +175,7 @@ export default function SignUp() {
             textMuted={t.textMuted}
           />
           {errors.password && (
-            <Text style={[styles.fieldError, { color: '#FF3B5C' }]}>{errors.password}</Text>
+            <Text style={[styles.fieldError, { color: t.danger }]}>{errors.password}</Text>
           )}
           <Field
             icon="lock"
@@ -191,14 +191,14 @@ export default function SignUp() {
             textMuted={t.textMuted}
           />
           {errors.confirmPassword && (
-            <Text style={[styles.fieldError, { color: '#FF3B5C' }]}>{errors.confirmPassword}</Text>
+            <Text style={[styles.fieldError, { color: t.danger }]}>{errors.confirmPassword}</Text>
           )}
         </View>
 
         {errors.form && (
           <Text
             accessibilityLiveRegion="assertive"
-            style={[styles.formError, { color: '#FF3B5C' }]}
+            style={[styles.formError, { color: t.danger }]}
           >
             {errors.form}
           </Text>
@@ -207,6 +207,7 @@ export default function SignUp() {
         <PillBtn
           variant="accent"
           onPress={onSubmit}
+          accentFill={t.accent}
           accentInk={t.accentInk}
           style={styles.submitBtn}
         >

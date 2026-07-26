@@ -142,6 +142,10 @@ export function AppGate({
   const locked = useBiometricStore((s) => s.locked);
   const resolveLock = useBiometricStore((s) => s.resolveLock);
   const session = useAuthStore((s) => s.session);
+  // The status-bar glyphs sit on whatever surface the active screen paints,
+  // and light mode's surfaces are near-white — a hardcoded `light` made the
+  // clock/battery/signal invisible on every screen.
+  const { dark } = useThemeStore();
   const ready =
     fontsLoaded && themeHydrated && authHydrated && biometricHydrated && !isRestoring;
 
@@ -164,7 +168,7 @@ export function AppGate({
       <AuthErrorBoundary />
       <AuthCacheClear />
       <SafeAreaProvider>
-        <StatusBar style="light" />
+        <StatusBar style={dark ? 'light' : 'dark'} />
         {locked ? (
           <LockScreen />
         ) : (

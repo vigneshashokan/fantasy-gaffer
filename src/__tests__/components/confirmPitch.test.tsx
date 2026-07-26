@@ -1,6 +1,7 @@
 // src/__tests__/components/confirmPitch.test.tsx
 import { render } from '@testing-library/react-native';
 import { ConfirmPitch } from '@/components/connect-team/ConfirmPitch';
+import { apexTokens } from '@/constants/apexTokens';
 import type { Preview, PreviewPlayer } from '@/api/teamPreview';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -47,6 +48,20 @@ describe('<ConfirmPitch />', () => {
   it('renders the vice badge next to the vice captain', () => {
     const { getAllByText } = render(<ConfirmPitch preview={PREVIEW} />);
     expect(getAllByText('V').length).toBeGreaterThan(0);
+  });
+
+  // #173: the disc is reused on the pitch (always dark green) and on the bench
+  // card (tk.card — WHITE in light mode). A hardcoded '#fff' name made every
+  // bench player invisible in light mode.
+  it('inks bench names against the bench card, not the pitch', () => {
+    // themeStore defaults to the light classic palette.
+    const tk = apexTokens(false, 'classic');
+    const { getByText } = render(<ConfirmPitch preview={PREVIEW} />);
+
+    const flat = (s: unknown) => (Array.isArray(s) ? Object.assign({}, ...s.flat()) : s) as { color?: string };
+    expect(flat(getByText('Haaland').props.style).color).toBe('#fff');
+    expect(flat(getByText('Henderson').props.style).color).toBe(tk.text);
+    expect(flat(getByText('Henderson').props.style).color).not.toBe('#fff');
   });
 
   it('handles partial squads (5 starters, 0 bench) without crashing', () => {

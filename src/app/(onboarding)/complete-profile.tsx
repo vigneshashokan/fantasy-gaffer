@@ -142,7 +142,7 @@ export default function CompleteProfile() {
             />
           )}
           {dob && ageYears(dob) < COPPA_MIN_AGE_YEARS ? (
-            <Text style={[styles.error, { color: '#FF3B5C' }]}>
+            <Text style={[styles.error, { color: t.danger }]}>
               You must be 13 or older to use Fantasy Gaffer.
             </Text>
           ) : (
@@ -156,6 +156,7 @@ export default function CompleteProfile() {
           <PillBtn
             variant="accent"
             onPress={onSubmit}
+            accentFill={t.accent}
             accentInk={t.accentInk}
             style={styles.submitBtn}
           >

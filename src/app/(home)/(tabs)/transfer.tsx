@@ -62,7 +62,7 @@ export default function TransferTab() {
   const seasonLabel = currentSeasonLabel();
 
   const heroFrom = t.primary;
-  const heroTo = dark ? '#0C1018' : '#5B0F63';
+  const heroTo = tk.heroBg2;
 
   const openTargets = (p: TransferPitchPlayer) => {
     track('transfer_target_opened', { player_id: p.id });
