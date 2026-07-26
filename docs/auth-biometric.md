@@ -82,7 +82,7 @@ AppGate re-renders the Stack, which (with no session) routes to onboarding
 
 `SIGNED_IN` is deliberately **not** subscribed to. Session-restore, app
 foreground, and token-refresh all emit `SIGNED_IN` too (see the
-`lastSignInUserId` note at `src/store/authStore.ts:15-17`) — unlocking on it
+`lastSignInUserId` note at `src/store/authStore.ts:21-25`) — unlocking on it
 would auto-unlock every cold start and defeat the feature entirely.
 
 To clear enrollment, the user toggles Face ID OFF in Settings.
