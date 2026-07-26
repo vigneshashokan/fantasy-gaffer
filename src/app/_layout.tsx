@@ -63,7 +63,15 @@ function RootLayout() {
       new QueryClient({
         defaultOptions: {
           queries: {
-            retry: 2,
+            // fplGet already exhausts its own backoff and never retries a 4xx.
+            // A blanket retry:2 on top turned one 5xx into up to nine network
+            // attempts, and re-fired 4xx requests that are deterministic —
+            // a wrong team id was asked for three times (#178).
+            retry: (failureCount: number, error: unknown) => {
+              const status = (error as { status?: number } | null)?.status;
+              if (typeof status === 'number' && status >= 400 && status < 500) return false;
+              return failureCount < 2;
+            },
             gcTime: CACHE_MAX_AGE,
             refetchOnWindowFocus: true,
             refetchOnReconnect: true,

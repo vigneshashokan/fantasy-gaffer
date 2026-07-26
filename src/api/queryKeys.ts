@@ -19,4 +19,5 @@ export const queryKeys = {
   squad:          (teamId: number, gw: number) => ['squad', teamId, gw] as const,
   elementSummary: (id: string) => ['elementSummary', id] as const,
   clubsByTeamId:  ['clubsByTeamId'] as const,
+  teamPreview: (teamId: number, gw: number) => ['teamPreview', teamId, gw] as const,
 };

@@ -26,7 +26,13 @@ export function score3(p: Player, projMaps: Map<string, ProjectionStat>[]): numb
       hasAny = true;
     }
   }
-  return hasAny ? av * sum : av * p.gw;
+  // Both branches must land on the same scale. Comparing a 3-gameweek sum
+  // against a single-gameweek ep_next in one ranking pushed every player
+  // without a projection row ~3x down the list purely because of the window
+  // width (#175). Padding maps past the final gameweek are empty, so counting
+  // non-empty ones keeps the end of the season honest too.
+  const windowGws = projMaps.filter((m) => m.size > 0).length || 1;
+  return hasAny ? av * sum : av * p.gw * windowGws;
 }
 
 // Minimum 3-GW gain (pts) for a swap to be worth suggesting — stands in for the

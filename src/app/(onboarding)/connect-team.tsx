@@ -120,7 +120,12 @@ export default function ConnectTeam() {
 
   const onRetryFetch = () => {
     if (!validInput) return;
+    // Re-setting the identical stage was a no-op: React bails on unchanged
+    // state, and the errored query has retry:false, so nothing re-ran until an
+    // app-focus or reconnect event happened to refire it. Ask the query
+    // directly (#178).
     setStage({ kind: 'submitted', teamId: Number(teamIdStr) });
+    void preview.refetch();
   };
 
   return (
