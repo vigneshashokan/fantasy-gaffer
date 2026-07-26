@@ -7,6 +7,13 @@ import {
   type SnapshotElement,
   type SnapshotEvent,
 } from '../sources/snapshot.ts';
+
+// #165 — the handlers now require a shared secret. Tests set it and send it;
+// the gate itself is covered separately in auth.test.ts.
+const TEST_SECRET = 'test-ingest-secret';
+Deno.env.set('INGEST_SHARED_SECRET', TEST_SECRET);
+const authed = (url: string) =>
+  new Request(url, { headers: { 'x-ingest-secret': TEST_SECRET } });
 import { handler } from '../index.ts';
 
 // ---- selectSnapshotGw ------------------------------------------------------
@@ -236,7 +243,7 @@ Deno.test('handler: ?source=snapshot routes to ingestSnapshot and returns 200', 
     },
   });
 
-  const res = await handler(new Request('http://localhost/fpl-ingest?source=snapshot'), deps);
+  const res = await handler(authed('http://localhost/fpl-ingest?source=snapshot'), deps);
   const body = await res.json();
   assertEquals(res.status, 200);
   assertEquals(body.ok, true);

@@ -4,6 +4,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from './lib/supabase-admin.ts';
+import { authorize } from './lib/auth.ts';
 import { fetchJson } from './lib/fpl-client.ts';
 import { artifact } from './lib/scorer.ts';
 import { buildProjections, type FixtureLite, type PlayerInput } from './lib/project.ts';
@@ -109,6 +110,11 @@ function defaultDeps(): Deps {
 }
 
 export async function handler(req: Request, depsOverride?: Deps): Promise<Response> {
+  // Gate first: four selects and a projections upsert per call otherwise run
+  // for anyone who read the anon key out of the app bundle (#165).
+  const denied = authorize(req);
+  if (denied) return denied;
+
   const deps = depsOverride ?? defaultDeps();
   try {
     const boot = await fetchJson<{ events: EventLite[] }>(

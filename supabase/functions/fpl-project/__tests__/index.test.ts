@@ -2,6 +2,13 @@ import { assertEquals, assertRejects } from '@std/assert';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { fetchSeasonHistory, handler, seasonForGw, seasonLabel, upcomingGws } from '../index.ts';
 
+// #165 — the handlers now require a shared secret. Tests set it and send it;
+// the gate itself is covered separately in auth.test.ts.
+const TEST_SECRET = 'test-ingest-secret';
+Deno.env.set('INGEST_SHARED_SECRET', TEST_SECRET);
+const authed = (url: string) =>
+  new Request(url, { headers: { 'x-ingest-secret': TEST_SECRET } });
+
 type Row = Record<string, unknown>;
 
 interface Recorder {
@@ -163,7 +170,7 @@ Deno.test('handler reads inputs, builds projections, upserts', async () => {
   const supabase = makeSupabase(BASE_SELECTS, rec);
   const fetch = bootFetch([{ id: 10, is_current: false, is_next: true, deadline_time: '2026-11-01T11:00:00Z' }]);
 
-  const res = await handler(new Request('http://x/'), { supabase, fetch, now: () => new Date('2026-11-01') });
+  const res = await handler(authed('http://x/'), { supabase, fetch, now: () => new Date('2026-11-01') });
 
   assertEquals(res.status, 200);
   const proj = rec.upserts.find((c) => c.table === 'projections');
@@ -178,7 +185,7 @@ Deno.test('handler skips serving when the target season has no history', async (
   const supabase = makeSupabase({ ...BASE_SELECTS, player_gw_history: [] }, rec, [[]]);
   const fetch = bootFetch([{ id: 1, is_current: false, is_next: true, deadline_time: '2026-08-14T17:30:00Z' }]);
 
-  const res = await handler(new Request('http://x/'), { supabase, fetch, now: () => new Date('2026-07-18') });
+  const res = await handler(authed('http://x/'), { supabase, fetch, now: () => new Date('2026-07-18') });
 
   assertEquals(res.status, 200);
   assertEquals((await res.json()).skipped, 'no-history-for-season');
@@ -193,7 +200,7 @@ Deno.test('handler sweeps rows the run did not refresh', async () => {
   const fetch = bootFetch([{ id: 10, is_current: false, is_next: true, deadline_time: '2026-11-01T11:00:00Z' }]);
   const now = new Date('2026-11-01T04:00:00Z');
 
-  await handler(new Request('http://x/'), { supabase, fetch, now: () => now });
+  await handler(authed('http://x/'), { supabase, fetch, now: () => now });
 
   assertEquals(rec.deletes.length, 1);
   assertEquals(rec.deletes[0].table, 'projections');

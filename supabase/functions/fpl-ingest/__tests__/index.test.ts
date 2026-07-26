@@ -1,6 +1,13 @@
 import { assertEquals } from '@std/assert';
 import { handler, type Deps } from '../index.ts';
 
+// #165 — the handlers now require a shared secret. Tests set it and send it;
+// the gate itself is covered separately in auth.test.ts.
+const TEST_SECRET = 'test-ingest-secret';
+Deno.env.set('INGEST_SHARED_SECRET', TEST_SECRET);
+const authed = (url: string) =>
+  new Request(url, { headers: { 'x-ingest-secret': TEST_SECRET } });
+
 interface CallLog {
   table: string;
   op: 'insert' | 'update' | 'upsert' | 'select';
@@ -136,7 +143,7 @@ const SAMPLE_FIXTURES = [
 Deno.test('returns 400 when source query param is missing', async () => {
   const { deps } = makeDeps({ source: 'bootstrap', fpl: SAMPLE_BOOTSTRAP });
   const res = await handler(
-    new Request('http://localhost/functions/v1/fpl-ingest'),
+    authed('http://localhost/functions/v1/fpl-ingest'),
     deps,
   );
   assertEquals(res.status, 400);
@@ -145,7 +152,7 @@ Deno.test('returns 400 when source query param is missing', async () => {
 Deno.test('returns 400 when source query param is unrecognised', async () => {
   const { deps } = makeDeps({ source: 'bootstrap', fpl: SAMPLE_BOOTSTRAP });
   const res = await handler(
-    new Request('http://localhost/functions/v1/fpl-ingest?source=garbage'),
+    authed('http://localhost/functions/v1/fpl-ingest?source=garbage'),
     deps,
   );
   assertEquals(res.status, 400);
@@ -160,7 +167,7 @@ Deno.test('source=bootstrap inside PL season upserts clubs + players and closes 
     now: new Date('2026-09-15T02:00:00Z'),
   });
   const res = await handler(
-    new Request('http://localhost/functions/v1/fpl-ingest?source=bootstrap'),
+    authed('http://localhost/functions/v1/fpl-ingest?source=bootstrap'),
     deps,
   );
   assertEquals(res.status, 200);
@@ -185,7 +192,7 @@ Deno.test('source=bootstrap outside season + outside windows logs skipped, no up
     now: new Date('2027-06-01T02:00:00Z'),
   });
   const res = await handler(
-    new Request('http://localhost/functions/v1/fpl-ingest?source=bootstrap'),
+    authed('http://localhost/functions/v1/fpl-ingest?source=bootstrap'),
     deps,
   );
   assertEquals(res.status, 200);
@@ -203,7 +210,7 @@ Deno.test('source=bootstrap with ?force=1 bypasses the calendar gate', async () 
     now: new Date('2027-06-01T02:00:00Z'),
   });
   await handler(
-    new Request('http://localhost/functions/v1/fpl-ingest?source=bootstrap&force=1'),
+    authed('http://localhost/functions/v1/fpl-ingest?source=bootstrap&force=1'),
     deps,
   );
   assertEquals(calls.some((c) => c.op === 'upsert' && c.table === 'players'), true);
@@ -218,7 +225,7 @@ Deno.test('source=fixtures with no prior hash upserts and stores hash', async ()
     fixturesHashOnRead: null,
   });
   const res = await handler(
-    new Request('http://localhost/functions/v1/fpl-ingest?source=fixtures'),
+    authed('http://localhost/functions/v1/fpl-ingest?source=fixtures'),
     deps,
   );
   assertEquals(res.status, 200);
@@ -236,7 +243,7 @@ Deno.test('source=fixtures with matching prior hash skips upsert', async () => {
     fixturesHashOnRead: null,
   });
   await handler(
-    new Request('http://localhost/functions/v1/fpl-ingest?source=fixtures'),
+    authed('http://localhost/functions/v1/fpl-ingest?source=fixtures'),
     firstDeps,
   );
   const firstClose = firstCalls.find(
@@ -250,7 +257,7 @@ Deno.test('source=fixtures with matching prior hash skips upsert', async () => {
     fixturesHashOnRead: hash,
   });
   await handler(
-    new Request('http://localhost/functions/v1/fpl-ingest?source=fixtures'),
+    authed('http://localhost/functions/v1/fpl-ingest?source=fixtures'),
     secondDeps,
   );
   assertEquals(secondCalls.some((c) => c.op === 'upsert' && c.table === 'fixtures'), false);
@@ -293,7 +300,7 @@ function makeHistoryRouteDeps(): { deps: Deps; calls: CallLog[] } {
 Deno.test('source=history dispatches to ingestHistory and closes the run', async () => {
   const { deps, calls } = makeHistoryRouteDeps();
   const res = await handler(
-    new Request('http://localhost/functions/v1/fpl-ingest?source=history'),
+    authed('http://localhost/functions/v1/fpl-ingest?source=history'),
     deps,
   );
   assertEquals(res.status, 200);

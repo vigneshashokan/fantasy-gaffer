@@ -34,9 +34,31 @@ For each environment (currently: prod), open Studio → SQL Editor and run **onc
 -- For the FPL ingestion cron (#20).
 select vault.create_secret('https://<project-ref>.supabase.co', 'supabase_url');
 select vault.create_secret('<anon key from Settings → API>',    'supabase_anon_key');
+
+-- Shared secret authenticating the cron -> Edge Function calls (#165).
+-- Generate with: openssl rand -hex 32
+-- (hex, so there is no +, / or = to escape in an HTTP header)
+select vault.create_secret('<value>', 'ingest_shared_secret');
 ```
 
-Verify with `select name from vault.decrypted_secrets;` — both names should appear.
+Verify with `select name from vault.decrypted_secrets;` — all three names should appear.
+
+**`ingest_shared_secret` must be seeded in TWO places, to the same value.** The
+Vault copy above is what `pg_cron` sends; the functions read their own copy from
+the runtime environment:
+
+```bash
+supabase secrets set INGEST_SHARED_SECRET=<same value>
+```
+
+Verify with `supabase secrets list`. The names are checkable; that the two
+*values* match is not — get it right by construction.
+
+`fpl-ingest` and `fpl-project` **fail closed**: an unset secret rejects every
+request with 503 rather than quietly reverting to an open endpoint. So seed this
+BEFORE deploying the functions that check it, or the scheduled jobs will 503
+until you do. (`ping` is deliberately exempt — a static health check with no
+database or upstream access.)
 
 The `fpl-ingest` Edge Function reads `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from its runtime environment. **No setup required** — the Supabase platform auto-injects both into every Edge Function. (The CLI actively refuses `supabase secrets set` for any name starting with `SUPABASE_` because they're reserved for the platform.)
 
