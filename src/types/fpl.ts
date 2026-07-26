@@ -97,6 +97,10 @@ export interface TransferPitchPlayer {
 }
 
 export interface CaptainPick {
+  // Carried purely so lists can key on something unique: FPL web-names collide
+  // across clubs (two "Forster"s shipped in 2026/27), and a duplicate React key
+  // makes one row silently disappear. `name` remains the selection contract.
+  id: string;
   name: string;
   club: ClubCode;
   xp: number;

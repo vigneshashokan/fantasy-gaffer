@@ -52,7 +52,7 @@ export function CaptainPickCard({
         const RowTag = editable ? Pressable : View;
         return (
           <RowTag
-            key={p.name}
+            key={p.id}
             onPress={editable ? () => onPick?.(p.name) : undefined}
             style={[
               styles.row,

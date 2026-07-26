@@ -167,7 +167,7 @@ describe('Kit', () => {
 });
 
 // ── PlayerToken ───────────────────────────────────────────────
-import type { Player } from '@/types/fpl';
+import type { CaptainPick, Player } from '@/types/fpl';
 
 const mockPlayer: Player = {
   id: 'p1', name: 'Haaland', club: 'MCI', pos: 'FWD',
@@ -410,9 +410,9 @@ describe('ApexDugout', () => {
 describe('CaptainPickCard', () => {
   it('marks the applied captain', () => {
     const tk = apexTokens(false, 'classic');
-    const picks = [
-      { name: 'Haaland', club: 'MCI' as const, xp: 8.4, note: 'Home vs bottom-half defence' },
-      { name: 'Salah',   club: 'LIV' as const, xp: 7.1, note: 'Penalties' },
+    const picks: CaptainPick[] = [
+      { id: '401', name: 'Haaland', club: 'MCI', xp: 8.4, note: 'Home vs bottom-half defence' },
+      { id: '233', name: 'Salah',   club: 'LIV', xp: 7.1, note: 'Penalties' },
     ];
     const { getByText } = render(
       <CaptainPickCard picks={picks} captainApplied="Haaland" tk={tk} />
