@@ -140,6 +140,40 @@ export function selectMissingGws(events: HistoryEvent[], presentGws: number[]): 
     .sort((a, b) => a - b);
 }
 
+// Which of `gws` already have rows, asked one bounded question at a time.
+//
+// This used to be a single `select('gw').eq('season', …)` over the whole
+// season. PostgREST caps every read at max_rows (1000) and supabase-js does not
+// paginate, so from GW2 onward the answer was roughly {1,2}: every later
+// gameweek looked permanently missing and the daily self-healing cron
+// re-captured the entire season every single day. That is not merely wasteful —
+// liveToHistoryRows stamps team_id and value from TODAY's bootstrap, so
+// re-capturing an old gameweek overwrites the correct-at-time price, and a
+// player transferred mid-season has his real stats attributed to his current
+// club's fixture. Because that is a different fixture_id, the
+// (season, player_id, fixture_id) upsert INSERTS A DUPLICATE rather than
+// replacing the correct row.
+//
+// Each probe is `limit(1)` on the primary key's leading columns, so the read is
+// bounded no matter how large the table grows.
+export async function presentGwsAmong(
+  supabase: IngestHistoryDeps['supabase'],
+  season: string,
+  gws: number[],
+): Promise<number[]> {
+  const found = await Promise.all(gws.map(async (gw) => {
+    const { data, error } = await supabase
+      .from('player_gw_history')
+      .select('gw')
+      .eq('season', season)
+      .eq('gw', gw)
+      .limit(1);
+    if (error) throw error;
+    return (data ?? []).length > 0 ? gw : null;
+  }));
+  return found.filter((gw): gw is number => gw !== null);
+}
+
 // event/{gw}/live element. xG / ict / influence / creativity / threat arrive as
 // strings (like element-summary); the rest as numbers. `num()` coerces both.
 export interface LiveElementStats {
@@ -275,14 +309,10 @@ export async function ingestHistory(runId: string, deps: IngestHistoryDeps): Pro
     { fetch: deps.fetch },
   );
 
-  const presentRes = await deps.supabase
-    .from('player_gw_history')
-    .select('gw')
-    .eq('season', season);
-  if (presentRes.error) throw presentRes.error;
-  const presentGws = [
-    ...new Set(((presentRes.data ?? []) as Array<{ gw: number }>).map((r) => r.gw)),
-  ];
+  // Passing no present gameweeks yields every settled one — the full candidate
+  // set, computed from the bootstrap without touching the database.
+  const settledGws = selectMissingGws(boot.events, []);
+  const presentGws = await presentGwsAmong(deps.supabase, season, settledGws);
 
   const targetGws = selectMissingGws(boot.events, presentGws);
   if (targetGws.length === 0) {
