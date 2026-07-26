@@ -1,11 +1,19 @@
 import * as WebBrowser from 'expo-web-browser';
-import * as Linking from 'expo-linking';
 import { makeRedirectUri } from 'expo-auth-session';
 import { supabase } from '@/lib/supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export type SignInResult = { ok: true } | { ok: false; error: string };
+
+// Everything this module could log — OAuth callback URLs, the provider
+// authorize URL, provider error detail — is auth material or close to it, and
+// console.* in a release build lands in the device log stream (readable via
+// Xcode/logcat and any log-forwarding tooling). Gate it all behind __DEV__,
+// and never pass a callback URL through even then (#166).
+function debug(...args: unknown[]): void {
+  if (__DEV__) console.log('[google-oauth]', ...args);
+}
 
 export async function signInWithGoogle(): Promise<SignInResult> {
   const redirectTo = makeRedirectUri({ path: 'auth/callback' });
@@ -15,7 +23,7 @@ export async function signInWithGoogle(): Promise<SignInResult> {
     options: { redirectTo, skipBrowserRedirect: true },
   });
   if (error || !data?.url) {
-    console.log('[google-oauth] signInWithOAuth error =', error?.message, 'data =', data);
+    debug('signInWithOAuth error =', error?.message);
     return { ok: false, error: error?.message ?? 'oauth_url_unavailable' };
   }
 
@@ -31,12 +39,13 @@ export async function signInWithGoogle(): Promise<SignInResult> {
   const { accessToken, refreshToken, error: urlError, errorDescription } = extractTokens(callbackUrl);
 
   if (urlError) {
-    console.log('[google-oauth] callback URL returned error:', urlError, errorDescription);
+    debug('callback URL returned error:', urlError, errorDescription);
     return { ok: false, error: errorDescription || urlError };
   }
 
   if (!accessToken || !refreshToken) {
-    console.log('[google-oauth] missing tokens in callback URL:', callbackUrl);
+    // Deliberately without the URL — that is the one value never worth logging.
+    debug('missing tokens in callback URL');
     return { ok: false, error: 'missing_tokens_in_redirect' };
   }
 
@@ -46,7 +55,7 @@ export async function signInWithGoogle(): Promise<SignInResult> {
   });
 
   if (sessionError) {
-    console.log('[google-oauth] setSession error =', sessionError.message);
+    debug('setSession error =', sessionError.message);
     return { ok: false, error: sessionError.message };
   }
 
