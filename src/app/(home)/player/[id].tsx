@@ -33,7 +33,7 @@ export default function PlayerDetailModal() {
   // Same root cause as the tabs: on error `data` is undefined and `isPending`
   // is false, so the skeleton below would win forever (#167).
   if (isError && !players) {
-    return <ErrorState tk={tk} onRetry={refetch} />;
+    return <ErrorState tk={tk} onRetry={refetch} onBack={() => router.back()} />;
   }
   if (isPending || !players) {
     return (

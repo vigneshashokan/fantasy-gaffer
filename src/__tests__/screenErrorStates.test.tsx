@@ -7,9 +7,10 @@ import { RefreshControl } from 'react-native';
 import { fireEvent } from '@testing-library/react-native';
 import { renderWithProviders } from './utils/renderWithProviders';
 
+const mockBack = jest.fn();
 jest.mock('expo-router', () => ({
   __esModule: true,
-  useRouter: () => ({ push: jest.fn(), back: jest.fn() }),
+  useRouter: () => ({ push: jest.fn(), back: mockBack }),
   useLocalSearchParams: () => ({ id: '401' }),
 }));
 jest.mock('@/store/themeStore', () => ({
@@ -87,6 +88,7 @@ const failing = (refetch: jest.Mock) => ({
 });
 
 beforeEach(() => {
+  mockBack.mockReset();
   apexRefetch.mockReset();
   picksRefetch.mockReset();
   profileRefetch.mockReset();
@@ -120,6 +122,22 @@ describe('#167 — a failed load renders a retryable error card, not an endless 
     const { getByText, queryByTestId } = renderWithProviders(<TeamTab />);
     expect(getByText('Apex Pitch FC')).toBeTruthy();
     expect(queryByTestId('error-state')).toBeNull();
+  });
+
+  // These screens set `headerShown: false`, so without an explicit dismiss the
+  // error card would be a dead end — the exact trap this work removes.
+  it.each([
+    ['Transfer targets', () => <TransferTargets />],
+    ['Profile', () => <ProfileModal />],
+  ])('%s offers a way back out of the error state', (_name, screen) => {
+    const { getByTestId } = renderWithProviders(screen());
+    fireEvent.press(getByTestId('error-state-back'));
+    expect(mockBack).toHaveBeenCalled();
+  });
+
+  it('the tabs have no Close — the tab bar is always the way out', () => {
+    const { queryByTestId } = renderWithProviders(<TeamTab />);
+    expect(queryByTestId('error-state-back')).toBeNull();
   });
 
   it('still shows the skeleton while genuinely pending', () => {

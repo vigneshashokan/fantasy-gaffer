@@ -28,6 +28,7 @@ export default function ProfileModal() {
       <ErrorState
         tk={tk}
         onRetry={refetch}
+        onBack={() => router.back()}
         title="Couldn't load your profile"
         message="Check your connection and try again."
       />

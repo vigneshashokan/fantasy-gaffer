@@ -19,6 +19,11 @@ interface ErrorStateProps {
   onRetry: () => void;
   title?: string;
   message?: string;
+  // Required on any screen that renders its own header (`headerShown: false`
+  // in the stack) — without it an error card is a dead end with no visible way
+  // back, which is the trap this component exists to remove. Tab screens don't
+  // need it: the tab bar is always there.
+  onBack?: () => void;
   // Screens inside a paged carousel need explicit page dimensions instead of
   // `flex: 1` (see GameweekScreen).
   style?: StyleProp<ViewStyle>;
@@ -30,6 +35,7 @@ export function ErrorState({
   onRetry,
   title = "Couldn't load your data",
   message = "We couldn't reach the game right now. Check your connection and try again.",
+  onBack,
   style,
   testID = 'error-state',
 }: ErrorStateProps) {
@@ -57,6 +63,16 @@ export function ErrorState({
             Retry
           </Text>
         </Pressable>
+        {onBack && (
+          <Pressable testID={`${testID}-back`} onPress={onBack} hitSlop={8} accessibilityRole="button">
+            <Text
+              style={[styles.backText, { color: tk.faint }]}
+              maxFontSizeMultiplier={MAX_FONT_SCALE}
+            >
+              Close
+            </Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -102,5 +118,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: 'Archivo_800ExtraBold',
     fontSize: 14.5,
+  },
+  backText: {
+    marginTop: 10,
+    fontFamily: 'Archivo_700Bold',
+    fontSize: 13.5,
   },
 });

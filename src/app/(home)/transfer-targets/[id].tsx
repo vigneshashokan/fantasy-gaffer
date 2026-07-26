@@ -42,7 +42,7 @@ export default function TransferTargetsScreen() {
 
   // Error before pending — this screen had no error branch at all (#167).
   if ((squadError || picksError) && (!squad || !topPicks)) {
-    return <ErrorState tk={tk} onRetry={refetch} />;
+    return <ErrorState tk={tk} onRetry={refetch} onBack={() => router.back()} />;
   }
   if (squadPending || picksPending || !squad || !topPicks) {
     return (
