@@ -42,7 +42,12 @@ jest.mock('expo-router', () => {
   Tabs.Screen = function TabsScreen() {
     return null;
   };
-  return { __esModule: true, Tabs, useRouter: () => ({ push: jest.fn() }) };
+  return {
+    __esModule: true,
+    Tabs,
+    useRouter: () => ({ push: jest.fn() }),
+    useSegments: () => ['(home)', '(tabs)', 'team'],
+  };
 });
 
 jest.mock('@/components/onboarding/TabCoachmark', () => ({

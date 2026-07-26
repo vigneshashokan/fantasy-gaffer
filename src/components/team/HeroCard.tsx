@@ -1,10 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ApexTokens } from '@/constants/apexTokens';
+import { HERO_ON_DARK } from '@/constants/apexTokens';
 
 interface HeroCardProps {
-  tk: ApexTokens;
   totalPoints: number;
   gwPts: number;
   avgPoints: number;
@@ -15,7 +14,6 @@ interface HeroCardProps {
 }
 
 export function HeroCard({
-  tk,
   totalPoints,
   gwPts,
   avgPoints,
@@ -46,16 +44,21 @@ export function HeroCard({
           <Text style={styles.gwBig}>{gwPts}</Text>
           <Text style={styles.label}>GW PTS</Text>
           {showVsAvg && (
+            // The hero gradient is dark in BOTH modes, so this pill takes
+            // fixed on-dark colours like its sibling stats — `tk.green` is
+            // tuned for the light card surface and measured 2.56:1 here.
+            // Direction is also carried by the ↑/↓ glyph and the sign, so the
+            // colour is not the only signal.
             <View
               style={[
                 styles.vsAvgPill,
-                { backgroundColor: up ? tk.greenSoft : 'rgba(255,255,255,0.12)' },
+                { backgroundColor: HERO_ON_DARK.pill },
               ]}
             >
               <Text
                 style={[
                   styles.vsAvgText,
-                  { color: up ? tk.green : 'rgba(255,255,255,0.7)' },
+                  { color: up ? HERO_ON_DARK.accent : HERO_ON_DARK.muted },
                 ]}
               >
                 {vsAvgText}

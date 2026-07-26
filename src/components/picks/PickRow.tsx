@@ -34,11 +34,12 @@ export function PickRow({
   const selectableActive = selectable && !owned;
   const xp = p.xp ?? p.gw;
   const xpC = xpColor(xp, dark);
-  const accentBar = selected
-    ? tk.green
-    : owned
-      ? (dark ? '#DDD6FE' : '#C4B5FD')
-      : (dark ? '#A78BFA' : '#7C3AED');
+  // The rail used to hardcode the classic palette's violets, so a pitch or
+  // electric user got a stray purple next to a card header already painted in
+  // `tk.purple`. The owned tint is dropped rather than re-derived: an owned
+  // row is already de-emphasised by the 0.5 row opacity below and named by
+  // its "In team" badge, so the rail was carrying no unique information.
+  const accentBar = selected ? tk.green : tk.purple;
   const jersey = jerseyForClub(p.club);
   const openStats = () => {
     track('pick_row_opened', { player_id: p.id });

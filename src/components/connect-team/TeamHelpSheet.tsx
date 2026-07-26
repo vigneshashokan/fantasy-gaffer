@@ -6,6 +6,8 @@ import React from 'react';
 import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
 import { useThemeStore } from '@/store/themeStore';
 import { apexTokens } from '@/constants/apexTokens';
+import { getTheme } from '@/constants/theme';
+import { PillBtn } from '@/components/ui/PillBtn';
 
 interface TeamHelpSheetProps {
   visible: boolean;
@@ -15,6 +17,7 @@ interface TeamHelpSheetProps {
 export function TeamHelpSheet({ visible, onClose }: TeamHelpSheetProps) {
   const { paletteKey, dark } = useThemeStore();
   const tk = apexTokens(dark, paletteKey);
+  const t = getTheme(paletteKey, dark);
 
   return (
     <Modal
@@ -38,15 +41,15 @@ export function TeamHelpSheet({ visible, onClose }: TeamHelpSheetProps) {
             sits under the team name.
           </Text>
         </View>
-        <Pressable
+        <PillBtn
+          variant="accent"
+          accentFill={t.accent}
+          accentInk={t.accentInk}
           onPress={onClose}
-          style={({ pressed }) => [
-            styles.btn,
-            { backgroundColor: '#7C3AED', opacity: pressed ? 0.85 : 1 },
-          ]}
+          style={styles.btn}
         >
-          <Text style={styles.btnText}>Got it</Text>
-        </Pressable>
+          Got it
+        </PillBtn>
       </View>
     </Modal>
   );
@@ -72,11 +75,5 @@ const styles = StyleSheet.create({
   steps: { gap: 10 },
   step: { fontFamily: 'Archivo_500Medium', fontSize: 14, lineHeight: 20 },
   bullet: { fontFamily: 'Archivo_700Bold' },
-  btn: {
-    paddingVertical: 13,
-    borderRadius: 999,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  btnText: { fontFamily: 'Archivo_700Bold', fontSize: 14.5, color: '#fff' },
+  btn: { marginTop: 8 },
 });

@@ -34,7 +34,7 @@ export default function ProfileModal() {
   const initials = initialsOf(profile.firstName, profile.lastName);
 
   const heroFrom = t.primary;
-  const heroTo = dark ? '#0C1018' : '#5B0F63';
+  const heroTo = tk.heroBg2;
 
   return (
     <View style={{ flex: 1, backgroundColor: tk.bg }}>

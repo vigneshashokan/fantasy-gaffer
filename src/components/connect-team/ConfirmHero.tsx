@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import type { Preview } from '@/api/teamPreview';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
+import { apexTokens } from '@/constants/apexTokens';
 
 interface ConfirmHeroProps {
   preview: Preview;
@@ -18,9 +19,10 @@ interface ConfirmHeroProps {
 export function ConfirmHero({ preview }: ConfirmHeroProps) {
   const { paletteKey, dark } = useThemeStore();
   const t = getTheme(paletteKey, dark);
+  const tk = apexTokens(dark, paletteKey);
 
   const from = t.primary;
-  const to = dark ? '#0C1018' : '#5B0F63';
+  const to = tk.heroBg2;
 
   return (
     <LinearGradient

@@ -6,6 +6,8 @@ let mockBiometricHydrated = true;
 const mockResolveLock = jest.fn();
 let mockSession: object | null = { user: { id: 'u1' } };
 let mockIsRestoring = false;
+let mockDark = true;
+const mockStatusBar = jest.fn();
 
 jest.mock('@tanstack/react-query', () => ({
   __esModule: true,
@@ -52,7 +54,13 @@ jest.mock('expo-router', () => ({
   useNavigationContainerRef: () => ({}),
 }));
 
-jest.mock('expo-status-bar', () => ({ __esModule: true, StatusBar: () => null }));
+jest.mock('expo-status-bar', () => ({
+  __esModule: true,
+  StatusBar: (props: { style?: string }) => {
+    mockStatusBar(props);
+    return null;
+  },
+}));
 
 jest.mock('react-native-safe-area-context', () => ({
   __esModule: true,
@@ -118,7 +126,7 @@ jest.mock('@/lib/query/onlineManager', () => ({ __esModule: true }));
 // points). AppGate itself never touches either, but the import still runs.
 jest.mock('@/store/themeStore', () => ({
   __esModule: true,
-  useThemeStore: () => ({ paletteKey: 'classic', dark: true }),
+  useThemeStore: () => ({ paletteKey: 'classic', dark: mockDark }),
 }));
 
 jest.mock('@/lib/query/persister', () => ({
@@ -170,6 +178,24 @@ describe('AppGate — biometric lock', () => {
     mockBiometricHydrated = true;
     mockSession = { user: { id: 'u1' } };
     mockIsRestoring = false;
+    mockDark = true;
+    mockStatusBar.mockClear();
+  });
+
+  // #173: the style was hardcoded `light`, so white glyphs sat on light
+  // mode's near-white surfaces on every screen.
+  it('paints light status-bar glyphs in dark mode', () => {
+    mockDark = true;
+    mockLocked = false;
+    render(<AppGate {...READY} />);
+    expect(mockStatusBar).toHaveBeenCalledWith(expect.objectContaining({ style: 'light' }));
+  });
+
+  it('paints dark status-bar glyphs in light mode', () => {
+    mockDark = false;
+    mockLocked = false;
+    render(<AppGate {...READY} />);
+    expect(mockStatusBar).toHaveBeenCalledWith(expect.objectContaining({ style: 'dark' }));
   });
 
   it('renders nothing while the lock verdict is undecided', () => {

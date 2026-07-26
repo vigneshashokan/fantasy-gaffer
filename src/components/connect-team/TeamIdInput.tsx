@@ -54,14 +54,14 @@ export function TeamIdInput({
         placeholderTextColor={tk.faint}
         style={[
           styles.input,
-          { backgroundColor: tk.card, borderColor: error ? '#FF6B6B' : tk.cardBorder, color: tk.text },
+          { backgroundColor: tk.card, borderColor: error ? tk.danger : tk.cardBorder, color: tk.text },
         ]}
       />
       {error ? (
-        <Text style={styles.error}>{error}</Text>
+        <Text style={[styles.error, { color: tk.danger }]}>{error}</Text>
       ) : null}
       <Pressable onPress={onHelpPress} hitSlop={8} accessibilityRole="button">
-        <Text style={[styles.helpLink, { color: '#A78BFA' }]}>
+        <Text style={[styles.helpLink, { color: tk.purple }]}>
           Where do I find my team ID?
         </Text>
       </Pressable>
@@ -89,7 +89,6 @@ const styles = StyleSheet.create({
   error: {
     fontFamily: 'Archivo_500Medium',
     fontSize: 12.5,
-    color: '#FF6B6B',
   },
   helpLink: {
     fontFamily: 'Archivo_700Bold',

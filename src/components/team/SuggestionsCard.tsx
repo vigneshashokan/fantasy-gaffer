@@ -110,6 +110,7 @@ export function SuggestionsCard({
                 onChange={() => onToggle?.(s.id)}
                 green={tk.green}
                 border={tk.cardBorder}
+                accessibilityLabel={`Apply ${s.text}`}
               />
             ) : done ? (
               <View style={styles.statusRow}>

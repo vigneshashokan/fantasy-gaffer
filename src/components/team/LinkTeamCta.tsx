@@ -4,9 +4,12 @@
 // connect-team flow.
 
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { ApexTokens } from '@/constants/apexTokens';
+import { getTheme } from '@/constants/theme';
+import { useThemeStore } from '@/store/themeStore';
+import { PillBtn } from '@/components/ui/PillBtn';
 
 interface LinkTeamCtaProps {
   tk: ApexTokens;
@@ -14,6 +17,8 @@ interface LinkTeamCtaProps {
 }
 
 export function LinkTeamCta({ tk, variant }: LinkTeamCtaProps) {
+  const { paletteKey, dark } = useThemeStore();
+  const t = getTheme(paletteKey, dark);
   const title = variant === 'team'
     ? 'Link your FPL team'
     : 'Link your FPL team to plan transfers';
@@ -23,17 +28,16 @@ export function LinkTeamCta({ tk, variant }: LinkTeamCtaProps) {
       <Text style={[styles.body, { color: tk.faint }]}>
         Paste your FPL team ID and we'll pull in your squad.
       </Text>
-      <Pressable
+      <PillBtn
         testID="connect-team-cta"
-        accessibilityRole="button"
+        variant="accent"
+        accentFill={t.accent}
+        accentInk={t.accentInk}
         onPress={() => router.push('/(onboarding)/connect-team')}
-        style={({ pressed }) => [
-          styles.btn,
-          { backgroundColor: '#7C3AED', opacity: pressed ? 0.85 : 1 },
-        ]}
+        style={styles.btn}
       >
-        <Text style={styles.btnText}>Connect FPL team</Text>
-      </Pressable>
+        Connect FPL team
+      </PillBtn>
     </View>
   );
 }
@@ -46,6 +50,5 @@ const styles = StyleSheet.create({
   },
   title:   { fontFamily: 'Archivo_800ExtraBold', fontSize: 20 },
   body:    { fontFamily: 'Archivo_500Medium',    fontSize: 14 },
-  btn:     { paddingVertical: 12, borderRadius: 999, alignItems: 'center', marginTop: 8 },
-  btnText: { fontFamily: 'Archivo_700Bold',      fontSize: 14, color: '#fff' },
+  btn:     { marginTop: 8 },
 });

@@ -14,6 +14,8 @@ import { ConfirmPitch } from '@/components/connect-team/ConfirmPitch';
 import { TeamHelpSheet } from '@/components/connect-team/TeamHelpSheet';
 import { TeamIdInput } from '@/components/connect-team/TeamIdInput';
 import { apexTokens } from '@/constants/apexTokens';
+import { getTheme } from '@/constants/theme';
+import { PillBtn } from '@/components/ui/PillBtn';
 import { useThemeStore } from '@/store/themeStore';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -39,6 +41,7 @@ type Stage =
 export default function ConnectTeam() {
   const { paletteKey, dark } = useThemeStore();
   const tk = apexTokens(dark, paletteKey);
+  const t = getTheme(paletteKey, dark);
   const insets = useSafeAreaInsets();
 
   const [teamIdStr, setTeamIdStr] = useState('');
@@ -166,7 +169,10 @@ export default function ConnectTeam() {
                 <Pressable
                   onPress={onRetryFetch}
                   accessibilityRole="button"
-                  style={[styles.retryBtn, { backgroundColor: '#7C3AED' }]}
+                  // Secondary action inside the error card, so it stays a
+                  // plain Pressable rather than the primary PillBtn — but the
+                  // fill is a palette token now, not the classic violet.
+                  style={[styles.retryBtn, { backgroundColor: tk.activeFill }]}
                 >
                   <Text style={styles.retryBtnText}>Try again</Text>
                 </Pressable>
@@ -174,25 +180,20 @@ export default function ConnectTeam() {
             )}
 
             <View style={styles.actions}>
-              <Pressable
+              <PillBtn
                 testID="connect-team-submit"
+                variant="accent"
+                accentFill={t.accent}
+                accentInk={t.accentInk}
                 onPress={onContinue}
                 disabled={!validInput || validating}
-                accessibilityRole="button"
-                accessibilityState={{ disabled: !validInput || validating }}
-                style={[
-                  styles.primaryBtn,
-                  { backgroundColor: validInput ? '#7C3AED' : tk.cardBorder, opacity: validating ? 0.7 : 1 },
-                ]}
               >
                 {validating ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={t.accentInk} />
                 ) : (
-                  <Text style={styles.primaryBtnText}>
-                    Continue
-                  </Text>
+                  'Continue'
                 )}
-              </Pressable>
+              </PillBtn>
               <Pressable onPress={onSkip} accessibilityRole="button" style={styles.ghostBtn}>
                 <Text style={[styles.ghostBtnText, { color: tk.faint }]}>Skip for now</Text>
               </Pressable>
@@ -210,25 +211,23 @@ export default function ConnectTeam() {
             {stage.kind === 'link_error' && (
               <Text
                 accessibilityLiveRegion="assertive"
-                style={styles.linkError}
+                style={[styles.linkError, { color: tk.danger }]}
               >
                 {stage.message}
               </Text>
             )}
 
             <View style={styles.actions}>
-              <Pressable
+              <PillBtn
                 testID="connect-team-confirm"
+                variant="accent"
+                accentFill={t.accent}
+                accentInk={t.accentInk}
                 onPress={onLink}
                 disabled={link.isPending}
-                accessibilityRole="button"
-                accessibilityState={{ disabled: link.isPending }}
-                style={[styles.primaryBtn, { backgroundColor: '#7C3AED', opacity: link.isPending ? 0.7 : 1 }]}
               >
-                {link.isPending ? <ActivityIndicator color="#fff" /> : (
-                  <Text style={styles.primaryBtnText}>Yes, link team</Text>
-                )}
-              </Pressable>
+                {link.isPending ? <ActivityIndicator color={t.accentInk} /> : 'Yes, link team'}
+              </PillBtn>
               <Pressable onPress={onWrongTeam} accessibilityRole="button" style={styles.ghostBtn}>
                 <Text style={[styles.ghostBtnText, { color: tk.faint }]}>Wrong team — go back</Text>
               </Pressable>
@@ -252,13 +251,6 @@ const styles = StyleSheet.create({
   subtitle: { fontFamily: 'Archivo_500Medium', fontSize: 13.5 },
   label: { fontFamily: 'Archivo_700Bold', fontSize: 10.5, letterSpacing: 1, textTransform: 'uppercase' },
   actions: { gap: 8, marginTop: 8 },
-  primaryBtn: {
-    paddingVertical: 13,
-    borderRadius: 999,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryBtnText: { fontFamily: 'Archivo_700Bold', fontSize: 14.5, color: '#fff' },
   ghostBtn: { paddingVertical: 11, alignItems: 'center' },
   ghostBtnText: { fontFamily: 'Archivo_700Bold', fontSize: 13 },
   fetchErrorCard: {
@@ -270,5 +262,5 @@ const styles = StyleSheet.create({
   fetchErrorText: { fontFamily: 'Archivo_700Bold', fontSize: 14 },
   retryBtn: { paddingVertical: 10, borderRadius: 999, alignItems: 'center' },
   retryBtnText: { fontFamily: 'Archivo_700Bold', fontSize: 13.5, color: '#fff' },
-  linkError: { color: '#FF6B6B', fontFamily: 'Archivo_500Medium', fontSize: 13 },
+  linkError: { fontFamily: 'Archivo_500Medium', fontSize: 13 },
 });
