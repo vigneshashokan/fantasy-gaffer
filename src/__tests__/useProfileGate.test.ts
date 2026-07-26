@@ -137,6 +137,43 @@ describe('useProfileGate', () => {
     await waitFor(() => expect(result.current.status).toBe('missing'));
   });
 
+  it('ignores a session-object swap for the same user (TOKEN_REFRESHED)', async () => {
+    mockProfilesMaybeSingle.mockResolvedValue({ data: { user_id: 'u1' }, error: null });
+    mockDeletionsMaybeSingle.mockResolvedValue({ data: null, error: null });
+    act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
+    const { result } = renderHook(() => useProfileGate());
+    await waitFor(() => expect(result.current.status).toBe('complete'));
+
+    mockFrom.mockClear();
+    // auth-js constructs a NEW Session object on every hourly token refresh
+    // and authStore `set`s it, so subscribing to the object identity blanked
+    // the home navigator once an hour. Same user id => nothing should move.
+    act(() =>
+      useAuthStore.setState({
+        session: { user: { id: 'u1' }, access_token: 'refreshed' } as never,
+      }),
+    );
+    expect(result.current.status).toBe('complete');
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it('re-resolves when the user id actually changes', async () => {
+    mockProfilesMaybeSingle.mockResolvedValue({ data: { user_id: 'u1' }, error: null });
+    mockDeletionsMaybeSingle.mockResolvedValue({ data: null, error: null });
+    act(() => useAuthStore.setState({ session: fakeSession as never, hydrated: true }));
+    const { result } = renderHook(() => useProfileGate());
+    await waitFor(() => expect(result.current.status).toBe('complete'));
+
+    mockFrom.mockClear();
+    act(() =>
+      useAuthStore.setState({
+        session: { user: { id: 'u2' }, access_token: 't' } as never,
+      }),
+    );
+    expect(mockFrom).toHaveBeenCalledWith('profiles');
+    expect(mockProfilesEq).toHaveBeenCalledWith('user_id', 'u2');
+  });
+
   it('stays loading if either query throws', async () => {
     mockProfilesMaybeSingle.mockRejectedValueOnce(new Error('boom'));
     mockDeletionsMaybeSingle.mockResolvedValueOnce({ data: null, error: null });
