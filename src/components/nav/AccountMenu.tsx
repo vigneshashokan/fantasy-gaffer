@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
 import { useThemeStore } from '@/store/themeStore';
-import { useAuthStore } from '@/store/authStore';
 import { useProfile } from '@/api/profile';
 import { useManager } from '@/api/manager';
 import { initialsOf } from '@/lib/name';
@@ -112,12 +111,13 @@ export function AccountMenu({
           <Text style={[styles.rowText, { color: t.text }]}>Settings</Text>
         </Pressable>
         <View style={[styles.divider, { backgroundColor: t.line }]} />
+        {/* Sign-out is the parent's job — it owns the whole sequence
+            (close the menu, await signOut, surface a failure). Calling the
+            store here as well ran supabase.auth.signOut() twice and reset
+            analytics twice for one tap. */}
         <Pressable
           style={styles.row}
-          onPress={async () => {
-            await useAuthStore.getState().signOut();
-            onSignOut();
-          }}
+          onPress={onSignOut}
           accessibilityRole="button"
           testID="account-menu-signout"
         >

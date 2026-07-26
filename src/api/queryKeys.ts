@@ -12,6 +12,7 @@ export const queryKeys = {
   allFixtures:    ['allFixtures'] as const,
   projections:    (gw: number) => ['projections', gw] as const,
   profile:        (userId: string) => ['profile', userId] as const,
+  profileGate:    (userId: string) => ['profileGate', userId] as const,
   notificationPrefs: (userId: string) => ['notificationPrefs', userId] as const,
   manager:        (teamId: number) => ['manager', teamId] as const,
   managerHistory: (teamId: number) => ['managerHistory', teamId] as const,

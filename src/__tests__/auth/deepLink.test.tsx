@@ -9,18 +9,19 @@ const mockAddEventListener = jest.fn((_evt: string, cb: (e: { url: string }) => 
   urlListener = cb;
   return { remove: jest.fn() };
 });
+let mockInitialUrl: string | null = null;
 
 jest.mock('@/lib/supabase', () => ({
   supabase: {
     auth: {
-      exchangeCodeForSession: (url: string) => mockExchangeCodeForSession(url),
+      exchangeCodeForSession: (code: string) => mockExchangeCodeForSession(code),
     },
   },
 }));
 
 jest.mock('expo-linking', () => ({
   __esModule: true,
-  useLinkingURL: jest.fn(() => null),
+  useLinkingURL: () => mockInitialUrl,
   addEventListener: (evt: string, cb: (e: { url: string }) => void) =>
     mockAddEventListener(evt, cb),
 }));
@@ -42,17 +43,40 @@ function Harness() {
   return null;
 }
 
+const OK = { data: { session: {} }, error: null };
+
 describe('parseAuthDeepLink', () => {
-  it('classifies the verify URL', () => {
+  it('classifies the verify URL and extracts the code', () => {
     expect(parseAuthDeepLink('fplgafferreactnativeapp://verify?code=abc')).toEqual({
       kind: 'verify',
+      code: 'abc',
     });
   });
 
-  it('classifies the reset-password URL', () => {
+  it('classifies the reset-password URL and extracts the code', () => {
     expect(parseAuthDeepLink('fplgafferreactnativeapp://reset-password?code=xyz')).toEqual({
       kind: 'reset',
+      code: 'xyz',
     });
+  });
+
+  it('finds the code among other query params, and url-decodes it', () => {
+    expect(
+      parseAuthDeepLink('fplgafferreactnativeapp://verify?type=signup&code=a%2Fb&x=1'),
+    ).toEqual({ kind: 'verify', code: 'a/b' });
+  });
+
+  it('reports a null code when the link carries none', () => {
+    expect(parseAuthDeepLink('fplgafferreactnativeapp://verify')).toEqual({
+      kind: 'verify',
+      code: null,
+    });
+  });
+
+  it('does not mistake a fragment for a query string', () => {
+    expect(
+      parseAuthDeepLink('fplgafferreactnativeapp://verify#access_token=t&code=nope'),
+    ).toEqual({ kind: 'verify', code: null });
   });
 
   it('classifies unknown paths', () => {
@@ -77,28 +101,55 @@ describe('useEmailAuthDeepLinks', () => {
     mockAddEventListener.mockClear();
     urlListener = null;
     mockHydrated = true;
+    mockInitialUrl = null;
   });
 
-  it('exchanges code and replaces to reset-password on reset URL', async () => {
-    mockExchangeCodeForSession.mockResolvedValueOnce({ data: { session: {} }, error: null });
+  it('exchanges the bare code — not the whole URL — and routes to reset-password', async () => {
+    mockExchangeCodeForSession.mockResolvedValueOnce(OK);
     render(<Harness />);
     await act(async () => {
       urlListener?.({ url: 'fplgafferreactnativeapp://reset-password?code=abc' });
     });
-    expect(mockExchangeCodeForSession).toHaveBeenCalledWith(
-      'fplgafferreactnativeapp://reset-password?code=abc',
-    );
+    // auth-js posts this value straight through as `auth_code`; the full
+    // deep-link URL was never a usable code.
+    expect(mockExchangeCodeForSession).toHaveBeenCalledWith('abc');
     expect(mockReplace).toHaveBeenCalledWith('/(onboarding)/reset-password');
   });
 
   it('exchanges code and lets layout route on verify URL (no explicit replace)', async () => {
-    mockExchangeCodeForSession.mockResolvedValueOnce({ data: { session: {} }, error: null });
+    mockExchangeCodeForSession.mockResolvedValueOnce(OK);
     render(<Harness />);
     await act(async () => {
       urlListener?.({ url: 'fplgafferreactnativeapp://verify?code=xyz' });
     });
-    expect(mockExchangeCodeForSession).toHaveBeenCalled();
+    expect(mockExchangeCodeForSession).toHaveBeenCalledWith('xyz');
     expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('routes to forgot-password?expired=1 when the reset exchange RESOLVES with an error', async () => {
+    // auth-js resolves { error } for a dead link rather than rejecting, so
+    // this is the path a real expired reset link takes.
+    mockExchangeCodeForSession.mockResolvedValueOnce({
+      data: { session: null, user: null },
+      error: { message: 'invalid flow state', name: 'AuthApiError' },
+    });
+    render(<Harness />);
+    await act(async () => {
+      urlListener?.({ url: 'fplgafferreactnativeapp://reset-password?code=dead' });
+    });
+    expect(mockReplace).toHaveBeenCalledWith('/(onboarding)/forgot-password?expired=1');
+  });
+
+  it('routes to signin?verify_expired=1 when the verify exchange RESOLVES with an error', async () => {
+    mockExchangeCodeForSession.mockResolvedValueOnce({
+      data: { session: null, user: null },
+      error: { message: 'expired', name: 'AuthApiError' },
+    });
+    render(<Harness />);
+    await act(async () => {
+      urlListener?.({ url: 'fplgafferreactnativeapp://verify?code=dead' });
+    });
+    expect(mockReplace).toHaveBeenCalledWith('/(onboarding)/signin?verify_expired=1');
   });
 
   it('routes to forgot-password?expired=1 if reset exchange rejects', async () => {
@@ -117,6 +168,27 @@ describe('useEmailAuthDeepLinks', () => {
       urlListener?.({ url: 'fplgafferreactnativeapp://verify?code=bad' });
     });
     expect(mockReplace).toHaveBeenCalledWith('/(onboarding)/signin?verify_expired=1');
+  });
+
+  it('treats a codeless auth link as expired instead of posting a null code', async () => {
+    render(<Harness />);
+    await act(async () => {
+      urlListener?.({ url: 'fplgafferreactnativeapp://reset-password' });
+    });
+    expect(mockExchangeCodeForSession).not.toHaveBeenCalled();
+    expect(mockReplace).toHaveBeenCalledWith('/(onboarding)/forgot-password?expired=1');
+  });
+
+  it('exchanges a warm-open URL once, not once per delivery channel', async () => {
+    // useLinkingURL() and the 'url' listener both surface the same URL on a
+    // warm open; the code is single-use, so the second exchange would fail.
+    mockInitialUrl = 'fplgafferreactnativeapp://reset-password?code=once';
+    mockExchangeCodeForSession.mockResolvedValue(OK);
+    render(<Harness />);
+    await act(async () => {
+      urlListener?.({ url: 'fplgafferreactnativeapp://reset-password?code=once' });
+    });
+    expect(mockExchangeCodeForSession).toHaveBeenCalledTimes(1);
   });
 
   it('ignores unknown URLs', async () => {

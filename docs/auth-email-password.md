@@ -35,7 +35,9 @@ router.replace('/(onboarding)/verify-pending?email=…')
   ↓
 useEmailAuthDeepLinks (in src/app/_layout.tsx) catches the URL
   ↓
-supabase.auth.exchangeCodeForSession(url) → session lands
+supabase.auth.exchangeCodeForSession(code)  ← the `code` param, not the URL
+  ↓ resolved { error } is checked — auth-js does NOT reject on a dead link
+  ↓ session lands
   ↓ (onboarding)/_layout routes to /(onboarding)/complete-profile
   ↓ complete-profile reads user_metadata.given_name / family_name and prefills
   ↓ user picks DOB → /(home)
@@ -54,7 +56,9 @@ supabase.auth.resetPasswordForEmail(email, {
   ↓ user opens email, taps link
   ↓ link → fplgafferreactnativeapp://reset-password?code=…
   ↓
-useEmailAuthDeepLinks catches the URL → exchangeCodeForSession → router.replace('/(onboarding)/reset-password')
+useEmailAuthDeepLinks catches the URL → exchangeCodeForSession(code) → router.replace('/(onboarding)/reset-password')
+  ↓ on a resolved { error } (expired / already-used link) it instead
+    replaces to /(onboarding)/forgot-password?expired=1
   ↓ user enters new password → resetPassword()
   ↓
 supabase.auth.updateUser({ password })
@@ -97,6 +101,16 @@ Same pattern as Google sign-in's manual setup. Required before the flow works en
 **Verify link opens but stays on signin (or shows "Verification link expired")**
 - Confirm `fplgafferreactnativeapp://verify` is in the Redirect URLs allow list.
 - The link is one-time-use — opening it twice fails the second time.
+
+**Every link reports "expired" even when freshly sent — UNVERIFIED RISK**
+- `exchangeCodeForSession` is a **PKCE** grant: it POSTs `grant_type=pkce`
+  with the `<storageKey>-code-verifier` auth-js stashed when the flow began.
+  `src/lib/supabase.ts` does not set `flowType`, and auth-js@2.107's default
+  is **`implicit`** — under which no verifier is ever stored, so the exchange
+  cannot succeed. If an on-device pass shows both email flows failing, the
+  fix is `flowType: 'pkce'` in `createClient`, **not** the deep-link code.
+  That is a coordinated change (client + Supabase email templates) and needs
+  device validation, so it is deliberately not bundled with the #176 fix.
 
 **Reset link doesn't open the app**
 - Confirm `fplgafferreactnativeapp://reset-password` is in the Redirect URLs allow list.

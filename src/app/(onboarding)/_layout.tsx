@@ -17,6 +17,9 @@ export default function OnboardingLayout() {
   // wins because a deleted account should not link a team.
   const onConnectTeam = segments[segments.length - 1] === 'connect-team';
 
+  // Every redirect below is opt-IN on a resolved status, so 'loading' and
+  // 'error' fall through to the plain <Stack>. That is deliberate: an
+  // unresolved gate must never push the user anywhere (see #170).
   // pending_deletion wins; check it first.
   if (session && status === 'pending_deletion' && !onRestoreAccount) {
     return <Redirect href="/(onboarding)/restore-account" />;

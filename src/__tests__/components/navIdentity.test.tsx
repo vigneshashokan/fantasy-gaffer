@@ -6,7 +6,8 @@
 // item that opens the account menu popup.
 
 import React from 'react';
-import { fireEvent } from '@testing-library/react-native';
+import { Alert } from 'react-native';
+import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { renderWithProviders as render } from '../utils/renderWithProviders';
 import { AccountMenu } from '@/components/nav/AccountMenu';
 import TabsLayout from '@/app/(home)/(tabs)/_layout';
@@ -68,6 +69,7 @@ jest.mock('@/api/manager', () => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockSignOut.mockResolvedValue({ error: null });
   mockUseProfile.mockReturnValue({
     data: { firstName: 'Vignesh', lastName: 'Ashokan', fplTeamId: 12345 } satisfies Partial<Profile>,
   });
@@ -131,5 +133,60 @@ describe('Account tab (bottom nav)', () => {
     fireEvent.press(getByText('Account'));
     // menu now shows the real name
     expect(getByText('Vignesh Ashokan')).toBeTruthy();
+  });
+});
+
+describe('signing out', () => {
+  it('calls only the onSignOut prop — AccountMenu does not sign out itself', () => {
+    const onSignOut = jest.fn();
+    const { getByTestId } = render(
+      <AccountMenu
+        visible
+        onClose={jest.fn()}
+        onProfile={jest.fn()}
+        onSettings={jest.fn()}
+        onSignOut={onSignOut}
+      />,
+    );
+    fireEvent.press(getByTestId('account-menu-signout'));
+    expect(onSignOut).toHaveBeenCalledTimes(1);
+    expect(mockSignOut).not.toHaveBeenCalled();
+  });
+
+  it('runs supabase signOut exactly once per tap', async () => {
+    const { getByText, getByTestId } = render(<TabsLayout />);
+    fireEvent.press(getByText('Account'));
+    // act(async) flushes the whole handler chain, so this counts the settled
+    // total — a waitFor would pass on the first of two calls.
+    await act(async () => {
+      fireEvent.press(getByTestId('account-menu-signout'));
+    });
+    expect(mockSignOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces a failed sign-out instead of closing the menu on a no-op', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    // supabase.auth.signOut() resolves { error } and keeps the local session
+    // when its remote call fails — the tap otherwise looks like it worked.
+    mockSignOut.mockResolvedValue({ error: { message: 'Network request failed' } });
+
+    const { getByText, getByTestId } = render(<TabsLayout />);
+    fireEvent.press(getByText('Account'));
+    fireEvent.press(getByTestId('account-menu-signout'));
+
+    await waitFor(() => expect(alertSpy).toHaveBeenCalledWith("Couldn't sign out", expect.any(String)));
+    alertSpy.mockRestore();
+  });
+
+  it('surfaces a sign-out that rejects outright', async () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockSignOut.mockRejectedValue(new Error('lock acquisition timeout'));
+
+    const { getByText, getByTestId } = render(<TabsLayout />);
+    fireEvent.press(getByText('Account'));
+    fireEvent.press(getByTestId('account-menu-signout'));
+
+    await waitFor(() => expect(alertSpy).toHaveBeenCalledWith("Couldn't sign out", expect.any(String)));
+    alertSpy.mockRestore();
   });
 });

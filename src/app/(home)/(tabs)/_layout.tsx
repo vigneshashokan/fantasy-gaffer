@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
@@ -13,6 +13,9 @@ import { apexTokens } from '@/constants/apexTokens';
 import { MAX_FONT_SCALE } from '@/lib/a11y';
 import { TabCoachmark } from '@/components/onboarding/TabCoachmark';
 import { useOfflineStripVisible } from '@/components/OfflineBanner';
+
+const SIGN_OUT_FAILED_TITLE = "Couldn't sign out";
+const SIGN_OUT_FAILED_BODY = 'Check your connection and try again.';
 
 type TabName = 'top-picks' | 'team' | 'transfer';
 
@@ -158,7 +161,18 @@ export default function TabsLayout() {
         }}
         onSignOut={async () => {
           setMenuOpen(false);
-          await signOut();
+          // supabase.auth.signOut() RESOLVES with { error } and leaves the
+          // local session intact when its remote call fails, so an offline
+          // tap used to look like a no-op: the menu closed and nothing else
+          // happened. It can also reject outright (it awaits internal
+          // init/lock acquisition), so catch that too — same as LockScreen's
+          // escape hatch does.
+          try {
+            const { error } = await signOut();
+            if (error) Alert.alert(SIGN_OUT_FAILED_TITLE, SIGN_OUT_FAILED_BODY);
+          } catch {
+            Alert.alert(SIGN_OUT_FAILED_TITLE, SIGN_OUT_FAILED_BODY);
+          }
         }}
       />
     </View>

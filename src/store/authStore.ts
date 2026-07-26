@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AuthChangeEvent, AuthError, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { identify, reset, track } from '@/lib/analytics';
@@ -17,27 +18,51 @@ interface AuthState {
   signOut: () => Promise<{ error: AuthError | null }>;
 }
 
-// Tracks the last user id for which we fired sign_in so that session-restore /
-// foreground / token-refresh events (all emit SIGNED_IN) don't inflate the funnel.
+// The last user id we fired `sign_in` for. PERSISTED, not just module-scoped:
+// auth-js re-emits SIGNED_IN from its own session-restore path on every cold
+// start, so a flag that died with the process re-counted the same user's
+// sign-in on every relaunch and inflated the funnel.
+const SIGN_IN_DEDUPE_KEY = 'analytics_last_sign_in_user';
 let lastSignInUserId: string | null = null;
+const dedupeSeeded: Promise<void> = AsyncStorage.getItem(SIGN_IN_DEDUPE_KEY)
+  .then((v) => {
+    lastSignInUserId = v;
+  })
+  .catch(() => {
+    /* first launch or unreadable storage — worst case, one extra sign_in */
+  });
 
-// Mirrors auth lifecycle into analytics: stitch identity across sessions on
-// sign-in, clear it on sign-out, and record the sign_in funnel event. Exported
-// so it can be unit-tested without the module-init subscription.
-export function handleAuthChange(event: AuthChangeEvent, session: Session | null): void {
-  if (event === 'SIGNED_IN' && session) {
+// Mirrors auth lifecycle into analytics + crash reporting: stitch identity
+// across sessions, clear it on sign-out, and record the sign_in funnel event.
+// Exported so it can be unit-tested without the module-init subscription.
+export async function handleAuthChange(
+  event: AuthChangeEvent,
+  session: Session | null,
+): Promise<void> {
+  // Scope on ANY event carrying a session, not just SIGNED_IN. A cold start
+  // whose stored access token has already expired — i.e. any launch more
+  // than the JWT's hour after the last one — emits INITIAL_SESSION and
+  // TOKEN_REFRESHED and never SIGNED_IN at all, so gating on SIGNED_IN left
+  // those sessions reporting crashes to Sentry with no user id and sending
+  // anonymous PostHog events for a known user.
+  if (session) {
     identify(session.user.id);
     setSentryUser(session.user.id);
+  }
+  if (event === 'SIGNED_IN' && session) {
+    await dedupeSeeded;
     if (session.user.id !== lastSignInUserId) {
       const provider = (session.user.app_metadata?.provider as string | undefined) ?? 'unknown';
       track('sign_in', { provider });
       lastSignInUserId = session.user.id;
+      AsyncStorage.setItem(SIGN_IN_DEDUPE_KEY, session.user.id).catch(() => {});
     }
   }
   if (event === 'SIGNED_OUT') {
     reset();
     setSentryUser(null);
     lastSignInUserId = null;
+    AsyncStorage.removeItem(SIGN_IN_DEDUPE_KEY).catch(() => {});
   }
 }
 
@@ -45,7 +70,9 @@ export const useAuthStore = create<AuthState>((set) => {
   // Subscribe once at module init.
   supabase.auth.onAuthStateChange((event, session) => {
     set({ session, hydrated: true });
-    handleAuthChange(event, session);
+    // Fire-and-forget: observability must never delay the auth state the
+    // router gates on. Ordering inside handleAuthChange is self-contained.
+    void handleAuthChange(event, session);
   });
 
   // Resolve current session so cold-start doesn't wait for an event.
