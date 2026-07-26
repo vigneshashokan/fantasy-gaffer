@@ -50,18 +50,24 @@ export function PillBtn({
     ...(variant === 'ghost'   && { color: textColor }),
     ...(variant === 'outline' && { color: textColor }),
   };
-  const a11yLabel = typeof children === 'string' ? children : undefined;
+  const isText = typeof children === 'string';
   return (
     <Pressable
       testID={testID}
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
-      accessibilityLabel={a11yLabel}
+      accessibilityLabel={isText ? children : undefined}
       accessibilityState={{ disabled }}
       style={({ pressed }) => [containerStyle, pressed && !disabled && styles.pressed]}
     >
-      <Text style={textStyle} maxFontSizeMultiplier={MAX_FONT_SCALE}>{children}</Text>
+      {/* Non-string children (a pending spinner) render directly: nesting a
+          view inside <Text> lays out inline and misbehaves on Android. */}
+      {isText ? (
+        <Text style={textStyle} maxFontSizeMultiplier={MAX_FONT_SCALE}>{children}</Text>
+      ) : (
+        children
+      )}
     </Pressable>
   );
 }
