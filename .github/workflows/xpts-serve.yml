@@ -2,6 +2,11 @@
 # bootstrap, 03:30 history, and 04:00 fpl-project (v1) crons, so both models
 # project the same night on the same data. Promotion (#130 runbook) flips
 # XPTS_SERVE_TABLE to `projections` in ONE line here.
+#
+# #194 asked whether this job should also write an `ingestion_runs` row. It
+# should not: unlike an edge function invoked by pg_cron, a failed scheduled
+# workflow already has a durable, notified record — this run history, plus
+# GitHub's failure email. A second ledger would only need keeping in sync.
 name: xpts-serve
 
 on:

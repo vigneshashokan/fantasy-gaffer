@@ -5,6 +5,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createAdminClient } from './lib/supabase-admin.ts';
 import { authorize } from './lib/auth.ts';
+import { errorRun, finishRun, serializeError, skipRun, startRun } from './lib/ingestion-runs.ts';
 import { fetchJson } from './lib/fpl-client.ts';
 import { artifact } from './lib/scorer.ts';
 import { buildProjections, type FixtureLite, type PlayerInput } from './lib/project.ts';
@@ -116,6 +117,9 @@ export async function handler(req: Request, depsOverride?: Deps): Promise<Respon
   if (denied) return denied;
 
   const deps = depsOverride ?? defaultDeps();
+  // Opened before the first fetch so a bootstrap failure is recorded too. This
+  // is the only trace a nightly run leaves outside the function logs (#194).
+  const runId = await startRun(deps.supabase);
   try {
     const boot = await fetchJson<{ events: EventLite[] }>(
       'https://fantasy.premierleague.com/api/bootstrap-static/',
@@ -141,8 +145,9 @@ export async function handler(req: Request, depsOverride?: Deps): Promise<Respon
     // that displaces the documented empty-table behaviour, where the client
     // falls back to FPL's ep_next. Serving nothing is the honest state.
     if (historyRows.length === 0) {
+      await skipRun(deps.supabase, runId, 'no-history-for-season');
       return Response.json(
-        { ok: true, season, gws, rows: 0, skipped: 'no-history-for-season' },
+        { ok: true, runId, season, gws, rows: 0, skipped: 'no-history-for-season' },
         { status: 200 },
       );
     }
@@ -199,10 +204,14 @@ export async function handler(req: Request, depsOverride?: Deps): Promise<Respon
         .lt('computed_at', computedAt);
       if (del.error) throw del.error;
     }
-    return Response.json({ ok: true, season, gws, rows: stamped.length }, { status: 200 });
+    await finishRun(deps.supabase, runId, stamped.length);
+    return Response.json({ ok: true, runId, season, gws, rows: stamped.length }, { status: 200 });
   } catch (err) {
     console.error('[fpl-project] handler caught:', err);
-    return Response.json({ ok: false, error: String(err) }, { status: 500 });
+    await errorRun(deps.supabase, runId, err);
+    // serializeError, not String(err): a PostgREST error is a plain object and
+    // would otherwise stringify to [object Object].
+    return Response.json({ ok: false, runId, error: serializeError(err) }, { status: 500 });
   }
 }
 
