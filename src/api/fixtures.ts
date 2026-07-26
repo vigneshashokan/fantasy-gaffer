@@ -96,6 +96,9 @@ export function useCurrentGameweek() {
     isError: q.isError,
     error: q.error,
     isSuccess: q.isSuccess,
+    // Forwarded so composing hooks can offer Retry / pull-to-refresh (#167).
+    isRefetching: q.isRefetching,
+    refetch: q.refetch,
   };
 }
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
@@ -9,6 +9,7 @@ import { useSquad } from '@/api/squad';
 import { useClubs } from '@/api/clubs';
 import { useCurrentGameweek, useFixturesByGw } from '@/api/fixtures';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { PicksCard } from '@/components/picks/PicksCard';
 import { TransferTargetsHeader } from '@/components/transfer/TransferTargetsHeader';
 import { TransferOutCard } from '@/components/transfer/TransferOutCard';
@@ -21,8 +22,17 @@ export default function TransferTargetsScreen() {
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
-  const { data: squad, isPending: squadPending } = useSquad();
-  const { data: topPicks, isPending: picksPending } = useTopPicks();
+  const {
+    data: squad, isPending: squadPending, isError: squadError,
+    isRefetching: squadRefetching, refetch: refetchSquad,
+  } = useSquad();
+  const {
+    data: topPicks, isPending: picksPending, isError: picksError,
+    isRefetching: picksRefetching, refetch: refetchPicks,
+  } = useTopPicks();
+  const refetch = async () => {
+    await Promise.all([refetchSquad(), refetchPicks()]);
+  };
   const { data: clubs } = useClubs();
   const { data: currentGw } = useCurrentGameweek();
   const nextGw = Math.min(38, (currentGw?.gw ?? 0) + 1);
@@ -30,6 +40,10 @@ export default function TransferTargetsScreen() {
 
   const [selectedInId, setSelectedInId] = useState<string | null>(null);
 
+  // Error before pending — this screen had no error branch at all (#167).
+  if ((squadError || picksError) && (!squad || !topPicks)) {
+    return <ErrorState tk={tk} onRetry={refetch} />;
+  }
   if (squadPending || picksPending || !squad || !topPicks) {
     return (
       <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
@@ -74,6 +88,12 @@ export default function TransferTargetsScreen() {
         style={{ flex: 1 }}
         contentContainerStyle={[{ padding: 16, gap: 16 }, selectedIn && { paddingBottom: 120 }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={squadRefetching || picksRefetching}
+            onRefresh={refetch}
+          />
+        }
       >
         <Text style={[styles.hint, { color: tk.faint }]}>
           Tap to transfer · tap jersey for stats

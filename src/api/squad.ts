@@ -128,6 +128,24 @@ export function useApexTeam(targetGw?: number) {
     historyQ.error ??
     null;
   const noTeam = profile.data?.fplTeamId === null;
+  // Refetching / retrying the same five gating queries the flags above are
+  // derived from, so Retry and pull-to-refresh can only ever clear the exact
+  // condition that produced the error/skeleton (#167).
+  const isRefetching =
+    profile.isRefetching ||
+    currentGwQ.isRefetching ||
+    squadQ.isRefetching ||
+    managerQ.isRefetching ||
+    historyQ.isRefetching;
+  const refetch = async () => {
+    await Promise.all([
+      profile.refetch(),
+      currentGwQ.refetch(),
+      squadQ.refetch(),
+      managerQ.refetch(),
+      historyQ.refetch(),
+    ]);
+  };
 
   const data = useMemo(() => {
     if (noTeam) return null;
@@ -168,7 +186,7 @@ export function useApexTeam(targetGw?: number) {
     allFixturesQ.data,
   ]);
 
-  return { data, isPending, isError, error, noTeam };
+  return { data, isPending, isError, error, noTeam, isRefetching, refetch };
 }
 
 // Captain shows multiplied points (×2 / ×3 TC) matching the FPL UI; bench

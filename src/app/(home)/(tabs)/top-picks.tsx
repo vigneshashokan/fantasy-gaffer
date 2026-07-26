@@ -5,6 +5,7 @@ import {
   ScrollView,
   StyleSheet,
   useWindowDimensions,
+  RefreshControl,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -23,6 +24,7 @@ import {
 import { useSquad } from '@/api/squad';
 import { useReducedMotion } from '@/lib/a11y';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { TabHeader } from '@/components/ui/TabHeader';
 import { SeasonCompleteBanner } from '@/components/ui/SeasonCompleteBanner';
 import { Icon } from '@/components/ui/Icon';
@@ -46,7 +48,13 @@ export default function TopPicksTab() {
   const { data: seasonState }                       = useSeasonState();
   const seasonLabel = currentSeasonLabel();
   const seasonOver = seasonState?.kind === 'complete';
-  const { data: topPicks, isPending: picksPending } = useTopPicks();
+  const {
+    data: topPicks,
+    isPending: picksPending,
+    isError: picksError,
+    isRefetching,
+    refetch,
+  } = useTopPicks();
   const { data: fixtures }                          = useFixturesByGw(gw ?? 0);
   const { data: squad }                             = useSquad();
 
@@ -70,6 +78,11 @@ export default function TopPicksTab() {
     if (idx !== active && idx >= 0 && idx < ORDER.length) setActive(idx);
   };
 
+  // This screen had no error branch at all — a failed player fetch pulsed the
+  // skeleton forever (#167).
+  if (picksError && !topPicks) {
+    return <ErrorState tk={tk} onRetry={refetch} />;
+  }
   if (picksPending || !topPicks) {
     return (
       <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
@@ -129,6 +142,9 @@ export default function TopPicksTab() {
             contentContainerStyle={styles.panelContent}
             showsVerticalScrollIndicator={false}
             nestedScrollEnabled
+            refreshControl={
+              <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+            }
           >
             <PicksCard
                 pos={pos}

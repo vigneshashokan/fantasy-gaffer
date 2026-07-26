@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Animated, useWindowDimensions } from 'react-native';
+import { View, FlatList, StyleSheet, Animated, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
@@ -10,6 +10,7 @@ import { useSeasonState, currentSeasonLabel } from '@/api/fixtures';
 import { useReducedMotion } from '@/lib/a11y';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { TabHeader } from '@/components/ui/TabHeader';
 import { SeasonCompleteBanner } from '@/components/ui/SeasonCompleteBanner';
 import { GameweekScreen } from '@/components/team/GameweekScreen';
@@ -50,7 +51,7 @@ export default function TeamTab() {
   }, [arrowsVisible, arrowOpacity, reduced]);
 
   // Live team — drives the gating states and the page-list bounds.
-  const { data: at, isPending, noTeam, isError } = useApexTeam();
+  const { data: at, isPending, noTeam, isError, refetch } = useApexTeam();
   const { data: seasonState } = useSeasonState();
 
   const [savedCaptain, setSavedCaptain] = useState('');
@@ -74,6 +75,13 @@ export default function TeamTab() {
       </View>
     );
   }
+  // Error before pending: on error TanStack reports isPending false with data
+  // undefined, so the skeleton branch would otherwise win forever (#167). With
+  // cached data present (offline read-cache, #39) we keep rendering it and let
+  // pull-to-refresh retry instead of blanking the screen.
+  if (isError && !at) {
+    return <ErrorState tk={tk} onRetry={refetch} />;
+  }
   if (isPending || !at) {
     return (
       <View style={{ flex: 1, backgroundColor: t.bg, padding: 16 }}>
@@ -82,15 +90,6 @@ export default function TeamTab() {
         <Skeleton height={180} radius={20} />
         <View style={{ height: 12 }} />
         <Skeleton height={260} radius={20} />
-      </View>
-    );
-  }
-  if (isError) {
-    return (
-      <View style={{ flex: 1, backgroundColor: t.bg, padding: 16 }}>
-        <Text style={{ color: tk.text, fontFamily: 'Archivo_700Bold' }}>
-          Could not reach FPL. Pull to retry.
-        </Text>
       </View>
     );
   }

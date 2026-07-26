@@ -8,6 +8,7 @@ import { useClubs, useClubCodeByTeamId } from '@/api/clubs';
 import { useElementSummary, last5FromHistory, next5Fixtures, gwBreakdown } from '@/api/playerSummary';
 import { GwBreakdownCard } from '@/components/player/GwBreakdownCard';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { Icon } from '@/components/ui/Icon';
 import { PlayerHero } from '@/components/player/PlayerHero';
 import { AvailabilityBanner } from '@/components/player/AvailabilityBanner';
@@ -24,11 +25,16 @@ export default function PlayerDetailModal() {
   const { paletteKey, dark } = useThemeStore();
   const tk = apexTokens(dark, paletteKey);
 
-  const { data: players, isPending } = usePlayers();
+  const { data: players, isPending, isError, refetch } = usePlayers();
   const { data: clubs } = useClubs();
   const { data: codeByTeamId } = useClubCodeByTeamId();
   const summary = useElementSummary(id);
 
+  // Same root cause as the tabs: on error `data` is undefined and `isPending`
+  // is false, so the skeleton below would win forever (#167).
+  if (isError && !players) {
+    return <ErrorState tk={tk} onRetry={refetch} />;
+  }
   if (isPending || !players) {
     return (
       <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>

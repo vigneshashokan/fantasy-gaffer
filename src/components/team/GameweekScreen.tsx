@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { track } from '@/lib/analytics';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
@@ -8,6 +8,7 @@ import { apexTokens } from '@/constants/apexTokens';
 import type { PitchPlayer, Suggestion } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { ApexPitch } from '@/components/pitch/ApexPitch';
 import { HeroCard } from '@/components/team/HeroCard';
 import { ApexDugout } from '@/components/team/ApexDugout';
@@ -57,7 +58,7 @@ export function GameweekScreen({
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
-  const { data: at, isPending, isError } = useApexTeam(gw);
+  const { data: at, isPending, isError, isRefetching, refetch } = useApexTeam(gw);
 
   // Report a fresh "at the top" position on mount so the shell's per-gameweek
   // scroll record is reset whenever this page (re)mounts after recycling.
@@ -81,6 +82,11 @@ export function GameweekScreen({
     track('decision_viewed', { type: 'chip' });
   }, [gw, upcoming]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Error before pending — otherwise the skeleton branch shadows this one
+  // forever, because `data` is undefined on error too (#167).
+  if (isError && !at) {
+    return <ErrorState tk={tk} onRetry={refetch} style={{ width, height }} />;
+  }
   if (isPending || !at) {
     return (
       <View style={{ width, height, backgroundColor: t.bg, padding: 16 }}>
@@ -89,15 +95,6 @@ export function GameweekScreen({
         <Skeleton height={180} radius={20} />
         <View style={{ height: 12 }} />
         <Skeleton height={260} radius={20} />
-      </View>
-    );
-  }
-  if (isError) {
-    return (
-      <View style={{ width, height, backgroundColor: t.bg, padding: 16 }}>
-        <Text style={{ color: tk.text, fontFamily: 'Archivo_700Bold' }}>
-          Could not reach FPL. Pull to retry.
-        </Text>
       </View>
     );
   }
@@ -130,6 +127,9 @@ export function GameweekScreen({
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={(e) => onVerticalScroll?.(e.nativeEvent.contentOffset.y)}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+        }
       >
         <GwPill gw={gw} state={gwState} tk={tk} />
 

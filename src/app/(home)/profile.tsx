@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
@@ -7,6 +7,7 @@ import { apexTokens } from '@/constants/apexTokens';
 import { useProfile } from '@/api/profile';
 import { initialsOf } from '@/lib/name';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { ReadField } from '@/components/profile/ReadField';
@@ -19,8 +20,19 @@ export default function ProfileModal() {
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
-  const { data: profile, isPending } = useProfile();
+  const { data: profile, isPending, isError, isRefetching, refetch } = useProfile();
 
+  // Error before pending — this screen had no error branch at all (#167).
+  if (isError && !profile) {
+    return (
+      <ErrorState
+        tk={tk}
+        onRetry={refetch}
+        title="Couldn't load your profile"
+        message="Check your connection and try again."
+      />
+    );
+  }
   if (isPending || !profile) {
     return (
       <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
@@ -62,6 +74,9 @@ export default function ProfileModal() {
       <ScrollView
         contentContainerStyle={{ paddingTop: 18, paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+        }
       >
         <SectionCard title="Personal details" tk={tk}>
           <ReadField label="First name" value={profile.firstName} tk={tk} />

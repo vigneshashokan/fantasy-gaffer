@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { track } from '@/lib/analytics';
 import { useThemeStore } from '@/store/themeStore';
@@ -10,6 +10,7 @@ import { useApexTeam } from '@/api/squad';
 import { useSeasonState, currentSeasonLabel } from '@/api/fixtures';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { ErrorState } from '@/components/ui/ErrorState';
 import { TabHeader } from '@/components/ui/TabHeader';
 import { TransferInfoCard } from '@/components/transfer/TransferInfoCard';
 import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
@@ -23,7 +24,7 @@ export default function TransferTab() {
   const { paletteKey, dark, pitchStyle } = useThemeStore();
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
-  const { data: at, isPending, noTeam, isError } = useApexTeam();
+  const { data: at, isPending, noTeam, isError, isRefetching, refetch } = useApexTeam();
   const { data: seasonState } = useSeasonState();
   const [pendingTransfers, setPendingTransfers] = useState<Record<string, boolean>>({});
   const pendingCount = Object.values(pendingTransfers).filter(Boolean).length;
@@ -41,19 +42,17 @@ export default function TransferTab() {
       </View>
     );
   }
+  // Error before pending — `data` is undefined on error too, so the skeleton
+  // branch used to shadow this one forever (#167).
+  if (isError && !at) {
+    return <ErrorState tk={tk} onRetry={refetch} />;
+  }
   if (isPending || !at) {
     return (
       <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
         <Skeleton height={72} radius={20} />
         <View style={{ height: 12 }} />
         <Skeleton height={260} radius={20} />
-      </View>
-    );
-  }
-  if (isError) {
-    return (
-      <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
-        <Text style={{ color: tk.text }}>Could not reach FPL. Pull to retry.</Text>
       </View>
     );
   }
@@ -102,6 +101,9 @@ export default function TransferTab() {
           pendingCount > 0 && { paddingBottom: 140 },
         ]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+        }
       >
         <View style={styles.topGroup}>
           {seasonOver ? (
