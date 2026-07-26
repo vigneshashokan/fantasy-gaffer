@@ -1,6 +1,93 @@
-import { assertEquals } from '@std/assert';
+import { assertEquals, assertRejects } from '@std/assert';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { handler, upcomingGws, seasonLabel } from '../index.ts';
+import { fetchSeasonHistory, handler, seasonForGw, seasonLabel, upcomingGws } from '../index.ts';
+
+type Row = Record<string, unknown>;
+
+interface Recorder {
+  upserts: { table: string; rows: unknown[] }[];
+  deletes: { table: string; gws: unknown; before: unknown }[];
+  ranges: [number, number][];
+}
+
+/**
+ * Minimal stand-in for the supabase-js query builder.
+ *
+ * `historyPages` is indexed by call order, so a test can hand back a full page
+ * followed by a short one and prove the handler kept paging.
+ */
+function makeSupabase(
+  selects: Record<string, Row[]>,
+  rec: Recorder,
+  historyPages?: Row[][],
+): SupabaseClient {
+  let historyCall = 0;
+  return {
+    from: (table: string) => ({
+      select: () => {
+        // deno-lint-ignore no-explicit-any
+        const self: any = {
+          eq: () => self,
+          in: () => Promise.resolve({ data: selects[table] ?? [], error: null }),
+          order: () => self,
+          range: (from: number, to: number) => {
+            rec.ranges.push([from, to]);
+            const page = historyPages
+              ? (historyPages[historyCall++] ?? [])
+              : (historyCall++ === 0 ? (selects[table] ?? []) : []);
+            return Promise.resolve({ data: page, error: null });
+          },
+          then: (r: (v: { data: Row[]; error: null }) => void) =>
+            r({ data: selects[table] ?? [], error: null }),
+        };
+        return self;
+      },
+      upsert: (rows: unknown[]) => {
+        rec.upserts.push({ table, rows });
+        return Promise.resolve({ error: null });
+      },
+      delete: () => ({
+        in: (_col: string, gws: unknown) => ({
+          lt: (_c: string, before: unknown) => {
+            rec.deletes.push({ table, gws, before });
+            return Promise.resolve({ error: null });
+          },
+        }),
+      }),
+    }),
+  } as unknown as SupabaseClient;
+}
+
+const recorder = (): Recorder => ({ upserts: [], deletes: [], ranges: [] });
+
+const historyRow = (player_id: number, gw: number, fixture_id: number): Row => ({
+  player_id,
+  gw,
+  fixture_id,
+  starts: 1,
+  total_points: 5,
+  expected_goals: 0.2,
+  expected_assists: 0.1,
+  expected_goal_involvements: 0.3,
+  threat: 20,
+  creativity: 10,
+  influence: 15,
+  bps: 20,
+  defensive_contribution: 2,
+});
+
+const BASE_SELECTS: Record<string, Row[]> = {
+  players: [{ id: 7, position: 'MID', team_id: 1, now_cost: 70 }],
+  clubs: [
+    { id: 1, strength_defence_home: 1100, strength_defence_away: 1100, strength_attack_home: 1100, strength_attack_away: 1100 },
+    { id: 2, strength_defence_home: 1100, strength_defence_away: 1100, strength_attack_home: 1100, strength_attack_away: 1100 },
+  ],
+  fixtures: [{ event: 10, team_h: 1, team_a: 2 }],
+  player_gw_history: [historyRow(7, 9, 90)],
+};
+
+const bootFetch = (events: Row[]) =>
+  (() => Promise.resolve(new Response(JSON.stringify({ events })))) as typeof globalThis.fetch;
 
 Deno.test('upcomingGws picks current/next and caps at 38', () => {
   const events = [{ id: 7, is_current: true, is_next: false }, { id: 8, is_current: false, is_next: true }];
@@ -13,37 +100,103 @@ Deno.test('seasonLabel uses the Aug boundary', () => {
   assertEquals(seasonLabel(new Date('2026-09-01')), '2026/27');
 });
 
-Deno.test('handler reads inputs, builds projections, upserts', async () => {
-  const captured: { table: string; rows: unknown[] }[] = [];
-  const selects: Record<string, unknown[]> = {
-    players: [{ id: 7, position: 'MID', team_id: 1, now_cost: 70 }],
-    clubs: [
-      { id: 1, strength_defence_home: 1100, strength_defence_away: 1100, strength_attack_home: 1100, strength_attack_away: 1100 },
-      { id: 2, strength_defence_home: 1100, strength_defence_away: 1100, strength_attack_home: 1100, strength_attack_away: 1100 },
-    ],
-    fixtures: [{ event: 10, team_h: 1, team_a: 2 }],
-    player_gw_history: [{ player_id: 7, gw: 9, fixture_id: 90, starts: 1, total_points: 5,
-      expected_goals: 0.2, expected_assists: 0.1, expected_goal_involvements: 0.3, threat: 20,
-      creativity: 10, influence: 15, bps: 20, defensive_contribution: 2 }],
-  };
+// #169: after the July API rollover the bootstrap serves the NEW season's GW1
+// while `now` is still July. Labelling from `now` paired new-season element ids
+// with last season's history, and element ids reset every season.
+Deno.test('seasonForGw labels from the gameweek deadline, not the clock', () => {
+  const events = [{ id: 1, is_current: false, is_next: true, deadline_time: '2026-08-14T17:30:00Z' }];
+  const julyNow = new Date('2026-07-18T04:00:00Z');
+  assertEquals(seasonForGw(events, 1, julyNow), '2026/27');
+  assertEquals(seasonLabel(julyNow), '2025/26', 'the clock alone would have said last season');
+});
+
+Deno.test('seasonForGw falls back to now when the event has no deadline', () => {
+  const events = [{ id: 5, is_current: true, is_next: false }];
+  assertEquals(seasonForGw(events, 5, new Date('2026-09-02')), '2026/27');
+});
+
+// #163: PostgREST caps every read at 1000 rows and supabase-js does not
+// paginate, so a whole-season select silently returned an arbitrary slice.
+Deno.test('fetchSeasonHistory pages until a request comes back empty', async () => {
+  const rec = recorder();
+  const full = Array.from({ length: 1000 }, (_, i) => historyRow(i + 1, 1, i + 1));
+  const partial = Array.from({ length: 37 }, (_, i) => historyRow(i + 1, 2, 2000 + i));
+  const supabase = makeSupabase({}, rec, [full, partial, []]);
+
+  const rows = await fetchSeasonHistory(supabase, '2025/26');
+
+  assertEquals(rows.length, 1037, 'both pages must be retained');
+  assertEquals(rec.ranges, [[0, 999], [1000, 1999], [1037, 2036]]);
+});
+
+Deno.test('fetchSeasonHistory advances by rows received, not page size', async () => {
+  const rec = recorder();
+  // A server-side cap below ours: advancing by PAGE_SIZE would skip rows.
+  const short = Array.from({ length: 500 }, (_, i) => historyRow(i + 1, 1, i + 1));
+  const supabase = makeSupabase({}, rec, [short, []]);
+
+  await fetchSeasonHistory(supabase, '2025/26');
+
+  assertEquals(rec.ranges[1][0], 500);
+});
+
+Deno.test('fetchSeasonHistory surfaces a query error instead of truncating', async () => {
   const supabase = {
-    from: (table: string) => ({
-      select: () => ({
-        eq: () => Promise.resolve({ data: selects[table], error: null }),
-        in: () => Promise.resolve({ data: selects[table], error: null }),
-        then: (r: (v: { data: unknown[]; error: null }) => void) => r({ data: selects[table], error: null }),
-      }),
-      upsert: (rows: unknown[]) => { captured.push({ table, rows }); return Promise.resolve({ error: null }); },
+    from: () => ({
+      select: () => {
+        // deno-lint-ignore no-explicit-any
+        const self: any = {
+          eq: () => self,
+          order: () => self,
+          range: () => Promise.resolve({ data: null, error: { message: 'boom' } }),
+        };
+        return self;
+      },
     }),
   } as unknown as SupabaseClient;
 
-  const fetch = (() => Promise.resolve(new Response(JSON.stringify({
-    events: [{ id: 10, is_current: false, is_next: true }],
-  })))) as typeof globalThis.fetch;
+  await assertRejects(() => fetchSeasonHistory(supabase, '2025/26'));
+});
 
-  const res = await handler(new Request('http://x/'), { supabase, fetch, now: () => new Date('2026-06-17') });
+Deno.test('handler reads inputs, builds projections, upserts', async () => {
+  const rec = recorder();
+  const supabase = makeSupabase(BASE_SELECTS, rec);
+  const fetch = bootFetch([{ id: 10, is_current: false, is_next: true, deadline_time: '2026-11-01T11:00:00Z' }]);
+
+  const res = await handler(new Request('http://x/'), { supabase, fetch, now: () => new Date('2026-11-01') });
+
   assertEquals(res.status, 200);
-  const proj = captured.find((c) => c.table === 'projections');
+  const proj = rec.upserts.find((c) => c.table === 'projections');
   assertEquals(!!proj, true);
   assertEquals((proj!.rows as { player_id: number }[])[0].player_id, 7);
+});
+
+// #169: writing near-intercept noise displaces the documented empty-table
+// behaviour, where the client falls back to FPL's ep_next.
+Deno.test('handler skips serving when the target season has no history', async () => {
+  const rec = recorder();
+  const supabase = makeSupabase({ ...BASE_SELECTS, player_gw_history: [] }, rec, [[]]);
+  const fetch = bootFetch([{ id: 1, is_current: false, is_next: true, deadline_time: '2026-08-14T17:30:00Z' }]);
+
+  const res = await handler(new Request('http://x/'), { supabase, fetch, now: () => new Date('2026-07-18') });
+
+  assertEquals(res.status, 200);
+  assertEquals((await res.json()).skipped, 'no-history-for-season');
+  assertEquals(rec.upserts.length, 0, 'nothing may be written');
+});
+
+// projections is keyed (player_id, gw) with no season column, so rows for
+// players who existed last season but not this one are never overwritten.
+Deno.test('handler sweeps rows the run did not refresh', async () => {
+  const rec = recorder();
+  const supabase = makeSupabase(BASE_SELECTS, rec);
+  const fetch = bootFetch([{ id: 10, is_current: false, is_next: true, deadline_time: '2026-11-01T11:00:00Z' }]);
+  const now = new Date('2026-11-01T04:00:00Z');
+
+  await handler(new Request('http://x/'), { supabase, fetch, now: () => now });
+
+  assertEquals(rec.deletes.length, 1);
+  assertEquals(rec.deletes[0].table, 'projections');
+  assertEquals(rec.deletes[0].gws, [10, 11, 12]);
+  assertEquals(rec.deletes[0].before, now.toISOString());
 });
