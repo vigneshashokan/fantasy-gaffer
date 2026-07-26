@@ -24,7 +24,7 @@ jest.mock('@/components/team/LinkTeamCta', () => {
 // fields it actually reads. `Partial<>` still catches a rename/type change on
 // any field that IS specified (see #155).
 let mockTeam: {
-  data: Partial<ApexTeamData> | null | undefined; isPending: boolean; isError: boolean; error: unknown; noTeam: boolean;
+  data: Partial<ApexTeamData> | null | undefined; isPending: boolean; isError: boolean; error: unknown; noTeam: boolean; noSquad: boolean;
 };
 jest.mock('@/api/squad', () => ({
   __esModule: true,
@@ -43,7 +43,7 @@ import type { ApexTeamData } from '@/api/squad';
 
 const liveTeam = (liveGw: number) => ({
   data: { liveGw, liveGwFinished: false, captainApplied: '', teamName: 'Apex Pitch FC' } satisfies Partial<ApexTeamData>,
-  isPending: false, isError: false, error: null, noTeam: false,
+  isPending: false, isError: false, error: null, noTeam: false, noSquad: false,
 });
 
 describe('TeamTab carousel shell', () => {
@@ -52,9 +52,21 @@ describe('TeamTab carousel shell', () => {
   });
 
   it('shows the link-team CTA when there is no team', () => {
-    mockTeam = { data: null, isPending: false, isError: false, error: null, noTeam: true };
+    mockTeam = { data: null, isPending: false, isError: false, error: null, noTeam: true, noSquad: false };
     const { getByText, queryByTestId } = renderWithProviders(<TeamTab />);
     expect(getByText('Link your team')).toBeTruthy();
+    expect(queryByTestId('gw-carousel')).toBeNull();
+  });
+
+  // Ordering guard. On a picks 404 the hook reports data:null with isPending
+  // false, so a noSquad branch placed AFTER `if (isPending || !at)` is
+  // unreachable and the screen pulses a skeleton forever — the 2026/27
+  // pre-season failure, and the same shape as the #167 error-branch bug.
+  it('shows the no-squad CTA rather than an endless skeleton when picks 404', () => {
+    mockTeam = { data: null, isPending: false, isError: false, error: null, noTeam: false, noSquad: true };
+    const { getByTestId, queryByTestId } = renderWithProviders(<TeamTab />);
+    expect(getByTestId('no-squad-cta')).toBeTruthy();
+    expect(getByTestId('open-fpl-cta')).toBeTruthy();
     expect(queryByTestId('gw-carousel')).toBeNull();
   });
 
@@ -93,7 +105,7 @@ describe('TeamTab carousel shell', () => {
   });
 
   it('shows the loading skeleton (no carousel) while the live team loads', () => {
-    mockTeam = { data: undefined, isPending: true, isError: false, error: null, noTeam: false };
+    mockTeam = { data: undefined, isPending: true, isError: false, error: null, noTeam: false, noSquad: false };
     const { queryByTestId } = renderWithProviders(<TeamTab />);
     expect(queryByTestId('gw-carousel')).toBeNull();
   });

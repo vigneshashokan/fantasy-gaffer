@@ -93,8 +93,22 @@ export function useTeamPreview(teamId: number | null) {
     queryKey: ['teamPreview', teamId, gw],
     queryFn: async () => {
       const [entry, picks] = await Promise.all([
+        // The entry endpoint is what actually validates the id: a wrong one
+        // 404s here, and connect-team's "We couldn't find a team with that ID"
+        // depends on that staying true.
         fplGet<FplEntry>(`/entry/${teamId}/`),
-        fplGet<PicksResponse>(`/entry/${teamId}/event/${gw}/picks/`),
+        // Picks 404 whenever the manager has no squad for this gameweek —
+        // pre-season before the first deadline, or a gameweek before they
+        // joined. Failing the whole preview on that told users with a
+        // perfectly valid id that their team did not exist, which blocked
+        // linking entirely between seasons. Treat a missing squad as an empty
+        // one; any other failure still propagates.
+        fplGet<PicksResponse>(`/entry/${teamId}/event/${gw}/picks/`).catch((err) => {
+          if (err instanceof FplFetchError && err.status === 404) {
+            return { picks: [] } as PicksResponse;
+          }
+          throw err;
+        }),
       ]);
       return composePreview(entry, picks, players.data ?? []);
     },
