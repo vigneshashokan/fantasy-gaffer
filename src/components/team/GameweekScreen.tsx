@@ -204,6 +204,8 @@ export function GameweekScreen({
             card={tk.card}
             cardBorder={tk.cardBorder}
             faint={tk.faint}
+            glyphGk={tk.green}
+            glyph={tk.purple}
             onPlayerPress={onOpenPlayer}
           />
         </View>

@@ -1,5 +1,5 @@
 import { getTheme, PALETTE, PaletteKey } from '@/constants/theme';
-import { apexTokens, HERO_ON_DARK } from '@/constants/apexTokens';
+import { apexTokens, HERO_ON_DARK, ON_PITCH } from '@/constants/apexTokens';
 import { contrastRatio } from '../utils/contrast';
 
 const AA = 4.5; // WCAG AA, normal text
@@ -35,6 +35,17 @@ describe('WCAG AA contrast — text tokens', () => {
   // document that darkening the accent keeps the button legible.)
   it('white text on the light green fill meets 4.5:1', () => {
     expect(contrastRatio('#FFFFFF', apexLight.green)).toBeGreaterThanOrEqual(AA);
+  });
+
+  // #188: the sub-on/sub-off pills sit on the grass, which is one fixed colour
+  // in every mode and palette, so they carry fixed ink rather than a token.
+  // Both fills used to fail against their own white text (3.48:1 / 2.36:1) and
+  // were invisible to this guard because it only ever read theme tokens.
+  it.each([
+    ['on-pitch ink / subOff', ON_PITCH.ink, ON_PITCH.subOff],
+    ['on-pitch ink / subIn', ON_PITCH.ink, ON_PITCH.subIn],
+  ])('%s meets 4.5:1', (_l, fg, bg) => {
+    expect(contrastRatio(fg, bg)).toBeGreaterThanOrEqual(AA);
   });
 
   // Sanity: the helper matches known reference ratios.
@@ -86,11 +97,15 @@ describe.each(KEYS)('WCAG AA contrast — palette %s', (key) => {
 
   // #179/#180: `purple` is the accent for links and rails on apex surfaces
   // (it replaced the hardcoded #A78BFA, which measured 2.72:1 on a card).
+  // #188: the same pair now also paints the dugout's outfield glyph, and
+  // `green` its keeper glyph — both on `card`, both swept for palette bleed.
   it.each([
     ['apex.light purple / card', aL.purple, aL.card],
     ['apex.light purple / bg', aL.purple, aL.bg],
     ['apex.dark purple / card', aD.purple, aD.card],
     ['apex.dark purple / bg', aD.purple, aD.bg],
+    ['apex.light green / card', aL.green, aL.card],
+    ['apex.dark green / card', aD.green, aD.card],
   ])('%s meets 4.5:1', (_l, fg, bg) => {
     expect(contrastRatio(fg, bg)).toBeGreaterThanOrEqual(AA);
   });

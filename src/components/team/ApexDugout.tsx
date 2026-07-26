@@ -10,10 +10,24 @@ interface ApexDugoutProps {
   card: string;
   cardBorder: string;
   faint: string;
+  /** Avatar fallback glyph (no club jersey). Pass `tk.green` / `tk.purple`. */
+  glyphGk: string;
+  glyph: string;
   onPlayerPress?: (p: PitchPlayer) => void;
 }
 
-export function ApexDugout({ players, card, cardBorder, faint, onPlayerPress }: ApexDugoutProps) {
+// The dugout is a themed card, not the pitch, so its glyphs take theme tokens —
+// the previous literals were classic-palette colours bleeding into pitch and
+// electric (#188), and #A78BFA measured 2.72:1 on a light card besides.
+export function ApexDugout({
+  players,
+  card,
+  cardBorder,
+  faint,
+  glyphGk,
+  glyph,
+  onPlayerPress,
+}: ApexDugoutProps) {
   return (
     <View style={[styles.container, { backgroundColor: card, borderColor: cardBorder }]}>
       <View style={styles.header}>
@@ -33,7 +47,7 @@ export function ApexDugout({ players, card, cardBorder, faint, onPlayerPress }: 
           const body = (
             <>
               <View style={styles.avatarWrap}>
-                <AvatarDisc size={42} player={p} glyph={p.gk ? '#00E472' : '#A78BFA'} />
+                <AvatarDisc size={42} player={p} glyph={p.gk ? glyphGk : glyph} />
                 {p.alert && (
                   <View style={[styles.alert, { borderColor: card }]} />
                 )}

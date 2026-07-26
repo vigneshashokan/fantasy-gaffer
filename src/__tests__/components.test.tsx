@@ -76,7 +76,7 @@ import { SettingsRow } from '@/components/settings/SettingsRow';
 import { ApplyCheckbox } from '@/components/ui/ApplyCheckbox';
 import { ApplyAllCard } from '@/components/team/ApplyAllCard';
 import { SubPill, SubInPill, GoalsBadge, AssistsBadge, CardIcons, CaptViceBadge } from '@/components/ui/PitchBadges';
-import { apexTokens } from '@/constants/apexTokens';
+import { apexTokens, ON_PITCH } from '@/constants/apexTokens';
 import { PALETTE } from '@/constants/theme';
 import { PitchMarks } from '@/components/pitch/PitchMarks';
 import { ApexPitchMarks } from '@/components/pitch/ApexPitchMarks';
@@ -379,10 +379,43 @@ describe('ApexDugout', () => {
       { id: '245', name: 'Truffert',  pts: 1 },
     ];
     const { getByText } = render(
-      <ApexDugout players={players} card="#fff" cardBorder="#E7E9F2" faint="#8B8694" />
+      <ApexDugout
+        players={players}
+        card="#fff"
+        cardBorder="#E7E9F2"
+        faint="#8B8694"
+        glyphGk="#008343"
+        glyph="#7C3AED"
+      />
     );
     expect(getByText('Dugout')).toBeTruthy();
     expect(getByText('Henderson')).toBeTruthy();
+  });
+
+  // #188: these were hardcoded classic-palette literals, so the dugout painted
+  // classic purple/green on the pitch and electric themes.
+  it('paints the avatar glyphs from the passed tokens', () => {
+    const players = [
+      { id: '116', name: 'Henderson', pts: 0, gk: true },
+      { id: '245', name: 'Truffert', pts: 1 },
+    ];
+    const tree = JSON.stringify(
+      render(
+        <ApexDugout
+          players={players}
+          card="#0B1224"
+          cardBorder="#E7E9F2"
+          faint="#8B8694"
+          glyphGk="#7CE0A6"
+          glyph="#9FD9FF"
+        />
+      ).toJSON()
+    );
+    // react-native-svg normalises a fill to an opaque ARGB int, not the hex.
+    const argb = (hex: string) => String(0xff000000 + parseInt(hex.slice(1), 16));
+    expect(tree).toContain(argb('#7CE0A6')); // keeper
+    expect(tree).toContain(argb('#9FD9FF')); // outfielder
+    expect(tree).not.toContain(argb('#A78BFA'));
   });
 
   it('calls onPlayerPress with the tapped bench player', () => {
@@ -397,6 +430,8 @@ describe('ApexDugout', () => {
         card="#fff"
         cardBorder="#E7E9F2"
         faint="#8B8694"
+        glyphGk="#008343"
+        glyph="#7C3AED"
         onPlayerPress={onPlayerPress}
       />
     );
@@ -646,6 +681,10 @@ describe('PitchBadges', () => {
   it('renders sub badges, goal/assist stacks and cards', () => {
     expect(render(<SubPill min={75} />).getByText("←75'")).toBeTruthy();
     expect(render(<SubInPill min={75} />).getByText("75'→")).toBeTruthy();
+    // #188: pins the fills to the guarded tokens. Hardcoding a fresh literal
+    // here is how both pills drifted below AA unnoticed in the first place.
+    expect(JSON.stringify(render(<SubPill min={75} />).toJSON())).toContain(ON_PITCH.subOff);
+    expect(JSON.stringify(render(<SubInPill min={75} />).toJSON())).toContain(ON_PITCH.subIn);
     expect(render(<GoalsBadge count={3} />).getByLabelText('3 goals')).toBeTruthy();
     expect(render(<AssistsBadge count={2} />).getByLabelText('2 assists')).toBeTruthy();
     const cards = render(<CardIcons cards={['yellow', 'red']} />);
