@@ -7,6 +7,7 @@ import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { PitchPlayer, Suggestion } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
+import { NoSquadCta } from '@/components/team/NoSquadCta';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ApexPitch } from '@/components/pitch/ApexPitch';
 import { HeroCard } from '@/components/team/HeroCard';
@@ -57,7 +58,7 @@ export function GameweekScreen({
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
-  const { data: at, isPending, isError } = useApexTeam(gw);
+  const { data: at, isPending, isError, noSquad } = useApexTeam(gw);
 
   // Report a fresh "at the top" position on mount so the shell's per-gameweek
   // scroll record is reset whenever this page (re)mounts after recycling.
@@ -81,6 +82,16 @@ export function GameweekScreen({
     track('decision_viewed', { type: 'chip' });
   }, [gw, upcoming]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Before the pending branch: on a picks 404 `at` is null and isPending is
+  // false, so `isPending || !at` would swallow this. Reachable here for a
+  // gameweek earlier than the one this manager joined on, even mid-season.
+  if (noSquad) {
+    return (
+      <View style={{ width, height, backgroundColor: t.bg }}>
+        <NoSquadCta tk={tk} gw={gw} />
+      </View>
+    );
+  }
   if (isPending || !at) {
     return (
       <View style={{ width, height, backgroundColor: t.bg, padding: 16 }}>

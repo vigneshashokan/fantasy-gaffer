@@ -19,7 +19,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useCurrentGameweek, useEventLive, useEventStats, useFixturesByGw, useAllFixtures, type SeasonFixtures } from './fixtures';
 import { pitchEventFields, type LivePlayerStat } from './liveStats';
-import { fplGet } from './fpl-client';
+import { fplGet, FplFetchError } from './fpl-client';
 import { chipsFromHistory, gwPointsFromHistory, useManager, useManagerHistory } from './manager';
 import { usePlayers } from './players';
 import { useProfile } from './profile';
@@ -80,8 +80,20 @@ export function useSquad(targetGw?: number) {
   return useQuery({
     queryKey: queryKeys.squad(teamId ?? 0, gwId ?? 0),
     queryFn: async () => {
-      const picks = await fplGet<PicksResponse>(`/entry/${teamId}/event/${gwId}/picks/`);
-      return squadFromPicks(picks, players.data ?? []);
+      try {
+        const picks = await fplGet<PicksResponse>(`/entry/${teamId}/event/${gwId}/picks/`);
+        return squadFromPicks(picks, players.data ?? []);
+      } catch (err) {
+        // FPL 404s this endpoint whenever the manager has no squad for the
+        // gameweek: pre-season before the first deadline has passed, or any
+        // gameweek earlier than the one they joined on. That is a legitimate
+        // state, not a failure — the entry itself still resolves, which is why
+        // useManager succeeds alongside this. Returning null lets the UI say so
+        // instead of offering a Retry that cannot succeed until the deadline.
+        // Anything other than a 404 is a real error and still propagates.
+        if (err instanceof FplFetchError && err.status === 404) return null;
+        throw err;
+      }
     },
     enabled: teamId !== null && gwId !== null && gwId > 0 && Array.isArray(players.data),
     staleTime: FPL_STALE,
@@ -128,9 +140,13 @@ export function useApexTeam(targetGw?: number) {
     historyQ.error ??
     null;
   const noTeam = profile.data?.fplTeamId === null;
+  // useSquad resolves to null (rather than erroring) when FPL has no picks for
+  // this gameweek. Distinct from noTeam: the account IS linked, there is just
+  // nothing to show yet.
+  const noSquad = !noTeam && squadQ.data === null;
 
   const data = useMemo(() => {
-    if (noTeam) return null;
+    if (noTeam || noSquad) return null;
     if (
       !squadQ.data ||
       !managerQ.data ||
@@ -154,6 +170,7 @@ export function useApexTeam(targetGw?: number) {
     );
   }, [
     noTeam,
+    noSquad,
     squadQ.data,
     managerQ.data,
     eventStatsQ.data,
@@ -168,7 +185,7 @@ export function useApexTeam(targetGw?: number) {
     allFixturesQ.data,
   ]);
 
-  return { data, isPending, isError, error, noTeam };
+  return { data, isPending, isError, error, noTeam, noSquad };
 }
 
 // Captain shows multiplied points (×2 / ×3 TC) matching the FPL UI; bench
