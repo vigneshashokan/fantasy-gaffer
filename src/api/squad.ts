@@ -69,6 +69,7 @@ export function squadFromPicks(
 }
 
 const FPL_STALE = 60 * 1000;
+const SEASON_FINAL_GW = 38;
 
 export function useSquad(targetGw?: number) {
   const profile = useProfile();
@@ -115,9 +116,23 @@ export function useApexTeam(targetGw?: number) {
   const fixturesQ = useFixturesByGw(gw);
   const liveQ = useEventLive(gw);
   const playersQ = usePlayers();
-  const projQ0 = useProjections(liveGw);
-  const projQ1 = useProjections(liveGw > 0 ? Math.min(38, liveGw + 1) : 0);
-  const projQ2 = useProjections(liveGw > 0 ? Math.min(38, liveGw + 2) : 0);
+  // Anchored on the page being composed, not the live gameweek. The advice
+  // surfaces (captain, best XI, bench, transfers, chips) only render when
+  // `gw > liveGw`, so anchoring on liveGw handed computeAdvice the p50/p75 of
+  // a gameweek that had already been played and joined it against the upcoming
+  // gameweek's fixtures. `is_current` stays on a finished gameweek until the
+  // next deadline, so that was the live state Tue–Sat — exactly when users
+  // make these decisions (#168).
+  //
+  // Out-of-range offsets pass 0, which disables the query and yields an empty
+  // map. Clamping with Math.min(38, …) instead produced windows like
+  // [37, 38, 38], and score3 and the chip sums counted the final gameweek two
+  // or three times, inflating transfer gains by up to 3x (#175).
+  const projGw = (offset: number) =>
+    gw > 0 && gw + offset <= SEASON_FINAL_GW ? gw + offset : 0;
+  const projQ0 = useProjections(projGw(0));
+  const projQ1 = useProjections(projGw(1));
+  const projQ2 = useProjections(projGw(2));
   const allFixturesQ = useAllFixtures();
 
   const isPending =
@@ -265,7 +280,11 @@ function buildApexTeam(
   });
   const chipAdvice = computeChipAdvice({
     squad,
-    upcomingGw: liveCurrent.gw,
+    // Must match the anchor of projMaps above: chipAdvice indexes
+    // projMaps[bestGw - upcomingGw]. Leaving this on liveCurrent.gw while the
+    // window starts at `gw` would just relocate the #168 off-by-one into the
+    // chip tips.
+    upcomingGw: gw,
     seasonFixtures: seasonFixtures ?? new Map(),
     projMaps,
   });

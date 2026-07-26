@@ -255,3 +255,66 @@ describe('useApexTeam chip wiring', () => {
     expect(bb?.tip?.lines[0]).toContain('play twice in GW25');
   });
 });
+
+// #168 — the advice surfaces (captain, best XI, bench, transfers, chips) only
+// render on the UPCOMING gameweek page, i.e. useApexTeam(liveGw + 1). The
+// projection window was anchored to liveGw regardless, so computeAdvice was
+// handed the already-played gameweek's p50/p75 and joined it against the
+// upcoming gameweek's fixtures. is_current stays on a finished gameweek until
+// the next deadline, so this was the live state Tue–Sat — exactly when the
+// decisions are made.
+describe('projection window anchoring (#168)', () => {
+  function renderFor(targetGw: number | undefined, liveGw: number) {
+    (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 1 }, isPending: false, isError: false, error: null });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({
+      data: { gw: liveGw, avgPoints: 0, highestPoints: 0, finished: true, dataChecked: true } satisfies CurrentGameweek,
+      isPending: false, isError: false, error: null,
+    });
+    (useEventStats as jest.Mock).mockReturnValue({ data: { gw: targetGw ?? liveGw, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false } satisfies CurrentGameweek });
+    (useEventLive as jest.Mock).mockReturnValue({ data: undefined });
+    (useFixturesByGw as jest.Mock).mockReturnValue({ data: undefined });
+    (usePlayers as jest.Mock).mockReturnValue({ data: [], isSuccess: true });
+    (useManager as jest.Mock).mockReturnValue({ data: { name: 'T', gw: liveGw, gwPoints: 0, totalPoints: 0, rank: 0, bank: 0 } satisfies TeamInfo, isPending: false, isError: false, error: null });
+    (useManagerHistory as jest.Mock).mockReturnValue({ data: { current: [], chips: [] } satisfies FplHistory, isPending: false, isError: false, error: null });
+    (useProjections as jest.Mock).mockReturnValue({ data: new Map() satisfies Map<string, ProjectionStat> });
+    (fplGet as jest.Mock).mockResolvedValue({ picks: [] });
+
+    const client = makeTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    return renderHook(() => useApexTeam(targetGw), { wrapper });
+  }
+
+  const requestedGws = () =>
+    (useProjections as jest.Mock).mock.calls.map((c) => c[0] as number);
+
+  it('anchors the 3-gameweek window on the page being viewed, not the live gameweek', async () => {
+    const { result } = renderFor(25, 24); // upcoming-gameweek page
+    await waitFor(() => expect(result.current.isPending).toBe(false));
+    // Was [24, 25, 26]: advice ranked on a gameweek that had already been played.
+    expect(requestedGws().slice(0, 3)).toEqual([25, 26, 27]);
+  });
+
+  it('falls back to the live gameweek when no page is specified', async () => {
+    const { result } = renderFor(undefined, 24);
+    await waitFor(() => expect(result.current.isPending).toBe(false));
+    expect(requestedGws().slice(0, 3)).toEqual([24, 25, 26]);
+  });
+
+  // #175 — Math.min(38, …) made the window [37, 38, 38] and [38, 38, 38], so
+  // score3 and the chip sums counted the final gameweek two or three times,
+  // inflating transfer gains by up to 3x. 0 disables the query, which yields
+  // an empty map rather than a duplicate.
+  it('pads past the final gameweek instead of clamping onto it', async () => {
+    const { result } = renderFor(37, 36);
+    await waitFor(() => expect(result.current.isPending).toBe(false));
+    expect(requestedGws().slice(0, 3)).toEqual([37, 38, 0]);
+  });
+
+  it('requests nothing beyond the final gameweek', async () => {
+    const { result } = renderFor(38, 37);
+    await waitFor(() => expect(result.current.isPending).toBe(false));
+    expect(requestedGws().slice(0, 3)).toEqual([38, 0, 0]);
+  });
+});
