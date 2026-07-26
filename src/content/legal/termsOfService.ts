@@ -2,9 +2,9 @@ import type { LegalDoc } from './types';
 
 export const termsOfService: LegalDoc = {
   title: 'Terms of Service',
-  lastUpdated: '2026-07-02',
+  lastUpdated: '2026-07-25',
   intro:
-    'These Terms of Service ("Terms") govern your use of the Fantasy Gaffer app, operated by [OPERATOR LEGAL NAME]. By creating an account or using the app, you agree to these Terms. If you do not agree, please do not use the app.',
+    'These Terms of Service ("Terms") govern your use of the Fantasy Gaffer app, operated by Vignesh Ashokan. By creating an account or using the app, you agree to these Terms. If you do not agree, please do not use the app.',
   sections: [
     {
       heading: 'Eligibility and your account',
@@ -66,7 +66,7 @@ export const termsOfService: LegalDoc = {
       blocks: [
         {
           type: 'paragraph',
-          text: 'The app, including its design, content, and software, is owned by [OPERATOR LEGAL NAME] and protected by intellectual property laws. We grant you a limited, personal, non-transferable licence to use the app in accordance with these Terms.',
+          text: 'The app, including its design, content, and software, is owned by Vignesh Ashokan and protected by intellectual property laws. We grant you a limited, personal, non-transferable licence to use the app in accordance with these Terms.',
         },
       ],
     },
@@ -84,7 +84,7 @@ export const termsOfService: LegalDoc = {
       blocks: [
         {
           type: 'paragraph',
-          text: 'To the maximum extent permitted by law, [OPERATOR LEGAL NAME] will not be liable for any indirect, incidental, special, or consequential damages, or for any loss arising from your use of, or inability to use, the app.',
+          text: 'To the maximum extent permitted by law, Vignesh Ashokan will not be liable for any indirect, incidental, special, or consequential damages, or for any loss arising from your use of, or inability to use, the app.',
         },
       ],
     },
@@ -111,7 +111,7 @@ export const termsOfService: LegalDoc = {
       blocks: [
         {
           type: 'paragraph',
-          text: 'These Terms are governed by the laws of [GOVERNING LAW JURISDICTION], without regard to its conflict-of-laws rules.',
+          text: 'These Terms are governed by the laws of the Province of British Columbia and the federal laws of Canada applicable therein, without regard to conflict-of-laws rules.',
         },
       ],
     },

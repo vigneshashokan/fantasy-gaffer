@@ -2,9 +2,9 @@ import type { LegalDoc } from './types';
 
 export const privacyPolicy: LegalDoc = {
   title: 'Privacy Policy',
-  lastUpdated: '2026-07-02',
+  lastUpdated: '2026-07-25',
   intro:
-    'This Privacy Policy explains what information Fantasy Gaffer ("the app", "we", "us") collects, how we use it, and the choices you have. Fantasy Gaffer is operated by [OPERATOR LEGAL NAME]. We recommend reviewing this policy together with our Terms of Service.',
+    'This Privacy Policy explains what information Fantasy Gaffer ("the app", "we", "us") collects, how we use it, and the choices you have. Fantasy Gaffer is operated by Vignesh Ashokan. We recommend reviewing this policy together with our Terms of Service.',
   sections: [
     {
       heading: 'Information we collect',
