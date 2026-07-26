@@ -26,12 +26,12 @@ signUpWithEmail() in src/lib/auth/email.ts
   ↓
 supabase.auth.signUp({ email, password, options: {
   data: { given_name, family_name },
-  emailRedirectTo: 'fplgafferreactnativeapp://verify',
+  emailRedirectTo: VERIFY_URL,   // https://fantasy-gaffer.com/verify
 } })
   ↓
 router.replace('/(onboarding)/verify-pending?email=…')
   ↓ user opens email, taps link
-  ↓ link → Supabase verify endpoint → redirect to fplgafferreactnativeapp://verify?code=…
+  ↓ link → Supabase verify endpoint → redirect to https://fantasy-gaffer.com/verify?code=…
   ↓
 useEmailAuthDeepLinks (in src/app/_layout.tsx) catches the URL
   ↓
@@ -50,11 +50,11 @@ User taps "Forgot password?" → /(onboarding)/forgot-password
   ↓ enters email → sendPasswordReset()
   ↓
 supabase.auth.resetPasswordForEmail(email, {
-  redirectTo: 'fplgafferreactnativeapp://reset-password',
+  redirectTo: RESET_PASSWORD_URL,   // https://fantasy-gaffer.com/reset-password
 })
   ↓ always shows success state (no enumeration)
   ↓ user opens email, taps link
-  ↓ link → fplgafferreactnativeapp://reset-password?code=…
+  ↓ link → https://fantasy-gaffer.com/reset-password?code=…
   ↓
 useEmailAuthDeepLinks catches the URL → exchangeCodeForSession(code) → router.replace('/(onboarding)/reset-password')
   ↓ on a resolved { error } (expired / already-used link) it instead
@@ -71,7 +71,10 @@ supabase.auth.signOut({ scope: 'others' })   ← invalidates other devices
 Same pattern as Google sign-in's manual setup. Required before the flow works end-to-end.
 
 1. **Supabase Dashboard → Authentication → URL Configuration → Redirect URLs:**
-   add `fplgafferreactnativeapp://verify` and `fplgafferreactnativeapp://reset-password`
+   add `https://fantasy-gaffer.com/verify` and `https://fantasy-gaffer.com/reset-password`.
+   Keep the old `fplgafferreactnativeapp://verify` / `://reset-password` entries too —
+   the custom scheme is still what the web fallback pages' "Open in the app" button
+   uses, and what any email sent before #71 shipped still carries
    (alongside the wildcard added during sub-project C).
 2. **Authentication → Providers → Email:** confirm "Confirm email" is **on**.
 3. **Authentication → Rate Limits:** defaults are acceptable for Phase 1 (5 sign-in attempts /
@@ -99,7 +102,9 @@ Same pattern as Google sign-in's manual setup. Required before the flow works en
 - Check the Supabase project's email rate-limit isn't tripped.
 
 **Verify link opens but stays on signin (or shows "Verification link expired")**
-- Confirm `fplgafferreactnativeapp://verify` is in the Redirect URLs allow list.
+- Confirm `https://fantasy-gaffer.com/verify` is in the Redirect URLs allow list. An
+  unlisted `redirect_to` is not an error — GoTrue silently rewrites it to the project's
+  Site URL, so the link will look fine and land somewhere useless.
 - The link is one-time-use — opening it twice fails the second time.
 
 **Every link reports "expired" even when freshly sent — UNVERIFIED RISK**
@@ -113,7 +118,7 @@ Same pattern as Google sign-in's manual setup. Required before the flow works en
   device validation, so it is deliberately not bundled with the #176 fix.
 
 **Reset link doesn't open the app**
-- Confirm `fplgafferreactnativeapp://reset-password` is in the Redirect URLs allow list.
+- Confirm `https://fantasy-gaffer.com/reset-password` is in the Redirect URLs allow list.
 - Confirm `app.config.ts` still has `scheme: 'fplgafferreactnativeapp'` (unchanged since #10).
 
 **"Invalid login credentials" on a freshly verified account**
@@ -129,3 +134,43 @@ Same pattern as Google sign-in's manual setup. Required before the flow works en
 - **Email-change flow:** the current spec only covers sign-up and reset. Changing the address
   on an existing account is a Phase 2 ticket.
 - **Server-side audit log:** track failed-login bursts for the security event view (Phase 5).
+
+## Universal Links (#71)
+
+Since #71 the auth emails redirect to `https://fantasy-gaffer.com/…` rather than
+the `fplgafferreactnativeapp://` scheme. iOS opens the app directly; a device
+without the app (or a desktop browser) gets a real web page instead of a dead
+tab, which is the gap the custom scheme could never close.
+
+- **Association file:** `/.well-known/apple-app-site-association`, served from
+  the `vigneshashokan/fantasy-gaffer-site` repo, claiming
+  `Q6G9ABTUH5.com.fantasygaffer.app` for `/verify` and `/reset-password`.
+- **Verify it end to end** by asking Apple, not the origin — Apple's CDN is what
+  the device actually reads, and it caches for an hour:
+
+  ```
+  curl -s -D- https://app-site-association.cdn-apple.com/a/v1/fantasy-gaffer.com | head -20
+  ```
+
+  A healthy response carries `Apple-From:` pointing at our URL and
+  `Apple-Origin-Format: json`.
+
+- **GitHub Pages serves the file as `application/octet-stream`** and offers no
+  way to set headers. Apple's docs ask for `application/json`, but its fetcher
+  parses ours anyway — confirmed by the CDN response above. If Universal Links
+  ever stop resolving, re-check that first: it is the one part of this setup
+  that is tolerated rather than correct.
+
+- **Ordering rule.** iOS fetches the association at install time. Publishing the
+  file must precede shipping `associatedDomains`, or every link silently
+  degrades to Safari for anyone who installed in between.
+
+- **`parseAuthDeepLink` accepts both shapes** and checks the *host*, not just
+  the path — otherwise any https link the OS handed the app would be read as an
+  auth callback. The custom scheme is still live for Google OAuth, the fallback
+  pages' "Open in the app" button, and emails predating this change.
+
+- **Android has no App Links.** `assetlinks.json` needs the Play app-signing
+  certificate and Play is parked, so on Android an auth email opens the web page
+  and the "Open in the app" button (custom scheme) is the only route in. Add
+  `assetlinks.json` + `intentFilters` when Play enrollment happens.

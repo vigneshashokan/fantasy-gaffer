@@ -89,6 +89,58 @@ describe('parseAuthDeepLink', () => {
     expect(parseAuthDeepLink('https://example.com/verify')).toEqual({ kind: 'unknown' });
   });
 
+  // #71: Supabase now redirects to Universal Links, so these are the shape the
+  // OS actually delivers. The custom scheme above stays supported — Google
+  // OAuth still uses it, as do the web fallback pages and any auth email
+  // already sitting in an inbox from before this shipped.
+  describe('Universal Links', () => {
+    it('classifies the https verify URL and extracts the code', () => {
+      expect(parseAuthDeepLink('https://fantasy-gaffer.com/verify?code=abc')).toEqual({
+        kind: 'verify',
+        code: 'abc',
+      });
+    });
+
+    it('classifies the https reset-password URL and extracts the code', () => {
+      expect(
+        parseAuthDeepLink('https://fantasy-gaffer.com/reset-password?code=xyz'),
+      ).toEqual({ kind: 'reset', code: 'xyz' });
+    });
+
+    // The parser used to gate on scheme alone. Matching on path without also
+    // checking the host would make any https link the OS handed us — a shared
+    // article, a tapped ad — read as an auth callback.
+    it('rejects a look-alike path on another host', () => {
+      expect(parseAuthDeepLink('https://evil.example/verify?code=abc')).toEqual({
+        kind: 'unknown',
+      });
+      expect(
+        parseAuthDeepLink('https://fantasy-gaffer.com.evil.example/verify?code=abc'),
+      ).toEqual({ kind: 'unknown' });
+    });
+
+    it('ignores our own non-auth pages', () => {
+      expect(parseAuthDeepLink('https://fantasy-gaffer.com/privacy')).toEqual({
+        kind: 'unknown',
+      });
+      expect(parseAuthDeepLink('https://fantasy-gaffer.com/')).toEqual({ kind: 'unknown' });
+    });
+
+    it('does not mistake a fragment for a query string over https', () => {
+      expect(
+        parseAuthDeepLink('https://fantasy-gaffer.com/verify#access_token=t&code=nope'),
+      ).toEqual({ kind: 'verify', code: null });
+    });
+
+    // http:// is not claimed by the association, so it should never arrive —
+    // but if it does it is an unauthenticated channel, not our callback.
+    it('does not accept plain http', () => {
+      expect(parseAuthDeepLink('http://fantasy-gaffer.com/verify?code=abc')).toEqual({
+        kind: 'unknown',
+      });
+    });
+  });
+
   it('handles malformed URLs gracefully', () => {
     expect(parseAuthDeepLink('not-a-url-at-all')).toEqual({ kind: 'unknown' });
   });

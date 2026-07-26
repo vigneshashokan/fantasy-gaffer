@@ -17,6 +17,12 @@ const config: ExpoConfig = {
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
+    // Universal Links for the auth emails (#71). The host must serve
+    // /.well-known/apple-app-site-association claiming /verify and
+    // /reset-password — it does, from the fantasy-gaffer-site repo. Keep in
+    // sync with AUTH_LINK_HOST in src/constants/links.ts. iOS fetches the
+    // association at install time, so publishing the file has to come first.
+    associatedDomains: ['applinks:fantasy-gaffer.com'],
   },
   android: {
     package: 'com.fantasygaffer.app',

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { RESET_PASSWORD_URL, VERIFY_URL } from '@/constants/links';
 
 export type AuthErrorKind =
   | 'invalid_credentials'
@@ -60,7 +61,7 @@ export async function signUpWithEmail(args: {
       password: args.password,
       options: {
         data: { given_name: args.firstName, family_name: args.lastName },
-        emailRedirectTo: 'fplgafferreactnativeapp://verify',
+        emailRedirectTo: VERIFY_URL,
       },
     });
     if (error) return { ok: false, error: classify(error) };
@@ -74,7 +75,7 @@ export async function sendPasswordReset(email: string): Promise<Result> {
   // Always-success from the caller's perspective: never enumerate accounts.
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'fplgafferreactnativeapp://reset-password',
+      redirectTo: RESET_PASSWORD_URL,
     });
     if (error) {
       console.warn('[auth] resetPasswordForEmail returned error (swallowed):', error.message);
