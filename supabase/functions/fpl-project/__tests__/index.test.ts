@@ -15,6 +15,9 @@ interface Recorder {
   upserts: { table: string; rows: unknown[] }[];
   deletes: { table: string; gws: unknown; before: unknown }[];
   ranges: [number, number][];
+  // #194: ingestion_runs rows — one insert to open the run, one update to close it.
+  runs: Row[];
+  runPatches: Row[];
 }
 
 /**
@@ -27,6 +30,7 @@ function makeSupabase(
   selects: Record<string, Row[]>,
   rec: Recorder,
   historyPages?: Row[][],
+  upsertError?: Row,
 ): SupabaseClient {
   let historyCall = 0;
   return {
@@ -51,8 +55,22 @@ function makeSupabase(
       },
       upsert: (rows: unknown[]) => {
         rec.upserts.push({ table, rows });
-        return Promise.resolve({ error: null });
+        return Promise.resolve({ error: upsertError ?? null });
       },
+      insert: (row: Row) => {
+        rec.runs.push(row);
+        return {
+          select: () => ({
+            single: () => Promise.resolve({ data: { id: `run-${rec.runs.length}` }, error: null }),
+          }),
+        };
+      },
+      update: (patch: Row) => ({
+        eq: (_col: string, id: unknown) => {
+          rec.runPatches.push({ ...patch, id });
+          return Promise.resolve({ error: null });
+        },
+      }),
       delete: () => ({
         in: (_col: string, gws: unknown) => ({
           lt: (_c: string, before: unknown) => {
@@ -65,7 +83,13 @@ function makeSupabase(
   } as unknown as SupabaseClient;
 }
 
-const recorder = (): Recorder => ({ upserts: [], deletes: [], ranges: [] });
+const recorder = (): Recorder => ({
+  upserts: [],
+  deletes: [],
+  ranges: [],
+  runs: [],
+  runPatches: [],
+});
 
 const historyRow = (player_id: number, gw: number, fixture_id: number): Row => ({
   player_id,
@@ -206,4 +230,53 @@ Deno.test('handler sweeps rows the run did not refresh', async () => {
   assertEquals(rec.deletes[0].table, 'projections');
   assertEquals(rec.deletes[0].gws, [10, 11, 12]);
   assertEquals(rec.deletes[0].before, now.toISOString());
+});
+
+// #194: fpl-project ran nightly and wrote nothing to ingestion_runs, so a
+// failure left no trace outside the function logs — the gap that let #163's
+// wrong-but-well-formed projections go unnoticed for months.
+Deno.test('handler opens a run and closes it on success', async () => {
+  const rec = recorder();
+  const supabase = makeSupabase(BASE_SELECTS, rec);
+  const fetch = bootFetch([{ id: 10, is_current: false, is_next: true, deadline_time: '2026-11-01T11:00:00Z' }]);
+
+  const res = await handler(authed('http://x/'), { supabase, fetch, now: () => new Date('2026-11-01') });
+
+  assertEquals(rec.runs, [{ source: 'project', status: 'running' }]);
+  assertEquals(rec.runPatches.length, 1);
+  assertEquals(rec.runPatches[0].status, 'success');
+  // One player, and only GW10 has a fixture in BASE_SELECTS.
+  assertEquals(rec.runPatches[0].rows_upserted, 1);
+  assertEquals((await res.json()).runId, 'run-1');
+});
+
+// #169 added a legitimate pre-season no-op. Without a row it is
+// indistinguishable from the job never having run.
+Deno.test('handler records the skip reason rather than silently no-opping', async () => {
+  const rec = recorder();
+  const supabase = makeSupabase({ ...BASE_SELECTS, player_gw_history: [] }, rec, [[]]);
+  const fetch = bootFetch([{ id: 1, is_current: false, is_next: true, deadline_time: '2026-08-14T17:30:00Z' }]);
+
+  await handler(authed('http://x/'), { supabase, fetch, now: () => new Date('2026-07-18') });
+
+  assertEquals(rec.runPatches[0].status, 'skipped');
+  assertEquals(rec.runPatches[0].skip_reason, 'no-history-for-season');
+});
+
+Deno.test('handler closes the run as error with a readable PostgREST message', async () => {
+  const rec = recorder();
+  // The shape #177's numeric overflow arrived in: a plain object, which
+  // String(err) would have flattened to [object Object].
+  const supabase = makeSupabase(BASE_SELECTS, rec, undefined, {
+    code: '22003',
+    message: 'numeric field overflow',
+  });
+  const fetch = bootFetch([{ id: 10, is_current: false, is_next: true, deadline_time: '2026-11-01T11:00:00Z' }]);
+
+  const res = await handler(authed('http://x/'), { supabase, fetch, now: () => new Date('2026-11-01') });
+
+  assertEquals(res.status, 500);
+  assertEquals(rec.runPatches[0].status, 'error');
+  assertEquals(rec.runPatches[0].error_message, 'code=22003 | message=numeric field overflow');
+  assertEquals((await res.json()).error, 'code=22003 | message=numeric field overflow');
 });
