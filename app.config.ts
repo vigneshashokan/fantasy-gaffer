@@ -6,12 +6,14 @@ const config: ExpoConfig = {
   owner: 'fantasygaffers-org',
   version: '1.0.0',
   orientation: 'portrait',
-  icon: './assets/logos/logo-mark.png',
+  // 1024x1024, square, NO alpha — App Store Connect rejects anything else
+  // (logo-mark.png is 574x401 with transparency, so it can't be the icon).
+  // Regenerate: crop logo-mark.png to its bbox, scale to 74% width, centre on #00E676, flatten.
+  icon: './assets/logos/icon.png',
   scheme: 'fplgafferreactnativeapp',
   userInterfaceStyle: 'automatic',
   ios: {
     bundleIdentifier: 'com.fantasygaffer.app',
-    icon: './assets/logos/logo-mark.png',
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
