@@ -74,7 +74,13 @@ export default function CompleteProfile() {
       }
       router.replace('/(onboarding)/connect-team');
     } catch (err) {
-      console.error(err);
+      // Was console.error-only, so a thrown network/auth failure left the
+      // button stuck on "Saving..." with no explanation. Same Alert the
+      // handled profileError path above already uses.
+      Alert.alert(
+        "Couldn't save your profile",
+        err instanceof Error ? err.message : 'Please try again.',
+      );
       setSubmitting(false);
     }
   };
@@ -130,16 +136,37 @@ export default function CompleteProfile() {
             </Text>
           </Pressable>
           {showPicker && (
-            <DateTimePicker
-              value={dob ?? new Date(2000, 0, 1)}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              maximumDate={new Date()}
-              onChange={(_event, selected) => {
-                if (Platform.OS !== 'ios') setShowPicker(false);
-                if (selected) setDob(selected);
-              }}
-            />
+            <>
+              <DateTimePicker
+                value={dob ?? new Date(2000, 0, 1)}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                maximumDate={new Date()}
+                onChange={(_event, selected) => {
+                  // The Android dialog dismisses itself; the iOS spinner is
+                  // inline and fires onChange on every scroll tick, so it can
+                  // only be closed by an explicit affordance — without the
+                  // Done row below there was no way out of it at all.
+                  if (Platform.OS !== 'ios') setShowPicker(false);
+                  if (selected) setDob(selected);
+                }}
+              />
+              {Platform.OS === 'ios' && (
+                <Pressable
+                  testID="dob-picker-done"
+                  onPress={() => {
+                    // Committing the visible value: an untouched spinner never
+                    // fires onChange, so confirming it must seed the default.
+                    if (!dob) setDob(new Date(2000, 0, 1));
+                    setShowPicker(false);
+                  }}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [styles.dobDone, { opacity: pressed ? 0.7 : 1 }]}
+                >
+                  <Text style={[styles.dobDoneText, { color: t.accent }]}>Done</Text>
+                </Pressable>
+              )}
+            </>
           )}
           {dob && ageYears(dob) < COPPA_MIN_AGE_YEARS ? (
             <Text style={[styles.error, { color: t.danger }]}>
@@ -152,10 +179,13 @@ export default function CompleteProfile() {
           )}
         </View>
 
-        <View style={[styles.submitWrap, { opacity: submitDisabled ? 0.5 : 1 }]}>
+        <View style={styles.submitWrap}>
           <PillBtn
             variant="accent"
             onPress={onSubmit}
+            // The wrapper used to fake this with opacity while the button
+            // stayed pressable and unannounced; PillBtn now owns both.
+            disabled={submitDisabled}
             accentFill={t.accent}
             accentInk={t.accentInk}
             style={styles.submitBtn}
@@ -206,6 +236,15 @@ const styles = StyleSheet.create({
     fontFamily: 'Archivo_600SemiBold',
     fontSize: 13,
     marginTop: -4,
+  },
+  dobDone: {
+    alignSelf: 'flex-end',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  dobDoneText: {
+    fontFamily: 'Archivo_700Bold',
+    fontSize: 15,
   },
   dobHelper: {
     fontFamily: 'Archivo_500Medium',

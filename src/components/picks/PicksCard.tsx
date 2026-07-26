@@ -66,7 +66,7 @@ export function PicksCard({
 
       {rows.map((p, i) => (
         <PickRow
-          key={p.name}
+          key={p.id}
           p={p}
           zebra={i % 2 === 1}
           last={i === rows.length - 1}

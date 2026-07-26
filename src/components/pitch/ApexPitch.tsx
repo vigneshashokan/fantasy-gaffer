@@ -76,7 +76,7 @@ export function ApexPitch({
             <View key={i} style={styles.row}>
               {row.map((p) => (
                 <ApexPitchPlayerCard
-                  key={p.name}
+                  key={p.id}
                   p={p}
                   upcoming={upcoming}
                   slotW={slotW}

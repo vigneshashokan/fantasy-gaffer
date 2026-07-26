@@ -80,6 +80,7 @@ export default function VerifyPending() {
         <PillBtn
           variant="accent"
           onPress={onResend}
+          disabled={cooldown > 0 || !email}
           accentFill={t.accent}
           accentInk={t.accentInk}
           style={styles.resendBtn}
