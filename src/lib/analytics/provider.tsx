@@ -25,7 +25,11 @@ export function useScreenTracking(): void {
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') posthog.reloadFeatureFlagsAsync();
+      // Voided explicitly: a rejected flag refresh (offline resume is the
+      // common case) was an unhandled rejection, not a no-op (#178).
+      if (state === 'active') {
+        void posthog.reloadFeatureFlagsAsync().catch(() => {});
+      }
     });
     return () => sub.remove();
   }, []);

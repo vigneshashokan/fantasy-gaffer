@@ -37,11 +37,22 @@ export async function fplGet<T>(path: string, signal?: AbortSignal): Promise<T> 
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
 
+      // fetch is ALWAYS driven by the internal controller. Passing the caller's
+      // signal straight through meant the timeout aborted a controller nobody
+      // was listening to, so a hung request never timed out at all (#178). The
+      // external signal is forwarded into it instead, so both can cancel.
+      const forwardAbort = () => controller.abort();
+      if (signal?.aborted) controller.abort();
+      else signal?.addEventListener('abort', forwardAbort, { once: true });
+
       const res = await fetch(`${FPL_BASE}${path}`, {
         method: 'GET',
         headers: { Accept: 'application/json' },
-        signal: signal ?? controller.signal,
-      }).finally(() => clearTimeout(timer));
+        signal: controller.signal,
+      }).finally(() => {
+        clearTimeout(timer);
+        signal?.removeEventListener('abort', forwardAbort);
+      });
 
       if (res.ok) {
         return (await res.json()) as T;
@@ -54,6 +65,12 @@ export async function fplGet<T>(path: string, signal?: AbortSignal): Promise<T> 
 
       lastErr = new FplFetchError(`FPL ${res.status} for ${path}`, res.status);
     } catch (err) {
+      // A caller-requested cancellation is not a failure to retry against —
+      // retrying it twice and then reporting a generic FplFetchError destroyed
+      // the cancellation semantics the signal exists for (#178). A timeout
+      // aborts the internal controller only, so it still falls through and
+      // retries as before.
+      if (signal?.aborted) throw err;
       // 4xx already thrown above. Anything else (network, timeout, parse) loops.
       if (err instanceof FplFetchError && err.status !== null && err.status < 500) {
         throw err;

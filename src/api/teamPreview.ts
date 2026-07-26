@@ -8,6 +8,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { fplGet, FplFetchError } from './fpl-client';
+import { queryKeys } from './queryKeys';
 import { useCurrentGameweek } from './fixtures';
 import { usePlayers } from './players';
 import type { ClubCode, Player } from '@/types/fpl';
@@ -90,7 +91,7 @@ export function useTeamPreview(teamId: number | null) {
   const playersReady = Array.isArray(players.data);
 
   return useQuery<Preview, FplFetchError>({
-    queryKey: ['teamPreview', teamId, gw],
+    queryKey: queryKeys.teamPreview(teamId ?? 0, gw ?? 0),
     queryFn: async () => {
       const [entry, picks] = await Promise.all([
         // The entry endpoint is what actually validates the id: a wrong one

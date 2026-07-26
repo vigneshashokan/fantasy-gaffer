@@ -97,3 +97,52 @@ describe('FPL_BASE resolution (E2E seam)', () => {
     expect(base).toBe('http://127.0.0.1:4004');
   });
 });
+
+// #178 — fetch used to receive `signal ?? controller.signal`, so whenever a
+// caller supplied one the timeout aborted a controller nobody was listening to
+// and a hung request never timed out at all. It also retried an external abort
+// twice and reported it as a generic FplFetchError, destroying the cancellation
+// semantics the signal exists for. Latent today (no caller passes one yet), but
+// this is the query-cancellation seam.
+describe('caller-supplied AbortSignal (#178)', () => {
+  const URL_PATH = '/entry/12345/';
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    (global as any).fetch = jest.fn();
+  });
+
+  it('still drives fetch from the internal controller so the timeout can bite', async () => {
+    const external = new AbortController();
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
+      ok: true, status: 200, json: async () => ({ ok: true }),
+    });
+
+    await fplGet(URL_PATH, external.signal);
+
+    const passed = (global.fetch as jest.Mock).mock.calls[0][1].signal as AbortSignal;
+    // Not the caller's signal — an internal one the timeout also owns.
+    expect(passed).not.toBe(external.signal);
+  });
+
+  it('propagates an external abort without retrying it', async () => {
+    const external = new AbortController();
+    external.abort();
+    (global.fetch as jest.Mock).mockRejectedValue(
+      Object.assign(new Error('Aborted'), { name: 'AbortError' }),
+    );
+
+    await expect(fplGet(URL_PATH, external.signal)).rejects.toThrow('Aborted');
+    // One attempt only: a cancellation is not something to retry against.
+    expect((global.fetch as jest.Mock).mock.calls.length).toBe(1);
+  });
+
+  it('still retries a network failure when no signal was supplied', async () => {
+    (global.fetch as jest.Mock)
+      .mockRejectedValueOnce(new Error('network'))
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ ok: true }) });
+
+    await expect(fplGet(URL_PATH)).resolves.toEqual({ ok: true });
+    expect((global.fetch as jest.Mock).mock.calls.length).toBe(2);
+  });
+});
