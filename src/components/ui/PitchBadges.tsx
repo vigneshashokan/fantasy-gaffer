@@ -1,12 +1,13 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { BallIcon, BootIcon } from './statIcons';
+import { ON_PITCH } from '@/constants/apexTokens';
 
 const CARD_COLORS = { yellow: '#FFCD00', red: '#FF3B3B' };
 
 export function SubPill({ min }: { min: number }) {
   return (
-    <View style={[styles.subPill, { backgroundColor: '#FF3B5C' }]}>
+    <View style={[styles.subPill, { backgroundColor: ON_PITCH.subOff }]}>
       <Text style={styles.subText}>{`←${min}'`}</Text>
     </View>
   );
@@ -14,7 +15,7 @@ export function SubPill({ min }: { min: number }) {
 
 export function SubInPill({ min }: { min: number }) {
   return (
-    <View style={[styles.subPill, { backgroundColor: '#16C172' }]}>
+    <View style={[styles.subPill, { backgroundColor: ON_PITCH.subIn }]}>
       <Text style={styles.subText}>{`${min}'→`}</Text>
     </View>
   );
@@ -100,7 +101,10 @@ const styles = StyleSheet.create({
     left: -14,
     height: 16,
     borderRadius: 999,
-    paddingHorizontal: 2,
+    // Borders are inside the box in RN, so the padding absorbs the ring.
+    paddingHorizontal: 3,
+    borderWidth: 1,
+    borderColor: ON_PITCH.ring,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 4,
@@ -113,7 +117,7 @@ const styles = StyleSheet.create({
   subText: {
     fontFamily: 'JetBrainsMono_700Bold',
     fontSize: 11,
-    color: '#fff',
+    color: ON_PITCH.ink,
     // No explicit lineHeight + trimmed font padding so the glyphs sit centered
     // in the pill instead of riding high (a fixed lineHeight left a gap below).
     includeFontPadding: false,

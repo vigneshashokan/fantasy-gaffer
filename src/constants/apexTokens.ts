@@ -26,6 +26,24 @@ export const HERO_ON_DARK = {
   pill: 'rgba(255,255,255,0.14)',
 } as const;
 
+/**
+ * Colours for badges painted on the pitch. The grass is the same green in both
+ * modes and every palette, so surface tokens are wrong here for the same reason
+ * they are wrong on the hero — and `danger` especially so, since its dark
+ * variant is a light pink that white ink can't sit on.
+ *
+ * The fills are dark enough to carry `ink` at AA (the old #FF3B5C measured
+ * 3.48:1 against its own white text, #16C172 2.36:1). Dark-on-grass then needs
+ * an edge to stay legible, which the existing drop shadow doesn't provide —
+ * hence `ring`, the same trick the dugout's alert dot uses against the card.
+ */
+export const ON_PITCH = {
+  subOff: '#C8102E',
+  subIn: '#00703C',
+  ink: '#FFFFFF',
+  ring: 'rgba(255,255,255,0.92)',
+} as const;
+
 export interface ApexTokens {
   bg: string;
   card: string;
