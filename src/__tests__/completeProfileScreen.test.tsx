@@ -9,9 +9,24 @@ jest.mock('expo-router', () => ({
   router: { replace: (p: string) => mockReplace(p) },
 }));
 
+// Mutable so the picker-theming tests below can flip palettes; every other
+// test in this file sees the original dark:true.
+let mockDark = true;
 jest.mock('@/store/themeStore', () => ({
   __esModule: true,
-  useThemeStore: () => ({ paletteKey: 'classic', dark: true }),
+  useThemeStore: () => ({ paletteKey: 'classic', dark: mockDark }),
+}));
+
+// Records what the native picker is handed. It renders nothing here — the
+// point is the props, and the real UIDatePicker has no observable colour in
+// jest anyway.
+const mockPickerProps: Record<string, unknown>[] = [];
+jest.mock('@react-native-community/datetimepicker', () => ({
+  __esModule: true,
+  default: (props: Record<string, unknown>) => {
+    mockPickerProps.push(props);
+    return null;
+  },
 }));
 
 jest.mock('@/store/authStore', () => ({
@@ -89,5 +104,35 @@ describe('CompleteProfile screen — submit gating', () => {
     const { getByRole } = render(<CompleteProfile />);
     const submit = getByRole('button', { name: 'Continue' });
     expect(submit.props.accessibilityState?.disabled).toBe(true);
+  });
+});
+
+// Found on the first real-device run: white spinner digits on a light lavender
+// sheet, unreadable. DateTimePicker is a native UIDatePicker, so with no theme
+// prop it colours itself from the DEVICE appearance while the rest of the
+// screen is painted from themeStore — a light app on a dark phone disagrees
+// with itself. Neither jest nor tsc can see a colour, so this pins the prop.
+describe('CompleteProfile screen — DOB picker follows the app theme', () => {
+  beforeEach(() => {
+    mockPickerProps.length = 0;
+  });
+  afterEach(() => {
+    mockDark = true;
+  });
+
+  const openPicker = () => {
+    const { getByText } = render(<CompleteProfile />);
+    fireEvent.press(getByText('Date of birth'));
+    return mockPickerProps[mockPickerProps.length - 1];
+  };
+
+  it('asks for the light variant when the app palette is light', () => {
+    mockDark = false;
+    expect(openPicker().themeVariant).toBe('light');
+  });
+
+  it('asks for the dark variant when the app palette is dark', () => {
+    mockDark = true;
+    expect(openPicker().themeVariant).toBe('dark');
   });
 });
