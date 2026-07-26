@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  type TextInput,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
@@ -30,6 +31,7 @@ export default function ResetPassword() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
   useA11yAnnounce(errors.form || null);
+  const confirmRef = useRef<TextInput>(null);
 
   if (!session) {
     return (
@@ -111,7 +113,9 @@ export default function ResetPassword() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            autoComplete="password"
+            autoComplete="new-password"
+            returnKeyType="next"
+            onSubmitEditing={() => confirmRef.current?.focus()}
             surfaceAlt={t.surfaceAlt}
             line={t.line}
             accent={t.accent}
@@ -127,7 +131,10 @@ export default function ResetPassword() {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
-            autoComplete="password"
+            autoComplete="new-password"
+            inputRef={confirmRef}
+            returnKeyType="go"
+            onSubmitEditing={onSubmit}
             surfaceAlt={t.surfaceAlt}
             line={t.line}
             accent={t.accent}

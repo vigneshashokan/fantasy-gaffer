@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  type TextInput,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
@@ -52,6 +53,8 @@ export default function SignIn() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
+  // Keyboard "next" hops to the password field; "go" submits from it (#181).
+  const pwRef = useRef<TextInput>(null);
   useA11yAnnounce(submitError);
   useA11yAnnounce(googleError || null);
   // Field-level validation was silent here while forgot-password's identical
@@ -173,6 +176,8 @@ export default function SignIn() {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoComplete="email"
+            returnKeyType="next"
+            onSubmitEditing={() => pwRef.current?.focus()}
             surfaceAlt={t.surfaceAlt}
             line={t.line}
             accent={t.accent}
@@ -190,6 +195,9 @@ export default function SignIn() {
             onChangeText={setPw}
             secureTextEntry
             autoComplete="password"
+            inputRef={pwRef}
+            returnKeyType="go"
+            onSubmitEditing={onSubmit}
             surfaceAlt={t.surfaceAlt}
             line={t.line}
             accent={t.accent}

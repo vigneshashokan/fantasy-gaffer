@@ -62,6 +62,19 @@ describe('RestoreAccount screen', () => {
     mockProfilesSelect.mockClear();
   });
 
+  // #181: this screen used to render a bare logo on an otherwise blank page
+  // while the deletion row resolved — on the app's most anxious screen.
+  it('shows a skeleton while the pending-deletion row is still loading', async () => {
+    mockLoadPendingDeletion.mockResolvedValueOnce({
+      requestedAt: new Date('2026-05-31T12:00:00.000Z'),
+      daysRemaining: 12,
+    });
+    const { getByTestId, queryByTestId, findByText } = render(<RestoreAccount />);
+    expect(getByTestId('restore-loading')).toBeTruthy();
+    await findByText('Welcome back, Ada');
+    expect(queryByTestId('restore-loading')).toBeNull();
+  });
+
   it('renders Welcome back, <firstName> when profile is loaded', async () => {
     mockLoadPendingDeletion.mockResolvedValueOnce({
       requestedAt: new Date('2026-05-31T12:00:00.000Z'),

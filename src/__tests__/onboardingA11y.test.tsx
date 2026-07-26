@@ -1,4 +1,5 @@
 import React from 'react';
+import { Dimensions } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 
 // Same mock header as signupScreen.test.tsx
@@ -55,11 +56,25 @@ describe('signup field errors a11y', () => {
 // #180: the dots were reachable buttons but never said which one was current.
 describe('onboarding pager dots a11y', () => {
   it('marks the current slide selected', () => {
-    const { getByLabelText } = render(<Landing />);
+    const { getByLabelText, getByTestId } = render(<Landing />);
     expect(getByLabelText('Go to slide 1').props.accessibilityState?.selected).toBe(true);
     expect(getByLabelText('Go to slide 2').props.accessibilityState?.selected).toBe(false);
 
-    fireEvent.press(getByLabelText('Go to slide 3'));
+    // Since #181 the slides live in a paged ScrollView and `onScroll` owns the
+    // index — tapping a dot only calls scrollTo, and the real ScrollView then
+    // reports the landed page. (Setting the index on tap as well would flash
+    // the target and snap back on the scroll's first frame.) A programmatic
+    // scrollTo fires no onScroll under jest, so drive the scroll directly, the
+    // way the swipe test in uxPolish.test.tsx does.
+    const { width, height } = Dimensions.get('window');
+    fireEvent.scroll(getByTestId('onboarding-pager'), {
+      nativeEvent: {
+        contentOffset: { x: width * 2, y: 0 },
+        contentSize: { width: width * 3, height },
+        layoutMeasurement: { width, height },
+      },
+    });
+
     expect(getByLabelText('Go to slide 3').props.accessibilityState?.selected).toBe(true);
     expect(getByLabelText('Go to slide 1').props.accessibilityState?.selected).toBe(false);
   });

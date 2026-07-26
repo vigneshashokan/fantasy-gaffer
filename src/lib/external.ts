@@ -7,7 +7,7 @@
 
 import { Share } from 'react-native';
 import * as Linking from 'expo-linking';
-import { APP_STORE_URL, FEEDBACK_EMAIL } from '@/constants/links';
+import { APP_STORE_URL, FEEDBACK_EMAIL, FPL_MY_TEAM_URL } from '@/constants/links';
 
 export async function shareApp(): Promise<void> {
   // User-cancel resolves normally (action === 'dismissedAction'); not an error.
@@ -15,6 +15,14 @@ export async function shareApp(): Promise<void> {
     message: `Check out Fantasy Gaffer — your FPL season, leveled up. ${APP_STORE_URL}`,
     url: APP_STORE_URL, // iOS uses url; Android folds it into message.
   });
+}
+
+// Hands off to the official FPL app/site so a saved plan can actually be
+// applied. Opens the installed FPL app when it claims the URL, the browser
+// otherwise. Swallows the rejection openURL throws when nothing can handle it —
+// there is no useful recovery, and the plan is still on screen.
+export async function openFplTeam(): Promise<void> {
+  await Linking.openURL(FPL_MY_TEAM_URL).catch(() => {});
 }
 
 export async function sendFeedback(): Promise<{ ok: boolean }> {

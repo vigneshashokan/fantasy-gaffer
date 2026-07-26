@@ -1,6 +1,7 @@
 import React from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
@@ -12,7 +13,6 @@ import { ThemeToggle } from '@/components/settings/ThemeToggle';
 import { NotificationsCard } from '@/components/settings/NotificationsCard';
 import { BiometricCard } from '@/components/settings/BiometricCard';
 import { SettingsRow } from '@/components/settings/SettingsRow';
-import { FollowUsRow } from '@/components/settings/FollowUsRow';
 import { PrivacyCard } from '@/components/settings/PrivacyCard';
 import { useOnboardingStore } from '@/store/onboardingStore';
 import { supabase } from '@/lib/supabase';
@@ -67,7 +67,10 @@ export default function SettingsModal() {
             // Feedback" (which leaves for the mail app) got an in-app chevron.
             external
           />
-          <FollowUsRow tk={tk} showDivider />
+          {/* The "Follow Us" accordion lived here with five social rows whose
+              onPress was `() => {}` — external-link affordances pointing at
+              handles that don't exist yet. Removed rather than faked; add it
+              back (with real URLs) when the accounts are live. (#174) */}
           <SettingsRow
             icon={<FeedbackIcon color={tk.faint} />}
             label="Send Feedback"
@@ -105,8 +108,10 @@ export default function SettingsModal() {
           />
         </SectionCard>
 
+        {/* Read from the build rather than hardcoded, so a bug report's
+            version string is the version the user is actually running (#181). */}
         <Text style={[styles.version, { color: tk.faint }]}>
-          Fantasy Gaffer · v1.0.0
+          Fantasy Gaffer · v{Constants.expoConfig?.version ?? '—'}
         </Text>
 
         {__DEV__ && (

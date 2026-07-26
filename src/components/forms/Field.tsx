@@ -4,6 +4,18 @@ import { Icon } from '@/components/ui/Icon';
 import { MAX_FONT_SCALE } from '@/lib/a11y';
 
 type IconName = 'mail' | 'lock' | 'person';
+// 'new-password' tells password managers to OFFER TO GENERATE rather than fill
+// the existing credential — signup and reset-password were asking for
+// 'password' on brand-new password fields, so managers suggested the old one
+// (#181). iOS additionally needs textContentType, derived here so callers can't
+// set one without the other.
+type AutoComplete = 'email' | 'password' | 'new-password';
+
+const CONTENT_TYPE: Record<AutoComplete, 'emailAddress' | 'password' | 'newPassword'> = {
+  email: 'emailAddress',
+  password: 'password',
+  'new-password': 'newPassword',
+};
 
 interface FieldProps {
   icon: IconName;
@@ -12,8 +24,14 @@ interface FieldProps {
   onChangeText: (v: string) => void;
   secureTextEntry?: boolean;
   keyboardType?: KeyboardTypeOptions;
-  autoComplete?: 'email' | 'password';
+  autoComplete?: AutoComplete;
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  // Keyboard submit flow: 'next' + onSubmitEditing focusing the next field's
+  // ref, 'go'/'done' + onSubmitEditing submitting on the last one. Without
+  // these the return key was inert on every form.
+  returnKeyType?: 'next' | 'go' | 'done' | 'send';
+  onSubmitEditing?: () => void;
+  inputRef?: React.RefObject<TextInput | null>;
   surfaceAlt: string;
   line: string;
   accent: string;
@@ -31,6 +49,9 @@ export function Field({
   keyboardType,
   autoComplete,
   autoCapitalize = 'none',
+  returnKeyType,
+  onSubmitEditing,
+  inputRef,
   surfaceAlt,
   line,
   accent,
@@ -50,6 +71,7 @@ export function Field({
     >
       <Icon name={icon} color={textMuted} size={20} />
       <TextInput
+        ref={inputRef}
         testID={testID}
         value={value}
         onChangeText={onChangeText}
@@ -60,7 +82,10 @@ export function Field({
         secureTextEntry={hidden}
         keyboardType={keyboardType}
         autoComplete={autoComplete}
+        textContentType={autoComplete ? CONTENT_TYPE[autoComplete] : undefined}
         autoCapitalize={autoCapitalize}
+        returnKeyType={returnKeyType}
+        onSubmitEditing={onSubmitEditing}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         style={[styles.input, { color: text }]}

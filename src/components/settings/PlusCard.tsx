@@ -1,14 +1,24 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { Alert, View, Text, Pressable, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
+import { MAX_FONT_SCALE } from '@/lib/a11y';
+import { useFlag } from '@/lib/analytics/flags';
 
 interface PlusCardProps {
   gradFrom: string;
   gradTo: string;
 }
 
+// A subscription pitch whose CTA did nothing (#174). RevenueCat (#40) is
+// post-launch, so there is no purchase flow to wire and faking one would be an
+// App Review problem. The card is gated on the existing `premium_paywall` flag
+// — off by default, so it simply isn't shown until there's something to sell —
+// and the CTA is honest about being unavailable if the flag is flipped early.
 export function PlusCard({ gradFrom, gradTo }: PlusCardProps) {
+  const enabled = useFlag('premium_paywall');
+  if (!enabled) return null;
+
   return (
     <View style={styles.wrap}>
       <LinearGradient
@@ -25,10 +35,19 @@ export function PlusCard({ gradFrom, gradTo }: PlusCardProps) {
         <Text style={styles.copy}>
           Subscribe for an ad-free experience and exclusive benefits
         </Text>
-        <Pressable style={({ pressed }) => [
-          styles.cta,
-          pressed && { opacity: 0.88, transform: [{ scale: 0.97 }] },
-        ]}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() =>
+            Alert.alert(
+              'Coming soon',
+              'Fantasy Gaffer+ is not available yet. Everything in the app is free in the meantime.',
+            )
+          }
+          style={({ pressed }) => [
+            styles.cta,
+            pressed && { opacity: 0.88, transform: [{ scale: 0.97 }] },
+          ]}
+        >
           <LinearGradient
             colors={['#FFE25A', '#F5B400']}
             start={{ x: 0, y: 0 }}
@@ -36,7 +55,9 @@ export function PlusCard({ gradFrom, gradTo }: PlusCardProps) {
             style={StyleSheet.absoluteFill}
           />
           <StarIcon />
-          <Text style={styles.ctaText}>Go Premium</Text>
+          <Text style={styles.ctaText} maxFontSizeMultiplier={MAX_FONT_SCALE}>
+            Go Premium
+          </Text>
         </Pressable>
       </View>
     </View>
