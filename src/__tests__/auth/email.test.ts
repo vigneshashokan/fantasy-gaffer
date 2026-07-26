@@ -118,7 +118,7 @@ describe('signUpWithEmail', () => {
       password: 'Strong1Pass',
       options: {
         data: { given_name: 'Ada', family_name: 'Lovelace' },
-        emailRedirectTo: 'fplgafferreactnativeapp://verify',
+        emailRedirectTo: 'https://fantasy-gaffer.com/verify',
       },
     });
     expect(r.ok).toBe(true);
@@ -164,7 +164,7 @@ describe('sendPasswordReset', () => {
     mockResetPasswordForEmail.mockResolvedValueOnce({ data: {}, error: null });
     const r = await sendPasswordReset('a@b.co');
     expect(mockResetPasswordForEmail).toHaveBeenCalledWith('a@b.co', {
-      redirectTo: 'fplgafferreactnativeapp://reset-password',
+      redirectTo: 'https://fantasy-gaffer.com/reset-password',
     });
     expect(r.ok).toBe(true);
   });

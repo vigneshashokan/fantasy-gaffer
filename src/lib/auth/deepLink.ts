@@ -3,6 +3,7 @@ import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/store/authStore';
+import { AUTH_LINK_HOST } from '@/constants/links';
 
 const APP_SCHEME = 'fplgafferreactnativeapp:';
 
@@ -27,14 +28,34 @@ function authCodeOf(url: string): string | null {
   return null;
 }
 
+// The route segment a link is asking for, or '' if this URL isn't ours.
+//
+// Two shapes reach here (#71). Universal Links are what Supabase now sends —
+// `https://fantasy-gaffer.com/verify?code=…` — and the custom scheme stays
+// supported because it is still what Google OAuth redirects to, what the web
+// fallback pages' "Open in the app" button uses, and what any email already in
+// a user's inbox from before this shipped carries.
+//
+// The two put the segment in different places: for `scheme://verify` the URL
+// parser reports `verify` as the HOST, while for the https form the host is
+// the domain and the segment is in the path.
+function routeOf(parsed: URL): string {
+  if (parsed.protocol === APP_SCHEME) {
+    return parsed.host || parsed.pathname.replace(/^\//, '').split('/')[0];
+  }
+  // Host-checked, not just scheme-checked: without it any https link the OS
+  // handed us would be read as an auth callback.
+  if (parsed.protocol === 'https:' && parsed.host === AUTH_LINK_HOST) {
+    return parsed.pathname.replace(/^\//, '').split('/')[0];
+  }
+  return '';
+}
+
 export function parseAuthDeepLink(url: string): AuthDeepLink {
   try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== APP_SCHEME) return { kind: 'unknown' };
-    // For `scheme://host/path`, `parsed.host` is the first path segment.
-    const head = parsed.host || parsed.pathname.replace(/^\//, '').split('/')[0];
-    if (head === 'verify') return { kind: 'verify', code: authCodeOf(url) };
-    if (head === 'reset-password') return { kind: 'reset', code: authCodeOf(url) };
+    const route = routeOf(new URL(url));
+    if (route === 'verify') return { kind: 'verify', code: authCodeOf(url) };
+    if (route === 'reset-password') return { kind: 'reset', code: authCodeOf(url) };
     return { kind: 'unknown' };
   } catch {
     return { kind: 'unknown' };
