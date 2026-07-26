@@ -3,6 +3,7 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 
 const mockSignIn = jest.fn();
 const mockSignInGoogle = jest.fn(() => Promise.resolve({ ok: false, error: 'cancel' }));
+const mockSignInApple = jest.fn(() => Promise.resolve({ ok: false, error: 'cancel' }));
 const mockPush = jest.fn();
 let mockSearchParams: Record<string, string> = {};
 
@@ -14,6 +15,13 @@ jest.mock('@/lib/auth/email', () => ({
 jest.mock('@/lib/auth/google', () => ({
   __esModule: true,
   signInWithGoogle: () => mockSignInGoogle(),
+}));
+
+// Mocked for the same reason as google: the real module imports
+// @/lib/supabase, which pulls in AsyncStorage and fails the suite.
+jest.mock('@/lib/auth/apple', () => ({
+  __esModule: true,
+  signInWithApple: () => mockSignInApple(),
 }));
 
 jest.mock('expo-router', () => ({
@@ -130,6 +138,41 @@ describe('SignIn screen — Google error a11y', () => {
       fireEvent.press(getByText('Continue with Google'));
     });
     const errText = await findByText('Google sign-in failed. Please try again.');
+    expect(errText.props.accessibilityLiveRegion).toBe('assertive');
+  });
+});
+
+// #14: the Apple button was a "Coming soon" alert. App Store policy requires
+// real Sign in with Apple because the app offers Google sign-in.
+describe('SignIn screen — Apple', () => {
+  beforeEach(() => {
+    mockSignInApple.mockReset();
+    mockSignInApple.mockResolvedValue({ ok: false, error: 'cancel' });
+  });
+
+  it('runs the Apple flow rather than a placeholder', async () => {
+    const { getByText } = render(<SignIn />);
+    await act(async () => {
+      fireEvent.press(getByText('Continue with Apple'));
+    });
+    expect(mockSignInApple).toHaveBeenCalled();
+  });
+
+  it('stays silent when the user dismisses the sheet', async () => {
+    const { getByText, queryByText } = render(<SignIn />);
+    await act(async () => {
+      fireEvent.press(getByText('Continue with Apple'));
+    });
+    expect(queryByText('Apple sign-in failed. Please try again.')).toBeNull();
+  });
+
+  it('announces a real failure', async () => {
+    mockSignInApple.mockResolvedValueOnce({ ok: false, error: 'bad_audience' });
+    const { getByText, findByText } = render(<SignIn />);
+    await act(async () => {
+      fireEvent.press(getByText('Continue with Apple'));
+    });
+    const errText = await findByText('Apple sign-in failed. Please try again.');
     expect(errText.props.accessibilityLiveRegion).toBe('assertive');
   });
 });

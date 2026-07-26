@@ -16,6 +16,8 @@ jest.mock('@/lib/auth/email', () => ({
   resetPassword: jest.fn().mockResolvedValue({ ok: true }),
 }));
 jest.mock('@/lib/auth/google', () => ({ __esModule: true, signInWithGoogle: jest.fn() }));
+// Same reason as google: the real module imports @/lib/supabase → AsyncStorage.
+jest.mock('@/lib/auth/apple', () => ({ __esModule: true, signInWithApple: jest.fn() }));
 jest.mock('expo-router', () => ({
   __esModule: true,
   router: { replace: jest.fn(), push: jest.fn(), back: jest.fn() },

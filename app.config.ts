@@ -14,6 +14,9 @@ const config: ExpoConfig = {
   userInterfaceStyle: 'automatic',
   ios: {
     bundleIdentifier: 'com.fantasygaffer.app',
+    // Adds the Sign in with Apple entitlement at prebuild (#14). App Store
+    // policy requires it because the app offers Google sign-in.
+    usesAppleSignIn: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
