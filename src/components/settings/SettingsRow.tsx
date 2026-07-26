@@ -12,7 +12,6 @@ interface SettingsRowProps {
   tk: ApexTokens;
   external?: boolean;
   showDivider?: boolean;
-  trailing?: React.ReactNode;
 }
 
 export function SettingsRow({
@@ -23,7 +22,6 @@ export function SettingsRow({
   tk,
   external,
   showDivider,
-  trailing,
 }: SettingsRowProps) {
   return (
     <Pressable
@@ -42,11 +40,11 @@ export function SettingsRow({
           <Text style={[styles.sub, { color: tk.faint }]} maxFontSizeMultiplier={MAX_FONT_SCALE}>{sub}</Text>
         )}
       </View>
-      {trailing
-        ? trailing
-        : (
-          <Caret kind={external ? 'external' : 'chevron'} color={tk.faint} />
-        )}
+      {/* An `external` row hands off to another app; everything else stays
+          in-app and gets the chevron. The `trailing` override this replaced
+          had exactly one caller, which used it to suppress the glyph
+          entirely on a row that should have read as external. */}
+      <Caret kind={external ? 'external' : 'chevron'} color={tk.faint} />
     </Pressable>
   );
 }

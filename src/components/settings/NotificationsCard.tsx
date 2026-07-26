@@ -57,7 +57,13 @@ export function NotificationsCard({ tk }: NotificationsCardProps) {
           { backgroundColor: tk.card, borderColor: tk.cardBorder },
         ]}
       >
-        <Pressable onPress={() => setOpen((o) => !o)} style={styles.head}>
+        {/* Matches its twins in ChangePassword and FollowUsRow. */}
+        <Pressable
+          onPress={() => setOpen((o) => !o)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: open }}
+          style={styles.head}
+        >
           <View style={styles.iconCell}>
             <BellIcon color={tk.faint} />
           </View>
@@ -78,7 +84,10 @@ export function NotificationsCard({ tk }: NotificationsCardProps) {
         </Pressable>
 
         {isError && (
-          <Text style={[styles.errSub, { color: tk.pink }]}>
+          <Text
+            accessibilityLiveRegion="assertive"
+            style={[styles.errSub, { color: tk.danger }]}
+          >
             Couldn&apos;t save — try again
           </Text>
         )}

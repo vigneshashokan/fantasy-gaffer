@@ -93,6 +93,7 @@ export function LockScreen() {
       <PillBtn
         variant="accent"
         onPress={attempt}
+        accentFill={t.accent}
         accentInk={t.accentInk}
         style={styles.btn}
       >

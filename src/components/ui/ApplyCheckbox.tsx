@@ -7,13 +7,24 @@ interface ApplyCheckboxProps {
   onChange: (v: boolean) => void;
   green: string;
   border: string;
+  /** Required: the box renders only a tick, so it has no text to be named by. */
+  accessibilityLabel: string;
 }
 
-export function ApplyCheckbox({ checked, onChange, green, border }: ApplyCheckboxProps) {
+export function ApplyCheckbox({
+  checked,
+  onChange,
+  green,
+  border,
+  accessibilityLabel,
+}: ApplyCheckboxProps) {
   return (
     <Pressable
       onPress={() => onChange(!checked)}
       hitSlop={6}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      accessibilityLabel={accessibilityLabel}
       style={[
         styles.box,
         {

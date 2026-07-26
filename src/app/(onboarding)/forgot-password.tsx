@@ -68,6 +68,7 @@ export default function ForgotPassword() {
             <PillBtn
               variant="accent"
               onPress={() => router.replace('/(onboarding)/signin')}
+              accentFill={t.accent}
               accentInk={t.accentInk}
               style={styles.submitBtn}
             >
@@ -116,7 +117,7 @@ export default function ForgotPassword() {
             {emailError && (
               <Text
                 accessibilityLiveRegion="assertive"
-                style={[styles.fieldError, { color: '#FF3B5C' }]}
+                style={[styles.fieldError, { color: t.danger }]}
               >
                 {emailError}
               </Text>
@@ -125,6 +126,7 @@ export default function ForgotPassword() {
             <PillBtn
               variant="accent"
               onPress={onSubmit}
+              accentFill={t.accent}
               accentInk={t.accentInk}
               style={styles.submitBtn}
             >

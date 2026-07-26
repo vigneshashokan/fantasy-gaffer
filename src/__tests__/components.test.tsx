@@ -21,6 +21,13 @@ jest.mock('@/lib/auth/email', () => ({
 }));
 
 let mockSessionEmail: string | null = 'ada@example.com';
+// ScreenHeader reads the safe-area inset (#180) — these component-level
+// renders have no SafeAreaProvider above them.
+jest.mock('react-native-safe-area-context', () => ({
+  ...jest.requireActual('react-native-safe-area-context'),
+  useSafeAreaInsets: () => ({ top: 47, bottom: 34, left: 0, right: 0 }),
+}));
+
 jest.mock('@/store/authStore', () => ({
   __esModule: true,
   useAuthStore: (selector: (s: { session: { user: { email: string | null } } | null }) => unknown) =>
@@ -70,6 +77,7 @@ import { ApplyCheckbox } from '@/components/ui/ApplyCheckbox';
 import { ApplyAllCard } from '@/components/team/ApplyAllCard';
 import { SubPill, SubInPill, GoalsBadge, AssistsBadge, CardIcons, CaptViceBadge } from '@/components/ui/PitchBadges';
 import { apexTokens } from '@/constants/apexTokens';
+import { PALETTE } from '@/constants/theme';
 import { PitchMarks } from '@/components/pitch/PitchMarks';
 import { ApexPitchMarks } from '@/components/pitch/ApexPitchMarks';
 import { Pitch } from '@/components/pitch/Pitch';
@@ -158,7 +166,7 @@ describe('Kit', () => {
 });
 
 // ── PlayerToken ───────────────────────────────────────────────
-import type { Player } from '@/types/fpl';
+import type { CaptainPick, Player } from '@/types/fpl';
 
 const mockPlayer: Player = {
   id: 'p1', name: 'Haaland', club: 'MCI', pos: 'FWD',
@@ -340,12 +348,9 @@ describe('ApexPitch', () => {
 
 // ── HeroCard ──────────────────────────────────────────────────
 describe('HeroCard', () => {
-  const tk = apexTokens(true, 'classic');
-
   it('shows centered GW points with the vs-avg pill and the stat row, no chip section', () => {
     const { getByText, queryByText } = render(
       <HeroCard
-        tk={tk}
         totalPoints={1452}
         gwPts={64}
         avgPoints={52}
@@ -404,9 +409,9 @@ describe('ApexDugout', () => {
 describe('CaptainPickCard', () => {
   it('marks the applied captain', () => {
     const tk = apexTokens(false, 'classic');
-    const picks = [
-      { name: 'Haaland', club: 'MCI' as const, xp: 8.4, note: 'Home vs bottom-half defence' },
-      { name: 'Salah',   club: 'LIV' as const, xp: 7.1, note: 'Penalties' },
+    const picks: CaptainPick[] = [
+      { id: '401', name: 'Haaland', club: 'MCI', xp: 8.4, note: 'Home vs bottom-half defence' },
+      { id: '233', name: 'Salah',   club: 'LIV', xp: 7.1, note: 'Penalties' },
     ];
     const { getByText } = render(
       <CaptainPickCard picks={picks} captainApplied="Haaland" tk={tk} />
@@ -451,6 +456,17 @@ describe('SegmentedControl', () => {
     );
     expect(getByText('GKP')).toBeTruthy();
     expect(getByText('FWD')).toBeTruthy();
+  });
+
+  // #180: the tab bar and AccountMenu segments announced role + selected;
+  // this sibling announced neither.
+  it('announces each segment as a tab with its selected state', () => {
+    const tk = apexTokens(false, 'classic');
+    const { getByRole } = render(
+      <SegmentedControl options={['GKP', 'DEF', 'MID', 'FWD']} value={2} onChange={() => {}} tk={tk} />
+    );
+    expect(getByRole('tab', { name: 'MID' }).props.accessibilityState?.selected).toBe(true);
+    expect(getByRole('tab', { name: 'GKP' }).props.accessibilityState?.selected).toBe(false);
   });
 });
 
@@ -530,6 +546,23 @@ describe('ChipsRow', () => {
     expect(getByText('Wildcard')).toBeTruthy();
     expect(getByText('Free Hit')).toBeTruthy();
   });
+
+  // #180: a used chip is inert and an available one expands a tip panel —
+  // neither fact reached assistive tech.
+  it('announces each tile as a button, with expanded and disabled state', () => {
+    const tk = apexTokens(false, 'classic');
+    const chips = [
+      { name: 'Wildcard', status: 'Available',  state: 'active' as const },
+      { name: 'Free Hit', status: 'Used GW 12', state: 'used'   as const, playedGw: 12 },
+    ];
+    const { getAllByRole } = render(<ChipsRow chips={chips} tk={tk} />);
+    const [wildcard, freeHit] = getAllByRole('button');
+    expect(wildcard.props.accessibilityState).toEqual({ expanded: false, disabled: false });
+    expect(freeHit.props.accessibilityState).toEqual({ expanded: false, disabled: true });
+
+    fireEvent.press(wildcard);
+    expect(getAllByRole('button')[0].props.accessibilityState?.expanded).toBe(true);
+  });
 });
 
 // ── TransferPitch ─────────────────────────────────────────────
@@ -564,10 +597,25 @@ describe('TransferSuggestionsCard', () => {
 
 // ── ApplyCheckbox ─────────────────────────────────────────────
 describe('ApplyCheckbox', () => {
+  // #180: the monetization surface's main control rendered only a tick, with
+  // no role, state or name — while forms' own checkbox was correct.
+  it('announces as a checkbox with its checked state and label', () => {
+    const on = render(
+      <ApplyCheckbox checked onChange={() => {}} green="#0f0" border="#ccc" accessibilityLabel="Apply all" />,
+    );
+    const box = on.getByRole('checkbox', { name: 'Apply all' });
+    expect(box.props.accessibilityState?.checked).toBe(true);
+
+    const off = render(
+      <ApplyCheckbox checked={false} onChange={() => {}} green="#0f0" border="#ccc" accessibilityLabel="Apply all" />,
+    );
+    expect(off.getByRole('checkbox').props.accessibilityState?.checked).toBe(false);
+  });
+
   it('renders both states', () => {
-    const a = render(<ApplyCheckbox checked onChange={() => {}} green="#0f0" border="#ccc" />);
+    const a = render(<ApplyCheckbox checked onChange={() => {}} green="#0f0" border="#ccc" accessibilityLabel="Apply" />);
     expect(a.toJSON()).toBeTruthy();
-    const b = render(<ApplyCheckbox checked={false} onChange={() => {}} green="#0f0" border="#ccc" />);
+    const b = render(<ApplyCheckbox checked={false} onChange={() => {}} green="#0f0" border="#ccc" accessibilityLabel="Apply" />);
     expect(b.toJSON()).toBeTruthy();
   });
 });
@@ -740,17 +788,36 @@ describe('Settings components', () => {
     expect(toJSON()).toBeNull();
   });
 
+  // Labels must match `PALETTE` in constants/theme.ts — the electric swatch
+  // was the odd one out, reading "Fantasy" only here.
   it('ThemeToggle shows all 3 palette labels', () => {
     const { getByText } = render(<ThemeToggle palette="classic" onSetPalette={() => {}} />);
-    expect(getByText('Classic')).toBeTruthy();
-    expect(getByText('Fantasy')).toBeTruthy();
-    expect(getByText('Pitch')).toBeTruthy();
+    for (const { label } of PALETTE) expect(getByText(label)).toBeTruthy();
+  });
+
+  it('ThemeToggle marks the active palette selected', () => {
+    const { getByRole } = render(<ThemeToggle palette="pitch" onSetPalette={() => {}} />);
+    const selected = (label: string) =>
+      getByRole('button', { name: label }).props.accessibilityState?.selected;
+    expect(selected('Pitch')).toBe(true);
+    expect(selected('Classic')).toBe(false);
   });
 
   it('NotificationsCard renders summary from fetched prefs', () => {
     const { getByText } = render(<NotificationsCard tk={tk} />);
     expect(getByText('Notifications')).toBeTruthy();
     expect(getByText('All off')).toBeTruthy(); // driven by the mocked hook (all four off)
+  });
+
+  // #180: its twins in ChangePassword and FollowUsRow already did this.
+  it('NotificationsCard expander announces role and expanded state', () => {
+    const { getByRole } = render(<NotificationsCard tk={tk} />);
+    const head = getByRole('button', { name: /Notifications/ });
+    expect(head.props.accessibilityState?.expanded).toBe(false);
+    fireEvent.press(head);
+    expect(
+      getByRole('button', { name: /Notifications/ }).props.accessibilityState?.expanded,
+    ).toBe(true);
   });
 
   it('SettingsRow renders label', () => {

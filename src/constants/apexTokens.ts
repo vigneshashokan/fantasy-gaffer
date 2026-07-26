@@ -1,4 +1,4 @@
-import { PaletteKey } from './theme';
+import { DANGER_DARK, DANGER_LIGHT, PaletteKey } from './theme';
 
 const APEX_BRAND: Record<string, {
   p1: string; p2: string;
@@ -12,6 +12,19 @@ const APEX_BRAND: Record<string, {
   pitch:    { p1: '#06371F', p2: '#0B6B38', glowD: 'rgba(0,228,120,0.45)', glowL: 'rgba(0,228,120,0.42)', active: '#0B6B38', purpleD: '#7CE0A6', purpleL: '#0B6B38', moneyD: '#9BE8B5', moneyL: '#06371F', infoL: '#E4F3E9' },
   electric: { p1: '#1B0A3E', p2: '#4A1B8C', glowD: 'rgba(4,245,255,0.45)', glowL: 'rgba(4,245,255,0.40)', active: '#4A1B8C', purpleD: '#9FD9FF', purpleL: '#3C2A9E', moneyD: '#9FD9FF', moneyL: '#1B0A3E', infoL: '#E7E3FB' },
 };
+
+/**
+ * Text colours for content painted on the hero gradient. The hero is
+ * permanently dark in BOTH modes (`heroBg`/`heroBg2` are always deep
+ * brand colours), so surface-tuned tokens like `tk.green` are wrong there —
+ * light mode's `green` (#008343) measured 2.56:1 on the classic hero.
+ * These are fixed on-dark values, like the hero's sibling stats.
+ */
+export const HERO_ON_DARK = {
+  accent: '#7CFFB0',
+  muted: 'rgba(255,255,255,0.85)',
+  pill: 'rgba(255,255,255,0.14)',
+} as const;
 
 export interface ApexTokens {
   bg: string;
@@ -43,7 +56,16 @@ export interface ApexTokens {
   deadlineFg: string;
   chipFill: string;
   heroBg: string;
+  /**
+   * Second stop of the hero/screen-header gradient (`heroBg` is the first).
+   * Per-palette in light mode, one neutral in dark — call sites used to
+   * hardcode `dark ? '#0C1018' : '#5B0F63'`, which painted the *classic*
+   * purple onto the pitch and electric palettes.
+   */
+  heroBg2: string;
   heroGlow: string;
+  /** Error / destructive text. Same pair as `Theme.danger`. */
+  danger: string;
   dark: boolean;
 }
 
@@ -63,7 +85,8 @@ export function apexTokens(dark: boolean, palette: PaletteKey | string = 'classi
       infoCard: B.p1, captCard: B.p1, moneyText: B.moneyD,
       deadlineBg: 'rgba(255,40,90,0.12)', deadlineFg: '#FF7A95',
       chipFill: B.active,
-      heroBg: B.p1, heroGlow: B.glowD,
+      heroBg: B.p1, heroBg2: '#0C1018', heroGlow: B.glowD,
+      danger: DANGER_DARK,
       dark: true,
     };
   }
@@ -80,7 +103,8 @@ export function apexTokens(dark: boolean, palette: PaletteKey | string = 'classi
     infoCard: B.infoL, captCard: B.infoL, moneyText: B.moneyL,
     deadlineBg: '#FFE3E9', deadlineFg: '#C8102E',
     chipFill: B.active,
-    heroBg: B.p1, heroGlow: B.glowL,
+    heroBg: B.p1, heroBg2: B.p2, heroGlow: B.glowL,
+    danger: DANGER_LIGHT,
     dark: false,
   };
 }

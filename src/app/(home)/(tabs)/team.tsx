@@ -9,6 +9,7 @@ import { useApexTeam } from '@/api/squad';
 import { useSeasonState, currentSeasonLabel } from '@/api/fixtures';
 import { useReducedMotion } from '@/lib/a11y';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
+import { NoSquadCta } from '@/components/team/NoSquadCta';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { TabHeader } from '@/components/ui/TabHeader';
@@ -51,7 +52,7 @@ export default function TeamTab() {
   }, [arrowsVisible, arrowOpacity, reduced]);
 
   // Live team — drives the gating states and the page-list bounds.
-  const { data: at, isPending, noTeam, isError, refetch } = useApexTeam();
+  const { data: at, isPending, noTeam, noSquad, isError, refetch } = useApexTeam();
   const { data: seasonState } = useSeasonState();
 
   const [savedCaptain, setSavedCaptain] = useState('');
@@ -72,6 +73,16 @@ export default function TeamTab() {
     return (
       <View style={{ flex: 1, backgroundColor: t.bg }}>
         <LinkTeamCta tk={tk} variant="team" />
+      </View>
+    );
+  }
+  // "No squad yet" is a state, not a failure, so it outranks the error branch.
+  // Both must precede pending: on a picks 404 `at` is null while isPending is
+  // false, so `isPending || !at` would swallow either one and pulse forever.
+  if (noSquad) {
+    return (
+      <View style={{ flex: 1, backgroundColor: t.bg }}>
+        <NoSquadCta tk={tk} />
       </View>
     );
   }

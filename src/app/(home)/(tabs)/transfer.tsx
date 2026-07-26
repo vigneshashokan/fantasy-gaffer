@@ -9,6 +9,7 @@ import type { TransferPitchPlayer } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
 import { useSeasonState, currentSeasonLabel } from '@/api/fixtures';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
+import { NoSquadCta } from '@/components/team/NoSquadCta';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { TabHeader } from '@/components/ui/TabHeader';
@@ -24,7 +25,7 @@ export default function TransferTab() {
   const { paletteKey, dark, pitchStyle } = useThemeStore();
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
-  const { data: at, isPending, noTeam, isError, isRefetching, refetch } = useApexTeam();
+  const { data: at, isPending, noTeam, noSquad, isError, isRefetching, refetch } = useApexTeam();
   const { data: seasonState } = useSeasonState();
   const [pendingTransfers, setPendingTransfers] = useState<Record<string, boolean>>({});
   const pendingCount = Object.values(pendingTransfers).filter(Boolean).length;
@@ -39,6 +40,14 @@ export default function TransferTab() {
     return (
       <View style={{ flex: 1, backgroundColor: tk.bg }}>
         <LinkTeamCta tk={tk} variant="transfer" />
+      </View>
+    );
+  }
+  // "No squad yet" is a state, not a failure, so it outranks the error branch.
+  if (noSquad) {
+    return (
+      <View style={{ flex: 1, backgroundColor: tk.bg }}>
+        <NoSquadCta tk={tk} />
       </View>
     );
   }
@@ -61,7 +70,7 @@ export default function TransferTab() {
   const seasonLabel = currentSeasonLabel();
 
   const heroFrom = t.primary;
-  const heroTo = dark ? '#0C1018' : '#5B0F63';
+  const heroTo = tk.heroBg2;
 
   const openTargets = (p: TransferPitchPlayer) => {
     track('transfer_target_opened', { player_id: p.id });

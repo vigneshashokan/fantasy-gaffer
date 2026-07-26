@@ -7,6 +7,7 @@ import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { PitchPlayer, Suggestion } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
+import { NoSquadCta } from '@/components/team/NoSquadCta';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { ApexPitch } from '@/components/pitch/ApexPitch';
@@ -58,7 +59,7 @@ export function GameweekScreen({
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
-  const { data: at, isPending, isError, isRefetching, refetch } = useApexTeam(gw);
+  const { data: at, isPending, isError, noSquad, isRefetching, refetch } = useApexTeam(gw);
 
   // Report a fresh "at the top" position on mount so the shell's per-gameweek
   // scroll record is reset whenever this page (re)mounts after recycling.
@@ -82,6 +83,16 @@ export function GameweekScreen({
     track('decision_viewed', { type: 'chip' });
   }, [gw, upcoming]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // "No squad yet" is a state, not a failure, so it outranks the error branch.
+  // Reachable here for a gameweek earlier than the one this manager joined on,
+  // even mid-season.
+  if (noSquad) {
+    return (
+      <View style={{ width, height, backgroundColor: t.bg }}>
+        <NoSquadCta tk={tk} gw={gw} />
+      </View>
+    );
+  }
   // Error before pending — otherwise the skeleton branch shadows this one
   // forever, because `data` is undefined on error too (#167).
   if (isError && !at) {
@@ -111,7 +122,7 @@ export function GameweekScreen({
   const totalChanges = (captainChanged ? 1 : 0) + suggestionCount;
 
   const heroFrom = t.primary;
-  const heroTo = dark ? '#0C1018' : '#5B0F63';
+  const heroTo = tk.heroBg2;
 
   const activeChip = at.transfer.chips.find((c) => c.playedGw === gw);
 
@@ -140,7 +151,6 @@ export function GameweekScreen({
         )}
 
         <HeroCard
-          tk={tk}
           totalPoints={at.totalPoints}
           gwPts={at.gwPts}
           avgPoints={at.avgPoints}

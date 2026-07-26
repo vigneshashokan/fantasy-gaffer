@@ -57,6 +57,10 @@ export default function SignIn() {
   const pwRef = useRef<TextInput>(null);
   useA11yAnnounce(submitError);
   useA11yAnnounce(googleError || null);
+  // Field-level validation was silent here while forgot-password's identical
+  // field announced. iOS needs the imperative announce; the live regions on
+  // the error Text nodes cover Android.
+  useA11yAnnounce(emailError || passwordError || null);
 
   const clearForm = () => {
     setEmail('');
@@ -155,7 +159,7 @@ export default function SignIn() {
           </View>
         )}
         {googleError && (
-          <Text accessibilityLiveRegion="assertive" style={[styles.error, { color: '#FF3B5C' }]}>{googleError}</Text>
+          <Text accessibilityLiveRegion="assertive" style={[styles.error, { color: t.danger }]}>{googleError}</Text>
         )}
 
         <View style={styles.divider}>
@@ -182,7 +186,7 @@ export default function SignIn() {
             testID="signin-email"
           />
           {emailError && (
-            <Text style={[styles.fieldError, { color: '#FF3B5C' }]}>{emailError}</Text>
+            <Text accessibilityLiveRegion="assertive" style={[styles.fieldError, { color: t.danger }]}>{emailError}</Text>
           )}
           <Field
             icon="lock"
@@ -202,14 +206,14 @@ export default function SignIn() {
             testID="signin-password"
           />
           {passwordError && (
-            <Text style={[styles.fieldError, { color: '#FF3B5C' }]}>{passwordError}</Text>
+            <Text accessibilityLiveRegion="assertive" style={[styles.fieldError, { color: t.danger }]}>{passwordError}</Text>
           )}
         </View>
 
         {submitError && (
           <Text
             accessibilityLiveRegion="assertive"
-            style={[styles.error, { color: '#FF3B5C' }]}
+            style={[styles.error, { color: t.danger }]}
           >
             {submitError}
           </Text>
@@ -228,6 +232,7 @@ export default function SignIn() {
         <PillBtn
           variant="accent"
           onPress={onSubmit}
+          accentFill={t.accent}
           accentInk={t.accentInk}
           style={styles.signInBtn}
           testID="signin-submit"

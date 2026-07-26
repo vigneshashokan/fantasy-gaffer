@@ -138,6 +138,7 @@ export function captainPicksFrom(
     .sort((a, b) => b.score - a.score || b.p.gw - a.p.gw || a.p.id.localeCompare(b.p.id))
     .slice(0, 3)
     .map(({ p, score }) => ({
+      id: p.id,
       name: p.name,
       club: p.club,
       xp: round1(score),

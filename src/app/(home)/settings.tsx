@@ -28,7 +28,7 @@ export default function SettingsModal() {
   const resetOnboarding = useOnboardingStore((s) => s.resetAll);
 
   const heroFrom = t.primary;
-  const heroTo = dark ? '#0C1018' : '#5B0F63';
+  const heroTo = tk.heroBg2;
 
   return (
     <View style={{ flex: 1, backgroundColor: tk.bg }}>
@@ -62,7 +62,10 @@ export default function SettingsModal() {
               shareApp().catch(() => {});
             }}
             tk={tk}
-            trailing={<View />}
+            // Hands off to the system share sheet, so it reads as external —
+            // it used to render no trailing glyph at all, while "Send
+            // Feedback" (which leaves for the mail app) got an in-app chevron.
+            external
           />
           {/* The "Follow Us" accordion lived here with five social rows whose
               onPress was `() => {}` — external-link affordances pointing at
@@ -76,6 +79,7 @@ export default function SettingsModal() {
               if (!ok) Alert.alert('No mail app', `Email us at ${FEEDBACK_EMAIL}`);
             }}
             tk={tk}
+            external
             showDivider
           />
           <SettingsRow

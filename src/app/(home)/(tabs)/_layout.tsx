@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs, useRouter, useSegments } from 'expo-router';
 import { Icon } from '@/components/ui/Icon';
 import { AccountMenu } from '@/components/nav/AccountMenu';
 import { useThemeStore } from '@/store/themeStore';
@@ -12,6 +12,7 @@ import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import { MAX_FONT_SCALE } from '@/lib/a11y';
 import { TabCoachmark } from '@/components/onboarding/TabCoachmark';
+import { useOfflineStripVisible } from '@/components/OfflineBanner';
 
 type TabName = 'top-picks' | 'team' | 'transfer';
 
@@ -35,14 +36,30 @@ export default function TabsLayout() {
   // There's no top banner anymore — the status-bar inset is painted in the
   // active screen's own background colour so the top stays flush with the
   // content. `team` uses the theme bg; the other tabs use the apex token bg.
+  //
+  // This used to be set only in the tab bar's `onPress`, so any navigation
+  // the user didn't tap — a notification deep link, a back-navigation —
+  // left it stale: the inset strip was painted in the wrong tab's colour and
+  // TabCoachmark showed (and marked seen) the wrong tab's tip. Derive it from
+  // the router instead. Non-tab routes (the profile/settings/player modals)
+  // contribute no tab segment, so the last tab is kept while they're open.
+  const segments = useSegments();
   const [activeTab, setActiveTab] = useState<TabName>('team');
+  useEffect(() => {
+    const leaf = segments[segments.length - 1];
+    if (TABS.some((tab) => tab.name === leaf)) setActiveTab(leaf as TabName);
+  }, [segments]);
   const screenBg = activeTab === 'team' ? t.bg : tk.bg;
 
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // The offline strip is docked above this layout and already paints the top
+  // safe-area inset; adding our own on top of it doubles the gap.
+  const topInset = useOfflineStripVisible() ? 0 : insets.top;
+
   return (
     <View style={{ flex: 1, backgroundColor: screenBg }}>
-      <View style={{ height: insets.top, backgroundColor: screenBg }} />
+      <View testID="tabs-top-inset" style={{ height: topInset, backgroundColor: screenBg }} />
       <TabCoachmark tab={activeTab} />
       <Tabs
         initialRouteName="team"
@@ -50,7 +67,21 @@ export default function TabsLayout() {
         tabBar={(props) => {
           const activeName = props.state.routes[props.state.index].name;
           return (
-            <View style={[styles.bar, { backgroundColor: t.surface, borderTopColor: t.line }]}>
+            <View
+              testID="tab-bar"
+              accessibilityRole="tablist"
+              style={[
+                styles.bar,
+                {
+                  backgroundColor: t.surface,
+                  borderTopColor: t.line,
+                  // A hardcoded 22 put the labels inside the home-indicator
+                  // gesture zone on 34pt devices; 12 is the old visual
+                  // breathing room for devices with no inset.
+                  paddingBottom: Math.max(insets.bottom, 12),
+                },
+              ]}
+            >
               {TABS.map((tab) => {
                 const focused = activeName === tab.name;
                 const color = focused ? tk.activeFill : t.textFaint;
@@ -62,10 +93,7 @@ export default function TabsLayout() {
                     accessibilityLabel={tab.label}
                     accessibilityState={{ selected: focused }}
                     style={styles.tab}
-                    onPress={() => {
-                      setActiveTab(tab.name);
-                      props.navigation.navigate(tab.name);
-                    }}
+                    onPress={() => props.navigation.navigate(tab.name)}
                   >
                     {focused && (
                       <View style={[styles.indicator, { backgroundColor: tk.activeFill }]} />
@@ -141,7 +169,6 @@ const styles = StyleSheet.create({
   bar: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    paddingBottom: 22,
   },
   tab: {
     flex: 1,

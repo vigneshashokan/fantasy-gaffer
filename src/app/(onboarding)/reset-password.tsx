@@ -47,6 +47,7 @@ export default function ResetPassword() {
           <PillBtn
             variant="accent"
             onPress={() => router.replace('/(onboarding)/signin')}
+            accentFill={t.accent}
             accentInk={t.accentInk}
             style={styles.submitBtn}
           >
@@ -122,7 +123,7 @@ export default function ResetPassword() {
             textMuted={t.textMuted}
           />
           {errors.password && (
-            <Text style={[styles.fieldError, { color: '#FF3B5C' }]}>{errors.password}</Text>
+            <Text style={[styles.fieldError, { color: t.danger }]}>{errors.password}</Text>
           )}
           <Field
             icon="lock"
@@ -141,14 +142,14 @@ export default function ResetPassword() {
             textMuted={t.textMuted}
           />
           {errors.confirmPassword && (
-            <Text style={[styles.fieldError, { color: '#FF3B5C' }]}>{errors.confirmPassword}</Text>
+            <Text style={[styles.fieldError, { color: t.danger }]}>{errors.confirmPassword}</Text>
           )}
         </View>
 
         {errors.form && (
           <Text
             accessibilityLiveRegion="assertive"
-            style={[styles.formError, { color: '#FF3B5C' }]}
+            style={[styles.formError, { color: t.danger }]}
           >
             {errors.form}
           </Text>
@@ -157,6 +158,7 @@ export default function ResetPassword() {
         <PillBtn
           variant="accent"
           onPress={onSubmit}
+          accentFill={t.accent}
           accentInk={t.accentInk}
           style={styles.submitBtn}
         >

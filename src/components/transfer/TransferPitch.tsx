@@ -64,7 +64,7 @@ export function TransferPitch({
                 <View style={styles.keeperBand}>
                   {row.map((p) => (
                     <TransferPlayer
-                      key={p.name}
+                      key={p.id}
                       p={p}
                       onPress={onPlayerPress}
                       slotW={slotW}
@@ -76,7 +76,7 @@ export function TransferPitch({
               ) : (
                 row.map((p) => (
                   <TransferPlayer
-                    key={p.name}
+                    key={p.id}
                     p={p}
                     onPress={onPlayerPress}
                     slotW={slotW}
