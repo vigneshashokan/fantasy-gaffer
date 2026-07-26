@@ -63,6 +63,12 @@ export function projectForHash(rows: FixtureRow[]): string {
     r.team_h,
     r.team_a,
     r.finished,
+    // Difficulty belongs in the hash. Omitting it meant an FPL re-tune that
+    // changed ONLY the difficulty ratings hashed identically, hit skipRun, and
+    // left the stored FDR stale indefinitely — which chip advice reads for its
+    // "more than five players at FDR>=4" wildcard heuristic (#177).
+    r.team_h_difficulty,
+    r.team_a_difficulty,
   ]);
   return JSON.stringify(projection);
 }

@@ -6,6 +6,7 @@ import { ingestBootstrap } from './sources/bootstrap.ts';
 import { ingestFixtures } from './sources/fixtures.ts';
 import { ingestHistory } from './sources/history.ts';
 import { ingestSnapshot } from './sources/snapshot.ts';
+import { authorize } from './lib/auth.ts';
 
 type Source = 'bootstrap' | 'fixtures' | 'history' | 'snapshot';
 
@@ -27,6 +28,12 @@ function defaultDeps(): Deps {
 }
 
 export async function handler(req: Request, depsOverride?: Deps): Promise<Response> {
+  // Before anything else — including reading ?source= and ?force=. An
+  // unauthorized caller must not be able to probe which sources exist, and
+  // must never reach the ingest work or the ingestion_runs insert (#165).
+  const denied = authorize(req);
+  if (denied) return denied;
+
   const url = new URL(req.url);
   const source = url.searchParams.get('source');
   const force = url.searchParams.get('force') === '1';

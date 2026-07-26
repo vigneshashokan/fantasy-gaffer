@@ -34,7 +34,12 @@ export async function startRun(
 ): Promise<string> {
   const { data, error } = await supabase
     .from('ingestion_runs')
-    .insert({ source, status: 'success' /* provisional; closed by finish/skip/error */ })
+    // Inserted as 'running', not a provisional 'success'. errorRun only fires
+    // on a thrown JS error, so an isolate kill mid-run left the optimistic row
+    // claiming the run had succeeded — the one failure mode the ledger exists
+    // to make visible. A row still marked 'running' long after the fact is a
+    // failure, and now looks like one (#177).
+    .insert({ source, status: 'running' })
     .select()
     .single();
   if (error) throw error;
