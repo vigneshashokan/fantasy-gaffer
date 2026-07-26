@@ -129,3 +129,38 @@ is the typeface (Archivo, matching the rest of the screen, rather than SF Pro).
 If review objects, the fix is a one-line swap in `signin.tsx` to
 `<AppleAuthentication.AppleAuthenticationButton …>` — but it will then look
 different from the Google button sitting above it.
+
+## Troubleshooting
+
+### `ERR_REQUEST_UNKNOWN` from `signInAsync`
+
+This is `ASAuthorizationError.unknown` — iOS refusing the request before any UI
+appears. It is nearly always **the installed binary lacking the Sign in with
+Apple entitlement**, not a bug in `apple.ts`. Nothing in the JS can fix it.
+
+The trap is that a dev client serves JS from Metro while the entitlement lives
+in the *native* build, so the feature can look wired up and still be denied by
+the OS. Check, in this order:
+
+1. **Was the build made after `ios.usesAppleSignIn: true` landed?** Expo's
+   prebuild is what writes `com.apple.developer.applesignin`. A build from
+   before that flag can never work, no matter how current the JS is.
+   `eas build:list --platform ios` against the merge date settles it.
+2. **Is the capability enabled on the App ID?** Apple Developer → Identifiers →
+   `com.fantasygaffer.app` → **Sign in with Apple**. EAS reads App ID
+   capabilities when generating the provisioning profile — if this is off at
+   build time, the profile omits the entitlement even with the flag set.
+3. **Did the provisioning profile get regenerated?** Changing entitlements
+   invalidates the old profile. EAS usually detects this; if not, force it with
+   `eas credentials` → iOS → the relevant profile → build credentials.
+4. **Is it a simulator build?** Use a device build. Simulator support is
+   limited, and a simulator not signed into an Apple ID fails the same way.
+
+### Failures *after* the sheet appears
+
+If the system sheet renders and the failure comes later, the entitlement is
+fine and the problem is server-side — an error from `signInWithIdToken`, which
+surfaces as the Supabase message rather than an `ERR_*` code. Check that the
+Apple provider is enabled in Supabase with `com.fantasygaffer.app` in
+**Authorized Client IDs**; a missing or mismatched client id reads as an
+audience error.
