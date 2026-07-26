@@ -14,6 +14,15 @@ jest.mock('@/lib/supabase', () => ({
 jest.mock('@/lib/analytics', () => ({ __esModule: true, identify: jest.fn(), reset: jest.fn(), track: jest.fn() }));
 jest.mock('@/api/pushTokens', () => ({ __esModule: true, deletePushToken: (...a: unknown[]) => mockDeletePushToken(...a) }));
 jest.mock('@/store/pushStore', () => ({ __esModule: true, usePushStore: { getState: () => ({ token: 'ExponentPushToken[abc]' }) } }));
+// authStore reads AsyncStorage at module scope to seed the sign_in dedupe.
+jest.mock('@react-native-async-storage/async-storage', () => ({
+  __esModule: true,
+  default: {
+    getItem: jest.fn(() => Promise.resolve(null)),
+    setItem: jest.fn(() => Promise.resolve()),
+    removeItem: jest.fn(() => Promise.resolve()),
+  },
+}));
 
 import { useAuthStore } from '@/store/authStore';
 
