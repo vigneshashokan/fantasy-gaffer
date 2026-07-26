@@ -8,19 +8,19 @@ const tk = apexTokens(true, 'classic');
 describe('ConfirmTransferBar', () => {
   it('shows out and in names and the confirm button', () => {
     const { getByText } = render(
-      <ConfirmTransferBar outName="Haaland" inName="Wood" onConfirm={jest.fn()} tk={tk} />,
+      <ConfirmTransferBar outName="Haaland" inName="Wood" onDone={jest.fn()} tk={tk} />,
     );
     getByText('Haaland');
     getByText('Wood');
     getByText('Confirm transfer');
   });
 
-  it('fires onConfirm when the button is pressed', () => {
-    const onConfirm = jest.fn();
-    const { getByText } = render(
-      <ConfirmTransferBar outName="Haaland" inName="Wood" onConfirm={onConfirm} tk={tk} />,
+  it('replaces the swap row with the saved-plan state when confirmed', () => {
+    const { getByText, queryByText } = render(
+      <ConfirmTransferBar outName="Haaland" inName="Wood" onDone={jest.fn()} tk={tk} />,
     );
     fireEvent.press(getByText('Confirm transfer'));
-    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(queryByText('Haaland')).toBeNull();
+    getByText('Open FPL');
   });
 });

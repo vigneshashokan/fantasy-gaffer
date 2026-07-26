@@ -121,12 +121,12 @@ export default function TransferTargetsScreen() {
 
       {selectedIn && (
         <View style={styles.barWrap}>
+          {/* Advisory-only: the bar saves a plan and hands off to the FPL app.
+              The real write-back is Phase 6 (fpl-proxy Edge Function). */}
           <ConfirmTransferBar
             outName={out.name}
             inName={selectedIn.name}
-            onConfirm={() => {
-              // TODO: Phase 6 — route the transfer through the fpl-proxy Edge Function.
-            }}
+            onDone={() => setSelectedInId(null)}
             tk={tk}
           />
         </View>

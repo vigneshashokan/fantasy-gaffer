@@ -66,7 +66,6 @@ import { PlusCard } from '@/components/settings/PlusCard';
 import { ThemeToggle } from '@/components/settings/ThemeToggle';
 import { NotificationsCard } from '@/components/settings/NotificationsCard';
 import { SettingsRow } from '@/components/settings/SettingsRow';
-import { FollowUsRow } from '@/components/settings/FollowUsRow';
 import { ApplyCheckbox } from '@/components/ui/ApplyCheckbox';
 import { ApplyAllCard } from '@/components/team/ApplyAllCard';
 import { SubPill, SubInPill, GoalsBadge, AssistsBadge, CardIcons, CaptViceBadge } from '@/components/ui/PitchBadges';
@@ -582,7 +581,7 @@ describe('ApplyAllCard', () => {
     );
     expect(getByText('2 changes pending')).toBeTruthy();
     expect(getByText('Undo all changes')).toBeTruthy();
-    expect(getByText('Confirm')).toBeTruthy();
+    expect(getByText('Save plan')).toBeTruthy();
   });
 
   it('shows singular form when count is 1', () => {
@@ -734,10 +733,11 @@ describe('Profile components', () => {
 describe('Settings components', () => {
   const tk = apexTokens(false, 'classic');
 
-  it('PlusCard renders promo copy', () => {
-    const { getByText } = render(<PlusCard gradFrom="#37003C" gradTo="#5B0F63" />);
-    expect(getByText('Fantasy Gaffer')).toBeTruthy();
-    expect(getByText('Go Premium')).toBeTruthy();
+  // #174: the premium pitch is gated on the `premium_paywall` flag, which the
+  // manual posthog mock leaves undefined → FLAG_DEFAULTS false → not rendered.
+  it('PlusCard renders nothing while the premium_paywall flag is off', () => {
+    const { toJSON } = render(<PlusCard gradFrom="#37003C" gradTo="#5B0F63" />);
+    expect(toJSON()).toBeNull();
   });
 
   it('ThemeToggle shows all 3 palette labels', () => {
@@ -760,18 +760,8 @@ describe('Settings components', () => {
     expect(getByText('Send Feedback')).toBeTruthy();
   });
 
-  it('FollowUsRow renders head', () => {
-    const { getByText } = render(<FollowUsRow tk={tk} />);
-    expect(getByText('Follow Us')).toBeTruthy();
-  });
-
-  it('FollowUsRow header has accessibilityState.expanded false initially, true after press', () => {
-    const { getByRole } = render(<FollowUsRow tk={tk} />);
-    const headerBtn = getByRole('button', { name: 'Follow Us' });
-    expect(headerBtn.props.accessibilityState?.expanded).toBe(false);
-    fireEvent.press(headerBtn);
-    expect(headerBtn.props.accessibilityState?.expanded).toBe(true);
-  });
+  // FollowUsRow was deleted in #174 — five rows whose onPress was `() => {}`,
+  // pointing at social handles that don't exist yet.
 });
 
 // ── PicksCard ─────────────────────────────────────────────────
