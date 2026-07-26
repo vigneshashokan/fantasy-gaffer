@@ -148,9 +148,15 @@ function makeHistoryDeps(opts: {
   liveByGw: Record<number, unknown>;
   fixturesByGw: Record<number, Array<{ id: number; team_h: number; team_a: number }>>;
   now?: Date;
-}): { deps: IngestHistoryDeps; upserts: Array<{ table: string; rows: unknown[] }>; runUpdates: Array<Record<string, unknown>> } {
+}): {
+  deps: IngestHistoryDeps;
+  upserts: Array<{ table: string; rows: unknown[] }>;
+  runUpdates: Array<Record<string, unknown>>;
+  probedGws: number[];
+} {
   const upserts: Array<{ table: string; rows: unknown[] }> = [];
   const runUpdates: Array<Record<string, unknown>> = [];
+  const probedGws: number[] = [];
 
   // deno-lint-ignore no-explicit-any
   const supabase: any = {
@@ -160,7 +166,22 @@ function makeHistoryDeps(opts: {
           return {
             eq(_col: string, val: unknown) {
               if (table === 'player_gw_history') {
-                return Promise.resolve({ data: opts.presentGws.map((gw) => ({ gw })), error: null });
+                // Presence is now asked one bounded question at a time:
+                // .eq('season', s).eq('gw', g).limit(1). Resolving here instead
+                // would mean the mock still models the unpaginated whole-season
+                // read that #164 removed.
+                return {
+                  eq(_c: string, gw: unknown) {
+                    probedGws.push(gw as number);
+                    return {
+                      limit: (_n: number) =>
+                        Promise.resolve({
+                          data: opts.presentGws.includes(gw as number) ? [{ gw }] : [],
+                          error: null,
+                        }),
+                    };
+                  },
+                };
               }
               if (table === 'fixtures') {
                 return Promise.resolve({ data: opts.fixturesByGw[val as number] ?? [], error: null });
@@ -201,6 +222,7 @@ function makeHistoryDeps(opts: {
     deps: { supabase, fetch: fetchStub, now: () => opts.now ?? new Date('2026-09-15T03:30:00Z') },
     upserts,
     runUpdates,
+    probedGws,
   };
 }
 
@@ -250,4 +272,41 @@ Deno.test('ingestHistory: skips (no upsert) when nothing settled is missing', as
   assertEquals(upserts.some((u) => u.table === 'player_gw_history'), false);
   assertEquals(runUpdates.at(-1)?.status, 'skipped');
   assertEquals(runUpdates.at(-1)?.skip_reason, 'no new settled gameweeks');
+});
+
+// #164. The old code derived presence from ONE unpaginated whole-season select,
+// which PostgREST caps at 1000 rows. Deep into a season that answer degenerated
+// to roughly {1,2}, so every later gameweek looked permanently missing and the
+// daily cron re-captured the whole season — overwriting correct-at-time prices
+// and inserting duplicate rows for players who had transferred.
+Deno.test('ingestHistory: presence is probed per gameweek, so a deep season stays bounded', async () => {
+  const settled = Array.from({ length: 30 }, (_, i) => ({ id: i + 1, finished: true, data_checked: true }));
+  const alreadyCaptured = Array.from({ length: 29 }, (_, i) => i + 1); // 1..29 done, 30 missing
+
+  const { deps, upserts, probedGws } = makeHistoryDeps({
+    events: settled,
+    elements: [elt(100, 12, 3)],
+    presentGws: alreadyCaptured,
+    fixturesByGw: { 30: [{ id: 300, team_h: 12, team_a: 9 }] },
+    liveByGw: {
+      30: { elements: [{ id: 100, stats: {
+        minutes: 90, starts: 1, goals_scored: 0, assists: 0, clean_sheets: 1,
+        goals_conceded: 0, bonus: 0, bps: 15, total_points: 6,
+        expected_goals: '0.10', expected_assists: '0.20', expected_goal_involvements: '0.30',
+        expected_goals_conceded: '0.80', influence: '20.0', creativity: '15.0', threat: '5.0',
+        ict_index: '4.0', defensive_contribution: 2,
+      } }] },
+    },
+  });
+
+  await ingestHistory('run-1', deps);
+
+  // One bounded question per settled gameweek — never a whole-season read.
+  assertEquals([...probedGws].sort((a, b) => a - b), settled.map((e) => e.id));
+
+  // Only the genuinely missing gameweek is captured. Under the old truncating
+  // read this upserted all 30, re-stamping 29 of them from today's bootstrap.
+  const hist = upserts.filter((u) => u.table === 'player_gw_history');
+  assertEquals(hist.length, 1);
+  assertEquals((hist[0].rows as Array<Record<string, unknown>>)[0].gw, 30);
 });
