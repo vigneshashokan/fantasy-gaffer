@@ -9,15 +9,24 @@ import { useThemeStore } from '@/store/themeStore';
 import { apexTokens } from '@/constants/apexTokens';
 import { useA11yAnnounce } from '@/lib/a11y';
 
+/**
+ * Whether the offline strip is on screen. It is docked above everything and
+ * already paints the top safe-area inset, so anything below it must not add
+ * its own — the tabs layout used to, producing a doubled gap while offline.
+ *
+ * Only true when explicitly offline: `null` (unknown) counts as online so the
+ * banner never flashes on a cold start before NetInfo resolves.
+ */
+export function useOfflineStripVisible(): boolean {
+  return useNetInfo().isConnected === false;
+}
+
 export function OfflineBanner() {
-  const { isConnected } = useNetInfo();
   const insets = useSafeAreaInsets();
   const { paletteKey, dark } = useThemeStore();
   const tk = apexTokens(dark, paletteKey);
 
-  // Only show when explicitly offline. `null` (unknown) is treated as online so
-  // the banner never flashes on a cold start before NetInfo resolves.
-  const offline = isConnected === false;
+  const offline = useOfflineStripVisible();
   const message = "You're offline — showing your last saved data";
   useA11yAnnounce(offline ? message : null);
   if (!offline) return null;

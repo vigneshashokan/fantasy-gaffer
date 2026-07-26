@@ -10,9 +10,14 @@ interface PillBtnProps {
   variant?: Variant;
   style?: ViewStyle;
   primaryColor?: string;
+  /** Fill for `variant="accent"`. Pass `t.accent` so the CTA follows the
+   *  palette AND the mode — light mode's accent is the darker `accentLight`,
+   *  which is what makes white `accentInk` legible on it. */
+  accentFill?: string;
   accentInk?: string;
   textColor?: string;
   borderColor?: string;
+  disabled?: boolean;
   testID?: string;
 }
 
@@ -22,18 +27,21 @@ export function PillBtn({
   variant = 'solid',
   style,
   primaryColor = '#37003C',
+  accentFill = '#00E676',
   accentInk = '#06351E',
   textColor = '#74627E',
   borderColor = 'rgba(40,0,48,0.16)',
+  disabled = false,
   testID,
 }: PillBtnProps) {
   const containerStyle: ViewStyle = {
     ...styles.base,
     ...(variant === 'solid'   && { backgroundColor: primaryColor }),
-    ...(variant === 'accent'  && { backgroundColor: '#00E676' }),
+    ...(variant === 'accent'  && { backgroundColor: accentFill }),
     ...(variant === 'ghost'   && { backgroundColor: 'transparent' }),
     ...(variant === 'outline' && { backgroundColor: 'transparent', borderWidth: 1.5, borderColor }),
     ...(style as object),
+    ...(disabled && { opacity: 0.5 }),
   };
   const textStyle: TextStyle = {
     ...styles.label,
@@ -42,16 +50,24 @@ export function PillBtn({
     ...(variant === 'ghost'   && { color: textColor }),
     ...(variant === 'outline' && { color: textColor }),
   };
-  const a11yLabel = typeof children === 'string' ? children : undefined;
+  const isText = typeof children === 'string';
   return (
     <Pressable
       testID={testID}
       onPress={onPress}
+      disabled={disabled}
       accessibilityRole="button"
-      accessibilityLabel={a11yLabel}
-      style={({ pressed }) => [containerStyle, pressed && styles.pressed]}
+      accessibilityLabel={isText ? children : undefined}
+      accessibilityState={{ disabled }}
+      style={({ pressed }) => [containerStyle, pressed && !disabled && styles.pressed]}
     >
-      <Text style={textStyle} maxFontSizeMultiplier={MAX_FONT_SCALE}>{children}</Text>
+      {/* Non-string children (a pending spinner) render directly: nesting a
+          view inside <Text> lays out inline and misbehaves on Android. */}
+      {isText ? (
+        <Text style={textStyle} maxFontSizeMultiplier={MAX_FONT_SCALE}>{children}</Text>
+      ) : (
+        children
+      )}
     </Pressable>
   );
 }

@@ -43,14 +43,14 @@ export function ApexDugout({ players, card, cardBorder, faint, onPlayerPress }: 
           );
           if (!onPlayerPress) {
             return (
-              <View key={p.name} style={styles.player}>
+              <View key={p.id} style={styles.player}>
                 {body}
               </View>
             );
           }
           return (
             <Pressable
-              key={p.name}
+              key={p.id}
               style={({ pressed }) => [
                 styles.player,
                 pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] },

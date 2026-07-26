@@ -46,7 +46,11 @@ export default function TransferTargetsScreen() {
     return (
       <View style={[styles.empty, { backgroundColor: tk.bg }]}>
         <Text style={[styles.notFound, { color: tk.text }]}>Player not found</Text>
-        <Pressable onPress={() => router.back()} style={[styles.closeBtn, { backgroundColor: tk.green }]}>
+        <Pressable
+          onPress={() => router.back()}
+          accessibilityRole="button"
+          style={[styles.closeBtn, { backgroundColor: tk.green }]}
+        >
           <Text style={styles.closeText}>Close</Text>
         </Pressable>
       </View>
@@ -67,7 +71,7 @@ export default function TransferTargetsScreen() {
         pos={out.pos}
         nextGw={nextGw}
         gradFrom={t.primary}
-        gradTo={dark ? '#0C1018' : '#5B0F63'}
+        gradTo={tk.heroBg2}
         onBack={() => router.back()}
       />
       <ScrollView

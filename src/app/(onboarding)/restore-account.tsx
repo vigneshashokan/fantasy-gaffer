@@ -118,6 +118,7 @@ export default function RestoreAccount() {
             <PillBtn
               variant="accent"
               onPress={onRestore}
+              accentFill={t.accent}
               accentInk={t.accentInk}
               style={styles.restoreBtn}
             >
@@ -125,7 +126,7 @@ export default function RestoreAccount() {
             </PillBtn>
 
             {error && (
-              <Text style={[styles.error, { color: '#FF3B5C' }]}>{error}</Text>
+              <Text style={[styles.error, { color: t.danger }]}>{error}</Text>
             )}
 
             <Pressable onPress={onCancel} hitSlop={8} style={styles.cancelWrap}>

@@ -121,8 +121,8 @@ export function AccountMenu({
           accessibilityRole="button"
           testID="account-menu-signout"
         >
-          <Icon name="signOut" color="#FF3B5C" size={18} />
-          <Text style={[styles.rowText, { color: '#FF3B5C' }]}>Sign out</Text>
+          <Icon name="signOut" color={t.danger} size={18} />
+          <Text style={[styles.rowText, { color: t.danger }]}>Sign out</Text>
         </Pressable>
       </View>
     </Modal>

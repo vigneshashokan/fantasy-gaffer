@@ -125,6 +125,50 @@ describe('useTeamPreview', () => {
     expect(fplGet).not.toHaveBeenCalled();
   });
 
+  // Pre-season (and any gameweek before this manager joined) FPL has no picks
+  // and 404s. Failing the whole preview told users with a VALID id that their
+  // team could not be found — connect-team maps a 404 to exactly that copy —
+  // which blocked linking entirely between seasons.
+  it('links successfully when the squad does not exist yet (picks 404)', async () => {
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: GW_FIXTURE });
+    (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE });
+    (fplGet as jest.Mock)
+      .mockResolvedValueOnce(ENTRY_FIXTURE)
+      .mockRejectedValueOnce(new FplFetchError('FPL 404 for picks', 404));
+
+    const client = makeTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useTeamPreview(12345), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.isError).toBe(false);
+    // Manager identity still comes through, so the user can confirm the link.
+    expect(result.current.data?.teamName).toBe(ENTRY_FIXTURE.name);
+    expect(result.current.data?.starters).toEqual([]);
+    expect(result.current.data?.bench).toEqual([]);
+  });
+
+  // A genuinely wrong id must still fail, or the 404 copy becomes a lie in the
+  // other direction.
+  it('still errors when the entry itself is missing', async () => {
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: GW_FIXTURE });
+    (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE });
+    (fplGet as jest.Mock)
+      .mockRejectedValueOnce(new FplFetchError('FPL 404 for entry', 404))
+      .mockRejectedValueOnce(new FplFetchError('FPL 404 for picks', 404));
+
+    const client = makeTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    const { result } = renderHook(() => useTeamPreview(999999999), { wrapper });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error?.status).toBe(404);
+  });
+
   it('fetches both endpoints when ready and returns the composed preview', async () => {
     (useCurrentGameweek as jest.Mock).mockReturnValue({ data: GW_FIXTURE });
     (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE });

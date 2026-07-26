@@ -80,6 +80,8 @@ export default function VerifyPending() {
         <PillBtn
           variant="accent"
           onPress={onResend}
+          disabled={cooldown > 0 || !email}
+          accentFill={t.accent}
           accentInk={t.accentInk}
           style={styles.resendBtn}
         >
@@ -87,7 +89,7 @@ export default function VerifyPending() {
         </PillBtn>
 
         {errorMsg && (
-          <Text accessibilityLiveRegion="assertive" style={[styles.error, { color: '#FF3B5C' }]}>{errorMsg}</Text>
+          <Text accessibilityLiveRegion="assertive" style={[styles.error, { color: t.danger }]}>{errorMsg}</Text>
         )}
 
         <Pressable

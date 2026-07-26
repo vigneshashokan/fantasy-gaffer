@@ -83,6 +83,7 @@ export default function Landing() {
                 key={d}
                 onPress={() => setI(d)}
                 accessibilityRole="button"
+                accessibilityState={{ selected: d === i }}
                 accessibilityLabel={`Go to slide ${d + 1}`}
                 hitSlop={8}
                 style={[

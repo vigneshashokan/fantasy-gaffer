@@ -20,7 +20,7 @@ export default function TermsScreen() {
         title={termsOfService.title}
         onBack={() => router.back()}
         gradFrom={t.primary}
-        gradTo={dark ? '#0C1018' : '#5B0F63'}
+        gradTo={tk.heroBg2}
       />
       <LegalDocView doc={termsOfService} tk={tk} />
     </View>

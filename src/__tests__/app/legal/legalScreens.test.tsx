@@ -1,4 +1,11 @@
 import React from 'react';
+
+// ScreenHeader reads the safe-area inset (#180); this suite renders screens
+// directly, with no SafeAreaProvider above them.
+jest.mock('react-native-safe-area-context', () => ({
+  ...jest.requireActual('react-native-safe-area-context'),
+  useSafeAreaInsets: () => ({ top: 47, bottom: 34, left: 0, right: 0 }),
+}));
 import { render } from '@testing-library/react-native';
 
 jest.mock('@/store/themeStore', () => ({

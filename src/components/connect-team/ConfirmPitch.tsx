@@ -37,7 +37,10 @@ function rowsFromStarters(starters: PreviewPlayer[]): PreviewPlayer[][] {
   return out;
 }
 
-function PlayerDisc({ player }: { player: PreviewPlayer }) {
+// `nameColor` is required rather than defaulted: the same disc renders on the
+// dark pitch AND on the bench card, which is white in light mode — a
+// hardcoded '#fff' made every bench name invisible there.
+function PlayerDisc({ player, nameColor }: { player: PreviewPlayer; nameColor: string }) {
   const color = CLUB_COLORS[player.club] ?? { kit: '#666', kit2: '#fff', ink: '#fff' };
   const jersey = jerseyForClub(player.club as ClubCode);
   const captainRing = player.capt ? { borderWidth: 2, borderColor: '#FFD60A' } : null;
@@ -52,7 +55,7 @@ function PlayerDisc({ player }: { player: PreviewPlayer }) {
         )}
       </View>
       <View style={styles.nameRow}>
-        <Text style={styles.name} numberOfLines={1}>{player.name}</Text>
+        <Text style={[styles.name, { color: nameColor }]} numberOfLines={1}>{player.name}</Text>
         {player.vice ? <Text style={styles.viceBadge}>V</Text> : null}
       </View>
     </View>
@@ -71,7 +74,8 @@ export function ConfirmPitch({ preview }: ConfirmPitchProps) {
         {rows.map((row, idx) => (
           <View key={idx} style={styles.row}>
             {row.map((player, j) => (
-              <PlayerDisc key={`${idx}-${j}`} player={player} />
+              // The pitch is always dark green, so names stay white here.
+              <PlayerDisc key={`${idx}-${j}`} player={player} nameColor="#fff" />
             ))}
           </View>
         ))}
@@ -80,7 +84,7 @@ export function ConfirmPitch({ preview }: ConfirmPitchProps) {
         <Text style={[styles.benchLabel, { color: tk.faint }]}>Bench</Text>
         <View style={styles.benchRow}>
           {preview.bench.map((player, i) => (
-            <PlayerDisc key={`b-${i}`} player={player} />
+            <PlayerDisc key={`b-${i}`} player={player} nameColor={tk.text} />
           ))}
         </View>
       </View>
@@ -124,7 +128,6 @@ const styles = StyleSheet.create({
   name: {
     fontFamily: 'Archivo_700Bold',
     fontSize: 11,
-    color: '#fff',
   },
   viceBadge: {
     fontFamily: 'Archivo_800ExtraBold',

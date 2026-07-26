@@ -24,6 +24,13 @@ export interface Theme {
   lineStrong: string;
   accent: string;
   accentInk: string;
+  /**
+   * Error / destructive text. Mode-aware and palette-independent, so one
+   * literal serves every form error, failed-save message and destructive
+   * action. Mirrored on `ApexTokens.danger` (same values) so screens on
+   * either token system reach the same colour. WCAG AA-guarded.
+   */
+  danger: string;
   shadow: string;
   islandText: string;
 }
@@ -40,6 +47,16 @@ export const PALETTE: PaletteEntry[] = [
   { key: 'electric', label: 'Electric', swatch: ['#1B0A3E', '#04F5FF', '#FF2D9B'] },
 ];
 
+/**
+ * Error / destructive text, one pair for the whole app. Both values clear
+ * WCAG AA 4.5:1 against every surface they land on (worst light case is
+ * `bg` #EFE9F3 at 4.94:1; worst dark case is `surfaceAlt` #2E1640 at
+ * 6.49:1) — see the contrast guard test. Same values as the pre-existing
+ * `apexTokens.deadlineFg` pair, so the app has one red, not three.
+ */
+export const DANGER_LIGHT = '#C8102E';
+export const DANGER_DARK = '#FF7A95';
+
 const ACCENTS: Record<PaletteKey, {
   primary: string; primaryGrad: string;
   accent: string; accentLight: string;
@@ -50,7 +67,12 @@ const ACCENTS: Record<PaletteKey, {
     primary:     '#37003C',
     primaryGrad: 'linear-gradient(135deg, #37003C 0%, #6A0060 100%)',
     accent:      '#00E676',
-    accentLight: '#00B863',
+    // `accentLight` is light mode's `accent`: it is both the primary-CTA FILL
+    // (white ink on top) and the colour of every inline link on the light
+    // `bg`. The previous values were tuned for the dark fill only — white on
+    // #00B863 measured 1.67:1 and the sign-in links measured ~2.6:1. These
+    // are darkened so both readings clear AA (see the contrast guard).
+    accentLight: '#00703A',
     accentGrad:  'linear-gradient(90deg, #00FF87 0%, #04F5FF 100%)',
     accentInk:   '#06351E',
     pink:        '#E90052',
@@ -60,7 +82,7 @@ const ACCENTS: Record<PaletteKey, {
     primary:     '#06371F',
     primaryGrad: 'linear-gradient(135deg, #06371F 0%, #0B6B38 100%)',
     accent:      '#A6F03C',
-    accentLight: '#5C9B12',
+    accentLight: '#3F6B0C',
     accentGrad:  'linear-gradient(90deg, #B6FF3C 0%, #5CE36B 100%)',
     accentInk:   '#1A2E00',
     pink:        '#FF7A00',
@@ -70,7 +92,7 @@ const ACCENTS: Record<PaletteKey, {
     primary:     '#1B0A3E',
     primaryGrad: 'linear-gradient(135deg, #1B0A3E 0%, #4A1B8C 100%)',
     accent:      '#04F5FF',
-    accentLight: '#0093B8',
+    accentLight: '#006B82',
     accentGrad:  'linear-gradient(90deg, #04F5FF 0%, #8A6BFF 100%)',
     accentInk:   '#04212A',
     pink:        '#FF2D9B',
@@ -94,6 +116,7 @@ export function getTheme(paletteKey: PaletteKey = 'classic', dark = false): Them
         lineStrong: 'rgba(255,255,255,0.16)',
         accent:     a.accent,
         accentInk:  a.accentInk,
+        danger:     DANGER_DARK,
         shadow:     '0 10px 30px rgba(0,0,0,0.5)',
         islandText: '#fff',
       }
@@ -110,6 +133,7 @@ export function getTheme(paletteKey: PaletteKey = 'classic', dark = false): Them
         lineStrong: 'rgba(40,0,48,0.16)',
         accent:     a.accentLight,
         accentInk:  '#fff',
+        danger:     DANGER_LIGHT,
         shadow:     '0 10px 30px rgba(40,0,48,0.12)',
         islandText: '#000',
       };
