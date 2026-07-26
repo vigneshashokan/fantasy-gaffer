@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  type TextInput,
 } from 'react-native';
 import { router } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -41,6 +42,7 @@ export default function CompleteProfile() {
   const [dob, setDob] = useState<Date | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const lastNameRef = useRef<TextInput>(null);
 
   const valid = useMemo(() => {
     if (firstName.trim().length === 0) return false;
@@ -101,6 +103,9 @@ export default function CompleteProfile() {
             placeholder="First name"
             value={firstName}
             onChangeText={setFirstName}
+            autoCapitalize="words"
+            returnKeyType="next"
+            onSubmitEditing={() => lastNameRef.current?.focus()}
             surfaceAlt={t.surfaceAlt}
             line={t.line}
             accent={t.accent}
@@ -112,6 +117,9 @@ export default function CompleteProfile() {
             placeholder="Last name"
             value={lastName}
             onChangeText={setLastName}
+            autoCapitalize="words"
+            inputRef={lastNameRef}
+            returnKeyType="done"
             surfaceAlt={t.surfaceAlt}
             line={t.line}
             accent={t.accent}

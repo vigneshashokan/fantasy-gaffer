@@ -105,6 +105,8 @@ export default function ForgotPassword() {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoComplete="email"
+              returnKeyType="go"
+              onSubmitEditing={onSubmit}
               surfaceAlt={t.surfaceAlt}
               line={t.line}
               accent={t.accent}

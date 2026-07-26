@@ -105,8 +105,13 @@ export default function TopPicksTab() {
             <StatusPill state={seasonState} seasonLabel={seasonLabel} tk={tk} />
           )
         }
+        // Only true while a gameweek is actually in progress — between
+        // gameweeks the picks ARE fresh, so the old always-on subtitle was
+        // telling users their data was stale when it wasn't (#181).
         subtitle={
-          seasonOver ? undefined : 'Top Picks will refresh once the current game week is done.'
+          seasonState?.kind === 'live'
+            ? 'Top Picks will refresh once the current game week is done.'
+            : undefined
         }
       />
 

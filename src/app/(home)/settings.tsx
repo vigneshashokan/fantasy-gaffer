@@ -1,6 +1,7 @@
 import React from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import Constants from 'expo-constants';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
@@ -103,8 +104,10 @@ export default function SettingsModal() {
           />
         </SectionCard>
 
+        {/* Read from the build rather than hardcoded, so a bug report's
+            version string is the version the user is actually running (#181). */}
         <Text style={[styles.version, { color: tk.faint }]}>
-          Fantasy Gaffer · v1.0.0
+          Fantasy Gaffer · v{Constants.expoConfig?.version ?? '—'}
         </Text>
 
         {__DEV__ && (

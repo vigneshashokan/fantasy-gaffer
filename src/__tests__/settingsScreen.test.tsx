@@ -61,6 +61,13 @@ jest.mock('@/api/notificationPrefs', () => ({
   useUpdateNotificationPrefs: () => ({ mutate: jest.fn(), isError: false }),
 }));
 
+// A version that is deliberately NOT the app's real one, so the assertion
+// below can only pass if the string is read from config (#181).
+jest.mock('expo-constants', () => ({
+  __esModule: true,
+  default: { expoConfig: { version: '9.9.9' } },
+}));
+
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   __esModule: true,
@@ -143,5 +150,19 @@ describe('Settings screen — More actions', () => {
     const { getByText } = render(<Settings />);
     fireEvent.press(getByText('Replay tutorial'));
     expect(mockResetAll).toHaveBeenCalled();
+  });
+
+  // #181: was hardcoded 'v1.0.0', so a version bump would silently leave the
+  // string (and every bug report quoting it) wrong.
+  it('reads the version string from the build config, not a literal', () => {
+    const { getByText, queryByText } = render(<Settings />);
+    getByText('Fantasy Gaffer · v9.9.9');
+    expect(queryByText('Fantasy Gaffer · v1.0.0')).toBeNull();
+  });
+
+  // #174: five social rows whose onPress was `() => {}`.
+  it('no longer offers the dead Follow Us rows', () => {
+    const { queryByText } = render(<Settings />);
+    expect(queryByText('Follow Us')).toBeNull();
   });
 });

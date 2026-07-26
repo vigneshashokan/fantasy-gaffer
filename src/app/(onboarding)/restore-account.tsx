@@ -15,6 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { getTheme } from '@/constants/theme';
 import { GafferLogo } from '@/components/ui/GafferLogo';
 import { PillBtn } from '@/components/ui/PillBtn';
+import { Skeleton } from '@/components/ui/Skeleton';
 import {
   loadPendingDeletion,
   cancelDeletion,
@@ -102,6 +103,18 @@ export default function RestoreAccount() {
           <GafferLogo size={46} light={dark} variant="wordmark" />
         </View>
 
+        {/* Until the pending-deletion row resolves this screen showed a bare
+            logo on an otherwise empty page — on the single highest-anxiety
+            screen in the app ("is my account gone?"). Give it the same
+            skeleton every sibling screen has (#181). */}
+        {!loaded && (
+          <View testID="restore-loading" style={styles.skeletonWrap}>
+            <Skeleton height={30} radius={10} />
+            <Skeleton height={60} radius={12} />
+            <Skeleton height={54} radius={999} />
+          </View>
+        )}
+
         {loaded && pending !== null && (
           <>
             <Text style={[styles.title, { color: t.text }]}>{greeting}</Text>
@@ -141,6 +154,7 @@ export default function RestoreAccount() {
 const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 26, paddingTop: 64, paddingBottom: 32 },
   logoWrap: { alignItems: 'center', marginBottom: 26 },
+  skeletonWrap: { gap: 18 },
   title: {
     fontFamily: 'Archivo_900Black',
     fontSize: 28,

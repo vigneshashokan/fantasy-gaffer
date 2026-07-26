@@ -1,10 +1,20 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  type NativeSyntheticEvent,
+  type NativeScrollEvent,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GafferLogo } from '@/components/ui/GafferLogo';
 import { Icon } from '@/components/ui/Icon';
 import { SlideVisual } from '@/components/onboarding/SlideVisual';
+import { useReducedMotion } from '@/lib/a11y';
 
 type SlideVariant = 'picks' | 'team' | 'strategy';
 
@@ -38,13 +48,26 @@ const SLIDES: Slide[] = [
 
 export default function Landing() {
   const router = useRouter();
-  const { height } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const [i, setI] = useState(0);
+  const pagerRef = useRef<ScrollView>(null);
+  const reduced = useReducedMotion();
   const last = i === SLIDES.length - 1;
-  const slide = SLIDES[i];
+
+  // The slides live in a paged ScrollView so horizontal swipe — the gesture
+  // every user tries first on a carousel — actually advances them (#181). As
+  // in Top Picks, onScroll owns `i`: setting it on tap first would flash the
+  // target, snap back on the scroll's first frame, then sweep.
+  const goTo = (index: number) =>
+    pagerRef.current?.scrollTo({ x: index * width, animated: !reduced });
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!width) return;
+    const idx = Math.round(e.nativeEvent.contentOffset.x / width);
+    if (idx !== i && idx >= 0 && idx < SLIDES.length) setI(idx);
+  };
 
   const goSignIn = () => router.push('/(onboarding)/signin');
-  const next = () => (last ? goSignIn() : setI(i + 1));
+  const next = () => (last ? goSignIn() : goTo(i + 1));
 
   return (
     <View style={{ flex: 1, backgroundColor: '#37003C' }}>
@@ -61,16 +84,31 @@ export default function Landing() {
       <View style={[styles.content, { paddingTop: Math.max(60, height * 0.08) }]}>
         <GafferLogo size={32} light variant="wordmark" style={{ alignSelf: 'center' }} />
 
-        <View style={styles.hero}>
-          <SlideVisual variant={slide.variant} />
-        </View>
-
-        <View>
-          <Text style={styles.tag}>{slide.tag}</Text>
-          <Text style={styles.title}>{slide.title[0]}</Text>
-          <Text style={styles.title}>{slide.title[1]}</Text>
-          <Text style={styles.body}>{slide.body}</Text>
-        </View>
+        <ScrollView
+          testID="onboarding-pager"
+          ref={pagerRef}
+          horizontal
+          pagingEnabled
+          decelerationRate="fast"
+          showsHorizontalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          style={{ flex: 1 }}
+        >
+          {SLIDES.map((slide) => (
+            <View key={slide.tag} style={[styles.page, { width }]}>
+              <View style={styles.hero}>
+                <SlideVisual variant={slide.variant} />
+              </View>
+              <View>
+                <Text style={styles.tag}>{slide.tag}</Text>
+                <Text style={styles.title}>{slide.title[0]}</Text>
+                <Text style={styles.title}>{slide.title[1]}</Text>
+                <Text style={styles.body}>{slide.body}</Text>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
 
         <View style={styles.controls}>
           <Pressable onPress={goSignIn} hitSlop={8} accessibilityRole="button" testID="onboarding-signin-link">
@@ -81,7 +119,7 @@ export default function Landing() {
             {SLIDES.map((_, d) => (
               <Pressable
                 key={d}
-                onPress={() => setI(d)}
+                onPress={() => goTo(d)}
                 accessibilityRole="button"
                 accessibilityLabel={`Go to slide ${d + 1}`}
                 hitSlop={8}
@@ -128,8 +166,14 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 26,
     paddingBottom: 30,
+  },
+  // The pager spans the full width so pages snap edge-to-edge; the 26pt gutter
+  // that used to live on `content` moves onto each page and the fixed rows.
+  // Width only — the cross axis stretches to the pager's height (same shape as
+  // the Top Picks pager), and `flex` here would fight the fixed page width.
+  page: {
+    paddingHorizontal: 26,
   },
   hero: {
     flex: 1,
@@ -165,6 +209,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 28,
+    paddingHorizontal: 26,
   },
   skip: {
     fontFamily: 'Archivo_700Bold',

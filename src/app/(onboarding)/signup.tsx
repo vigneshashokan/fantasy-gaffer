@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  type TextInput,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
@@ -36,6 +37,12 @@ export default function SignUp() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
   useA11yAnnounce(errors.form || null);
+  // The return key walks the form top-to-bottom and submits from the last
+  // field, instead of being inert (#181).
+  const lastNameRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
 
   const clearForm = () => {
     setFirstName('');
@@ -121,6 +128,8 @@ export default function SignUp() {
             value={firstName}
             onChangeText={setFirstName}
             autoCapitalize="words"
+            returnKeyType="next"
+            onSubmitEditing={() => lastNameRef.current?.focus()}
             surfaceAlt={t.surfaceAlt}
             line={t.line}
             accent={t.accent}
@@ -136,6 +145,9 @@ export default function SignUp() {
             value={lastName}
             onChangeText={setLastName}
             autoCapitalize="words"
+            inputRef={lastNameRef}
+            returnKeyType="next"
+            onSubmitEditing={() => emailRef.current?.focus()}
             surfaceAlt={t.surfaceAlt}
             line={t.line}
             accent={t.accent}
@@ -152,6 +164,9 @@ export default function SignUp() {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoComplete="email"
+            inputRef={emailRef}
+            returnKeyType="next"
+            onSubmitEditing={() => passwordRef.current?.focus()}
             surfaceAlt={t.surfaceAlt}
             line={t.line}
             accent={t.accent}
@@ -167,7 +182,10 @@ export default function SignUp() {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
-            autoComplete="password"
+            autoComplete="new-password"
+            inputRef={passwordRef}
+            returnKeyType="next"
+            onSubmitEditing={() => confirmRef.current?.focus()}
             surfaceAlt={t.surfaceAlt}
             line={t.line}
             accent={t.accent}
@@ -183,7 +201,10 @@ export default function SignUp() {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
             secureTextEntry
-            autoComplete="password"
+            autoComplete="new-password"
+            inputRef={confirmRef}
+            returnKeyType="go"
+            onSubmitEditing={onSubmit}
             surfaceAlt={t.surfaceAlt}
             line={t.line}
             accent={t.accent}
