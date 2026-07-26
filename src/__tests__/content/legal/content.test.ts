@@ -20,12 +20,20 @@ describe('legal content — structural invariants', () => {
   ] as const) {
     it(`${name} has a title, lastUpdated and at least 6 sections`, () => {
       expect(doc.title.length).toBeGreaterThan(0);
-      expect(doc.lastUpdated).toBe('2026-07-02');
+      // Shape, not a pinned literal: the date is meant to change whenever the
+      // copy does, so asserting a specific one just breaks on every edit.
+      expect(doc.lastUpdated).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(doc.sections.length).toBeGreaterThanOrEqual(6);
       for (const s of doc.sections) {
         expect(s.heading.length).toBeGreaterThan(0);
         expect(s.blocks.length).toBeGreaterThan(0);
       }
+    });
+
+    // [OPERATOR LEGAL NAME] reached the live hosted policy, because nothing
+    // failed when it was left unfilled. These docs face App Review.
+    it(`${name} has no unfilled [PLACEHOLDER] tokens`, () => {
+      expect(flatten(doc)).not.toMatch(/\[[a-z][a-z ]+\]/);
     });
   }
 });
