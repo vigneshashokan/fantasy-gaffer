@@ -109,7 +109,7 @@ function RootLayout() {
 // Linking.useLinkingURL() does return its value synchronously on first
 // render (it's a lazy useState initializer reading the native registry),
 // but the effect that reads it only ever navigates from inside an async
-// `exchangeCodeForSession(...).then()/.catch()` callback — never
+// `verifyOtp(...).then()/.catch()` callback — never
 // synchronously in the effect body — so any router call lands on a later
 // tick, after <Stack> has finished mounting. useLastNotificationResponse()
 // gets the same property a different way: it seeds in a layout effect, so

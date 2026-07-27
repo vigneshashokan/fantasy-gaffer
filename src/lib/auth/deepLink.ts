@@ -7,25 +7,50 @@ import { AUTH_LINK_HOST } from '@/constants/links';
 
 const APP_SCHEME = 'fplgafferreactnativeapp:';
 
+// Mirrors auth-js's EmailOtpType. Declared locally rather than imported:
+// @supabase/supabase-js does not re-export it, and reaching into
+// @supabase/auth-js would bind us to a transitive package. auth-js widens the
+// type with `(string & {})`, so this narrower union is assignable to it.
+const OTP_TYPES = [
+  'signup',
+  'invite',
+  'magiclink',
+  'recovery',
+  'email_change',
+  'email',
+] as const;
+export type OtpType = (typeof OTP_TYPES)[number];
+
 export type AuthDeepLink =
-  | { kind: 'verify'; code: string | null }
-  | { kind: 'reset'; code: string | null }
+  | { kind: 'verify'; tokenHash: string | null; type: OtpType }
+  | { kind: 'reset'; tokenHash: string | null; type: OtpType }
   | { kind: 'unknown' };
 
 // React Native's URL polyfill does not implement `searchParams`, so pull the
 // value out by hand — the same split idiom lib/auth/google.ts uses on the
 // OAuth callback. Fragment is stripped first: `?` inside a `#…` part is not
 // a query string.
-function authCodeOf(url: string): string | null {
+function paramOf(url: string, name: string): string | null {
   const query = url.split('#')[0].split('?')[1];
   if (!query) return null;
   for (const pair of query.split('&')) {
     const [key, value] = pair.split('=');
-    if (key && value && decodeURIComponent(key) === 'code') {
+    if (key && value && decodeURIComponent(key) === name) {
       return decodeURIComponent(value);
     }
   }
   return null;
+}
+
+// The email template chooses the OTP type, so read it from the link rather
+// than hardcoding one per route — Supabase's own snippets use `signup` in some
+// docs and `email` in others for the same confirmation mail. An absent or
+// unrecognised value falls back to the type the route implies.
+function otpTypeOf(url: string, fallback: OtpType): OtpType {
+  const raw = paramOf(url, 'type');
+  return (OTP_TYPES as readonly string[]).includes(raw ?? '')
+    ? (raw as OtpType)
+    : fallback;
 }
 
 // The route segment a link is asking for, or '' if this URL isn't ours.
@@ -54,8 +79,20 @@ function routeOf(parsed: URL): string {
 export function parseAuthDeepLink(url: string): AuthDeepLink {
   try {
     const route = routeOf(new URL(url));
-    if (route === 'verify') return { kind: 'verify', code: authCodeOf(url) };
-    if (route === 'reset-password') return { kind: 'reset', code: authCodeOf(url) };
+    if (route === 'verify') {
+      return {
+        kind: 'verify',
+        tokenHash: paramOf(url, 'token_hash'),
+        type: otpTypeOf(url, 'email'),
+      };
+    }
+    if (route === 'reset-password') {
+      return {
+        kind: 'reset',
+        tokenHash: paramOf(url, 'token_hash'),
+        type: otpTypeOf(url, 'recovery'),
+      };
+    }
     return { kind: 'unknown' };
   } catch {
     return { kind: 'unknown' };
@@ -95,16 +132,23 @@ export function useEmailAuthDeepLinks(): void {
             : '/(onboarding)/signin?verify_expired=1',
         );
 
-      // exchangeCodeForSession takes the auth CODE. It forwards whatever it
-      // is given straight through as the `auth_code` body field, so passing
-      // the whole deep-link URL just posted an unusable value.
-      if (!parsed.code) {
+      // verifyOtp, NOT exchangeCodeForSession (#71 on-device pass). The latter
+      // is a PKCE grant needing the `<storageKey>-code-verifier` auth-js stores
+      // when the flow begins — but the client leaves `flowType` at auth-js's
+      // default of `implicit`, under which no verifier is ever written, so the
+      // exchange could never succeed and every fresh link reported "expired".
+      // A token_hash link also lets the email point straight at our own domain,
+      // which is what makes the Universal Link fire at all: iOS matches
+      // associated domains against the TAPPED url, and the old GoTrue
+      // /auth/v1/verify?redirect_to=… form was matched against *.supabase.co,
+      // so it always opened Safari and only then redirected to us.
+      if (!parsed.tokenHash) {
         expired();
         return;
       }
 
       supabase.auth
-        .exchangeCodeForSession(parsed.code)
+        .verifyOtp({ token_hash: parsed.tokenHash, type: parsed.type })
         .then(({ error }) => {
           // auth-js RESOLVES with { error } for an expired or already-used
           // link — it only rejects on non-auth failures. The resolved error
