@@ -204,9 +204,15 @@ change; storing raw means the fetch is never repeated.
 
 - `sources/bootstrap.ts` writes `code`.
 - `sources/season-history.ts` (new) fetches `element-summary/{id}` and upserts
-  the last two seasons' aggregates. **Incremental**: only players with no row for
-  the target seasons are fetched, so the ~563-call cost is paid once and new
+  **every season the payload returns** (up to 4). **Incremental**: only players
+  with no row at all are fetched, so the ~563-call cost is paid once and new
   signings trickle in thereafter. (#212 open question 5, resolved.)
+
+  Storing all four rather than only the two used is deliberate: the Stage 1 gate
+  predicts 2025/26 from 2023/24 + 2024/25, so a two-season ingest would not
+  contain its own training input. Storage is trivial (~4 × 563 rows), and it
+  keeps the §2.1 depth cap where it belongs — a **synthesis** decision in model
+  code, not an ingest decision baked into the table.
 - Daily cron; harmless once saturated.
 
 ### 5.3 Serving — `fpl-project`
