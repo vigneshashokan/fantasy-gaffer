@@ -31,11 +31,12 @@ supabase.auth.signUp({ email, password, options: {
   ↓
 router.replace('/(onboarding)/verify-pending?email=…')
   ↓ user opens email, taps link
-  ↓ link → Supabase verify endpoint → redirect to https://fantasy-gaffer.com/verify?code=…
+  ↓ link → https://fantasy-gaffer.com/verify?token_hash=…&type=email
+    (points straight at our domain — NOT via /auth/v1/verify, see Universal Links)
   ↓
 useEmailAuthDeepLinks (in src/app/_layout.tsx) catches the URL
   ↓
-supabase.auth.exchangeCodeForSession(code)  ← the `code` param, not the URL
+supabase.auth.verifyOtp({ token_hash, type })  ← the token, not the URL
   ↓ resolved { error } is checked — auth-js does NOT reject on a dead link
   ↓ session lands
   ↓ (onboarding)/_layout routes to /(onboarding)/complete-profile
@@ -54,9 +55,9 @@ supabase.auth.resetPasswordForEmail(email, {
 })
   ↓ always shows success state (no enumeration)
   ↓ user opens email, taps link
-  ↓ link → https://fantasy-gaffer.com/reset-password?code=…
+  ↓ link → https://fantasy-gaffer.com/reset-password?token_hash=…&type=recovery
   ↓
-useEmailAuthDeepLinks catches the URL → exchangeCodeForSession(code) → router.replace('/(onboarding)/reset-password')
+useEmailAuthDeepLinks catches the URL → verifyOtp({ token_hash, type }) → router.replace('/(onboarding)/reset-password')
   ↓ on a resolved { error } (expired / already-used link) it instead
     replaces to /(onboarding)/forgot-password?expired=1
   ↓ user enters new password → resetPassword()
@@ -107,15 +108,28 @@ Same pattern as Google sign-in's manual setup. Required before the flow works en
   Site URL, so the link will look fine and land somewhere useless.
 - The link is one-time-use — opening it twice fails the second time.
 
-**Every link reports "expired" even when freshly sent — UNVERIFIED RISK**
-- `exchangeCodeForSession` is a **PKCE** grant: it POSTs `grant_type=pkce`
-  with the `<storageKey>-code-verifier` auth-js stashed when the flow began.
-  `src/lib/supabase.ts` does not set `flowType`, and auth-js@2.107's default
-  is **`implicit`** — under which no verifier is ever stored, so the exchange
-  cannot succeed. If an on-device pass shows both email flows failing, the
-  fix is `flowType: 'pkce'` in `createClient`, **not** the deep-link code.
-  That is a coordinated change (client + Supabase email templates) and needs
-  device validation, so it is deliberately not bundled with the #176 fix.
+**Every link reports "expired" even when freshly sent — CONFIRMED, then FIXED (2026-07-27)**
+- The risk flagged here was real and the #71 on-device pass hit it exactly.
+  `exchangeCodeForSession` is a **PKCE** grant needing the
+  `<storageKey>-code-verifier` auth-js stashes when the flow begins.
+  `src/lib/supabase.ts` never set `flowType`, and auth-js@2.107 defaults to
+  **`implicit`** — under which no verifier is ever written, so the exchange
+  could never succeed. Worse, under implicit GoTrue returns tokens in the URL
+  **fragment**, so there was no `?code=` to read either: the handler saw a
+  null code, took its expired branch, and bounced the user to
+  `forgot-password?expired=1` — which reads as an infinite loop on a link
+  that was perfectly valid.
+- **The fix was NOT `flowType: 'pkce'`.** That would have fixed this symptom
+  while leaving Universal Links dead, because PKCE *requires* the
+  `/auth/v1/verify` round-trip through `*.supabase.co` and iOS matches
+  associated domains against the **tapped** URL — so the link always opened
+  Safari first. The two constraints are mutually exclusive. We moved to
+  **`token_hash` + `verifyOtp`** instead, which lets the email point straight
+  at our own domain and needs no stored verifier. See Universal Links below.
+- **Trade-off accepted:** PKCE would have bound the reset to the device that
+  requested it. A `token_hash` link works from any device, so possession of
+  the mailbox is the only factor — the same model as most email reset flows,
+  and the reason reset links are short-lived and single-use.
 
 **Reset link doesn't open the app**
 - Confirm `https://fantasy-gaffer.com/reset-password` is in the Redirect URLs allow list.
@@ -137,10 +151,34 @@ Same pattern as Google sign-in's manual setup. Required before the flow works en
 
 ## Universal Links (#71)
 
-Since #71 the auth emails redirect to `https://fantasy-gaffer.com/…` rather than
+Since #71 the auth emails point at `https://fantasy-gaffer.com/…` rather than
 the `fplgafferreactnativeapp://` scheme. iOS opens the app directly; a device
 without the app (or a desktop browser) gets a real web page instead of a dead
 tab, which is the gap the custom scheme could never close.
+
+- **The email must link DIRECTLY at our domain — a redirect does not work, and
+  this is the single easiest way to break the feature.** iOS matches Universal
+  Links against the **tapped** URL only; they do not survive a server-side
+  redirect. GoTrue's stock `{{ .ConfirmationURL }}` expands to
+  `<project>.supabase.co/auth/v1/verify?…&redirect_to=…`, whose host is
+  **not** in our associated domains — so the OS hands it to Safari, Safari
+  follows the 302, and the user lands on our page *in the browser* having
+  never had a chance to open the app. That is exactly what the #71 on-device
+  pass found (2026-07-27). **The templates are therefore hand-written against
+  `{{ .TokenHash }}` and must stay that way:**
+
+  ```
+  Confirm signup:  https://fantasy-gaffer.com/verify?token_hash={{ .TokenHash }}&type=email
+  Reset password:  https://fantasy-gaffer.com/reset-password?token_hash={{ .TokenHash }}&type=recovery
+  ```
+
+  These live in **Supabase Dashboard → Authentication → Email Templates** and
+  are **not** in version control — a project restore or a second environment
+  needs them re-entered by hand, and reverting either one to
+  `{{ .ConfirmationURL }}` silently reintroduces the Safari bounce.
+  `emailRedirectTo` / `redirectTo` in `lib/auth/email.ts` still matter (GoTrue
+  validates them against the allowlist), but they no longer determine the
+  link's host.
 
 - **Association file:** `/.well-known/apple-app-site-association`, served from
   the `vigneshashokan/fantasy-gaffer-site` repo, claiming
@@ -167,8 +205,18 @@ tab, which is the gap the custom scheme could never close.
 
 - **`parseAuthDeepLink` accepts both shapes** and checks the *host*, not just
   the path — otherwise any https link the OS handed the app would be read as an
-  auth callback. The custom scheme is still live for Google OAuth, the fallback
-  pages' "Open in the app" button, and emails predating this change.
+  auth callback. The custom scheme is still live for Google OAuth and the
+  fallback pages' "Open in the app" button (the only route in on Android).
+
+- **The fallback pages forward `window.location.search`**, which is why the
+  token has to ride in the **query string** and not a fragment — a fragment is
+  never sent anywhere the page can forward it. Under the old implicit flow
+  `search` was empty and that button produced a token-less deep link, which the
+  app correctly read as expired. Both pages also had copy that the flow change
+  falsified: `/verify` announced "Email confirmed" (true only while GoTrue
+  confirmed server-side before redirecting — with `token_hash` nothing is
+  consumed until the app calls `verifyOtp`), and `/reset-password` claimed the
+  reset was bound to the requesting device. Both rewritten.
 
 - **Android has no App Links.** `assetlinks.json` needs the Play app-signing
   certificate and Play is parked, so on Android an auth email opens the web page
