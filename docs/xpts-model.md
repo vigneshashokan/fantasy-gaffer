@@ -468,3 +468,205 @@ snapshot accumulation are unaffected.
 | mid-P coverage within ±0.10 of 0.50 | **True** |
 
 **Verdict: ✅ PASS — revive #128/#130 for this candidate (prospective validation before any promotion)**
+
+<!-- xpts-seed-results -->
+
+# xPts GW1 seeding — Stage 1 gate (#212)
+
+**Candidate model version:** `v1.0.0-seed` · frozen v1 coefficients
+(`model/artifacts/xpts-v1.json`), unchanged feature builder.
+Spec: `docs/superpowers/specs/2026-07-27-xpts-gw1-seeding-design.md` §7.
+
+Seed from 2024/25 (0.7) + 2023/24 (0.3) → predict 2025/26 GW1–5 → score against
+`player_gw_history` actuals.
+
+| arm | definition |
+|---|---|
+| **S** | seeded pseudo-rows → frozen v1 coefficients |
+| **H** | `0.7·(total_points(2024/25)/38) + 0.3·(total_points(2023/24)/38)` |
+| **V** | real v1 on its 1–4 rows of history — *what ships today*, GW2–5 only |
+
+## Sample sizes
+
+| stage | n |
+|---|---|
+| `player_season_history` rows loaded (2024/25 + 2023/24) | 625 (2023/24 277, 2024/25 348) |
+| distinct seed codes | 363 |
+| after the code → 2025/26 element-id join | 334 (dropped 29) |
+| 2025/26 GW1–5 history rows / players | 3588 / 741 |
+| **gate population** (seeded) rows / players | **1619 / 326** |
+| after `prior_starts ≥ 10` (G1 binding) rows / players | **1017 / 205** |
+| unseeded rows (k-NN diagnostic, outside the gate) | 1969 |
+
+## G0 — floor
+
+Per-position constant = mean per-fixture points over **2024/25 + 2023/24 only**
+(never the 2025/26 eval window): DEF 1.525 · FWD 2.404 · GKP 1.358 · MID 1.817.
+
+| | MAE (capped) |
+|---|---|
+| winning arm **S** | **1.9689** |
+| per-position constant floor | 2.1814 |
+| margin (floor − winner) | +0.2125 |
+
+**G0: ✅ PASS**
+
+## G1 — binding MAE
+
+Capped population = prior-season `starts ≥ 10` (n = 1017 rows,
+205 players). Uncapped = all seeded rows (n = 1619).
+
+| arm | MAE (capped) | MAE (uncapped) |
+|---|---|---|
+| S | 1.9689 | 1.5657 |
+| H | 2.3178 | 1.8338 |
+
+**Winner: S** (margin 0.3489; ties go to H).
+
+### Arm V — is GW2–6 fixed too?
+
+V is undefined at GW1. Scored on its defined subset only, with S and H re-scored
+on that **same** subset (n = 812 capped / 1293 uncapped rows).
+
+| arm | MAE (capped, V subset) | MAE (uncapped, V subset) |
+|---|---|---|
+| S | 1.9002 | 1.5098 |
+| H | 2.3155 | 1.8287 |
+| V | 1.8318 | 1.4307 |
+
+Winner beats V (today's behaviour) at GW2–5: **False**
+
+## G2 — pathology guard
+
+Top-ranked pick per gameweek over the **uncapped** seeded population. Must never
+be a GKP and must carry prior-season `starts ≥ 20`.
+
+Arm S (the winner):
+
+| GW | top pick | pos | prior starts | pred | actual |
+|---|---|---|---|---|---|
+| 1 | B.Fernandes (449) | MID | 35.0 | 3.00 | 2 |
+| 2 | B.Fernandes (449) | MID | 35.0 | 3.23 | 2 |
+| 3 | B.Fernandes (449) | MID | 35.0 | 3.31 | 10 |
+| 4 | B.Fernandes (449) | MID | 35.0 | 4.28 | 2 |
+| 5 | B.Fernandes (449) | MID | 35.0 | 3.91 | 10 |
+
+**G2: ✅ PASS**
+
+Per-arm: S ✅ PASS · H ✅ PASS · V ✅ PASS.
+With the unseeded rows allowed into the ranking pool: ✅ PASS.
+
+## Verdict
+
+**SHIP S**
+
+| criterion | outcome |
+|---|---|
+| G0 floor | ✅ PASS |
+| G1 binding | winner **S** — 1.9689 (S) vs 2.3178 (H) |
+| G2 guard | ✅ PASS |
+
+Unseeded (k-NN newcomer path) diagnostic, **outside the gate** — n = 1969:
+S 0.7293 · H 1.1584 · floor 1.7470.
+Most of that population is not actually newcomers (see the diagnostics below).
+
+## Diagnostics (hand-written — `write_report_seed` truncates from `<!-- xpts-seed-results -->` to EOF and will clobber this; re-add it after any re-run)
+
+**Mechanical verdict `SHIP S` is the output of the frozen §7 criteria, not a
+shipping decision.** All three criteria passed; the two findings below are the
+material qualifications.
+
+### 1. S wins G1 decisively — but almost none of that margin is at GW1
+
+S beats H by **0.3489 MAE** capped (1.9689 vs 2.3178) and 0.2681 uncapped. Per
+gameweek, capped:
+
+| GW | n | S | H | V | S on V's rows | n(V) |
+|---|---|---|---|---|---|---|
+| 1 | 200 | **2.2769** | 2.3531 | — | — | 0 |
+| 2 | 202 | 2.0745 | 2.4497 | **1.9879** | 2.0871 | 200 |
+| 3 | 205 | 1.7383 | 2.1273 | **1.6934** | 1.7527 | 202 |
+| 4 | 205 | 2.1175 | 2.4150 | **2.0331** | 2.1175 | 205 |
+| 5 | 205 | 1.6461 | 2.2467 | **1.6145** | 1.6461 | 205 |
+
+**At GW1 — the only gameweek seeding uniquely serves — S beats H by 0.0762
+(capped) / 0.0621 (uncapped).** The headline margin is earned at GW2–5, where S
+is already mixing in real gameweeks and H stays frozen at its prior-season
+constant. Read the two numbers separately: the gate ranks S over H on the pooled
+window, but the cold-start advantage of the full feature vector over a single
+blended points rate is thin.
+
+### 2. S does NOT beat today's behaviour (V) at GW2–5
+
+On V's own defined subset (capped n = 812), **V 1.8318 · S 1.9002 · H 2.3155**.
+V is ahead at every one of GW2–5, capped and uncapped. The spec's "this fixes
+GW2–6, not only GW1" claim is **not supported**: 1–4 rows of real, current-season
+history beat 6 pseudo-rows blended from two seasons ago, and the seed actively
+dilutes real signal while it remains in the window. Within-position Spearman says
+the same thing — V 0.5045 vs S 0.3806 vs H 0.1343.
+
+The honest reading is that seeding's measured value is confined to GW1, where
+`fpl-project` currently skips entirely and the client falls back to the degenerate
+`ep_next` documented in #211.
+
+### 3. Leakage and population caveats, in order of severity
+
+- **The frozen v1 artifact is trained on the whole of 2025/26**, so GW2–5 target
+  rows are in its training set. This inflates **S and V** (both run those
+  coefficients) against **H** (which does not) on GW2–5. GW1 targets are *not* in
+  training — `build_samples` skips any row with no prior gameweek — so the GW1
+  S-vs-H comparison above is the clean one, and it is also the thinnest. The S-vs-V
+  comparison is unaffected: same artifact, same bias.
+- **Survivorship (spec §7, reported, not disqualifying).** Seeds exist only for
+  players in *today's* 2026/27 bootstrap, so the gate population is 326 of the 741
+  players who appeared in 2025/26 GW1–5. Everyone who left the league is gone —
+  including **M.Salah (code 118748)**, absent from all 563 rows of `players`. The
+  1969 unseeded rows are therefore **not newcomers**; they are mostly departed
+  veterans, which is why the k-NN diagnostic is reported outside the gate and
+  proves nothing about §4.3's newcomer path. That path stays untested by this gate.
+- **n is small by this project's standards**: 1017 capped rows / **205 players**,
+  against the ~7373 rows every prior cycle used. Above the point of being
+  uninformative, well below the point of a tight interval. No paired bootstrap was
+  run — n = 5 gameweeks, per §7.
+- **G0's floor is computed only over seed-season players who survive into the
+  2025/26 bootstrap** (position is unavailable in `player_season_history` and has
+  to come from that capture). Same survivorship filter as the arms.
+
+### 4. G2 top picks, named — all three arms pass
+
+| GW | S | H | V |
+|---|---|---|---|
+| 1 | B.Fernandes (MID, 35.0) | Palmer (MID, 33.9) | — |
+| 2 | B.Fernandes (MID, 35.0) | Palmer (MID, 33.9) | Virgil (DEF, 36.7) |
+| 3 | B.Fernandes (MID, 35.0) | Palmer (MID, 33.9) | Virgil (DEF, 36.7) |
+| 4 | B.Fernandes (MID, 35.0) | Palmer (MID, 33.9) | B.Fernandes (MID, 35.0) |
+| 5 | B.Fernandes (MID, 35.0) | Palmer (MID, 33.9) | B.Fernandes (MID, 35.0) |
+
+No goalkeeper, every pick above 33 prior starts, and the guard still passes with
+the unseeded rows allowed into the ranking pool. **The #211 pathology (Raya over
+Haaland; a two-appearance £4.5m keeper) does not reproduce under any arm.** Note
+H's pick is constant by construction — its prediction has no gameweek term.
+
+### 5. Two facts worth carrying forward
+
+- **v1 ignores venue, opponent strength and price entirely.** Every coefficient on
+  `was_home`, `opp_strength_def`, `opp_strength_att` and `value_scaled` is ~1e-7
+  across all 12 position×quantile fits; the fit put its weight on `xmin` and the
+  form stats. Consistent with #125's finding that match features carry no marginal
+  signal under this head. Consequence for seeding: arm S's output is a function of
+  the seeded form vector and `xmin` alone.
+- **S is badly biased low** — mean signed error −1.2681 capped (V −1.1334, H
+  −0.1503). v1's p50 is a conditional median on a right-skewed target, so H is far
+  better calibrated in *level* while being far worse in *ranking*. Relevant if the
+  number is ever shown as "expected points" rather than used to rank.
+
+### 6. Per-position and calibration detail (capped)
+
+| pos | n | S | H | mean actual |
+|---|---|---|---|---|
+| DEF | 348 | **2.3428** | 2.4951 | 2.9080 |
+| FWD | 89 | **1.8517** | 3.1053 | 2.3258 |
+| GKP | 75 | 2.4233 | **2.4072** | 3.3733 |
+| MID | 505 | **1.6643** | 2.0436 | 2.2871 |
+
+S's win is driven by forwards and midfielders; goalkeepers are a wash.
