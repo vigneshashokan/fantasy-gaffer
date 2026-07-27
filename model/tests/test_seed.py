@@ -93,17 +93,22 @@ def test_newcomer_pool_smaller_than_k_uses_all_of_it():
 
 
 def test_newcomer_tie_break_is_order_independent():
-    # The k-th and (k+1)-th candidates are EQUIDISTANT from the target, so
-    # which one lands inside k is decided purely by the tie-break. Shuffling
-    # the input must not change the answer, or the TS port will diverge here
-    # and the parity fixture will flake intermittently.
+    # The two boundary candidates share BOTH abs_dist (9) AND end_cost (41) —
+    # only element_code can break this tie. Python's sort is stable, so an
+    # implementation whose key is missing element_code would instead keep
+    # whichever of the pair appeared FIRST in the input list: reversing the
+    # pool would then change the answer, which is exactly what this test
+    # discriminates against (a prior version of this test used a pair with
+    # different end_costs, so its second key component alone resolved the
+    # order and element_code was never exercised).
     pool = [mk("DEF", 50 + i, 100 + i, 50 + i) for i in range(9)]   # dist 0..8
-    pool.append(mk("DEF", 41, 200, 41))   # dist 9, lower end_cost -> wins
-    pool.append(mk("DEF", 59, 201, 59))   # dist 9, loses the tie
+    pool.append(mk("DEF", 41, 200, 41))    # dist 9, end_cost 41 -> wins tie
+    pool.append(mk("DEF", 41, 201, 141))   # dist 9, end_cost 41, loses tie
 
     forward = newcomer_rates("DEF", 50, pool)["total_points"]
     reverse = newcomer_rates("DEF", 50, list(reversed(pool)))["total_points"]
     assert forward == pytest.approx(reverse)
-    # 50..58 plus 41 => mean 52.7. Had 59 won the tie instead it would be 54.5,
-    # so this assertion actually discriminates between the two orderings.
+    # 50..58 (sum 486) plus 41 => 527/10 = 52.7. Had code 201 (total_points
+    # 141) won instead: (486 + 141)/10 = 62.7, so this assertion actually
+    # discriminates between the two tie-break outcomes.
     assert forward == pytest.approx(52.7)

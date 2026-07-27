@@ -16,8 +16,7 @@ import argparse
 
 import pandas as pd
 
-from feature_spec import FEATURE_COLUMNS, FORM_STATS
-from features import build_feature_row
+from feature_spec import FORM_STATS
 from seed import blend_rates, pseudo_rows
 from seed_spec import SEED_DENOMINATOR
 
