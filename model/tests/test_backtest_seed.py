@@ -20,6 +20,16 @@ def test_eval_history_parses_was_home_to_both_classes():
     assert 0.45 < df["was_home"].mean() < 0.55  # not all-True, not all-False
 
 
+def test_eval_history_rejects_an_unexpected_was_home_value(tmp_path, monkeypatch):
+    # An unmapped value maps to NaN, and bool(NaN) is True — the same silent
+    # every-fixture-is-home failure. The both-classes assert only catches an
+    # ALL-unmapped column, so this branch needs its own check.
+    csv = tmp_path / "h.csv"
+    csv.write_text("player_id,gw,was_home\n1,1,t\n2,1,f\n3,1,MAYBE\n")
+    with pytest.raises(ValueError, match="unexpected was_home values"):
+        load_eval_history(str(csv))
+
+
 def test_join_by_code_maps_prior_season_to_current_element_ids():
     # The whole cross-season join. Element ids churn ~99% between seasons;
     # code does not. Getting this backwards silently pairs each player with a

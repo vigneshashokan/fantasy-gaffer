@@ -570,7 +570,7 @@ Unseeded (k-NN newcomer path) diagnostic, **outside the gate** — n = 1969:
 S 0.7293 · H 1.1584 · floor 1.7470.
 Most of that population is not actually newcomers (see the diagnostics below).
 
-## Diagnostics (hand-written — `write_report_seed` truncates from `<!-- xpts-seed-results -->` to EOF and will clobber this; re-add it after any re-run)
+## Diagnostics (hand-written — `write_report_seed` truncates from the xpts-seed results marker above to EOF and will clobber this; re-add it after any re-run. Do **not** write that marker's literal text here: the writer refuses to run if it occurs twice.)
 
 **Mechanical verdict `SHIP S` is the output of the frozen §7 criteria, not a
 shipping decision.** All three criteria passed; the two findings below are the
@@ -596,6 +596,32 @@ constant. Read the two numbers separately: the gate ranks S over H on the pooled
 window, but the cold-start advantage of the full feature vector over a single
 blended points rate is thin.
 
+#### POST-HOC SLICE — not a registered criterion
+
+Added after the gate ran, at the controller's request. It does **not** override
+G1: G1 was won on the registered pooled metric, and a post-hoc re-slice does not
+get to reverse a registered verdict.
+
+| GW1 only | n | S MAE | S ρ | H MAE | H ρ |
+|---|---|---|---|---|---|
+| capped (`prior_starts ≥ 10`) | 200 | **2.2769** | 0.1082 | 2.3531 | **0.1527** |
+| uncapped | 320 | **1.8065** | 0.3802 | 1.8686 | **0.3983** |
+
+ρ here is **pooled** Spearman (all positions in one correlation). Under this
+file's usual `within_position_spearman` (the per-position average) the same slice
+reads S 0.0900 / H 0.1464 capped and S 0.4476 / H 0.4685 uncapped — different
+numbers, identical conclusion. Both are recorded because the two definitions do
+not agree in level and a reader comparing against the 0.3806 quoted further down
+(a *different* metric on a *different*, pooled-GW slice) would otherwise be
+misled.
+
+Read plainly: **S's decisive pooled G1 win is produced by GW2–5**, where S mixes
+in real in-season rows while H stays frozen at a prior-season constant. **At GW1
+alone the two arms are statistically indistinguishable** — Spearman's standard
+error is roughly 0.06 at these n, so both ρ gaps are inside noise, and H in fact
+ranks *slightly* better on both slices and under both definitions, while S holds
+a small MAE edge.
+
 ### 2. S does NOT beat today's behaviour (V) at GW2–5
 
 On V's own defined subset (capped n = 812), **V 1.8318 · S 1.9002 · H 2.3155**.
@@ -613,10 +639,17 @@ The honest reading is that seeding's measured value is confined to GW1, where
 
 - **The frozen v1 artifact is trained on the whole of 2025/26**, so GW2–5 target
   rows are in its training set. This inflates **S and V** (both run those
-  coefficients) against **H** (which does not) on GW2–5. GW1 targets are *not* in
-  training — `build_samples` skips any row with no prior gameweek — so the GW1
-  S-vs-H comparison above is the clean one, and it is also the thinnest. The S-vs-V
-  comparison is unaffected: same artifact, same bias.
+  coefficients) against **H** (which does not) on GW2–5. The S-vs-V comparison is
+  unaffected: same artifact, same bias.
+
+  **GW1 is *not row-level in-sample*, which is weaker than "clean".**
+  `features.py:78` skips any row with no in-season prior, so GW1 rows genuinely
+  never entered training. But the coefficients were still fit on **GW2–38 of the
+  same season, over the same players**, so they are calibrated to that season's
+  scoring environment — and arm H has no fitted parameters, so it absorbs none of
+  that advantage. **S's +0.0762 GW1 margin is therefore an UPPER BOUND on what to
+  expect in deployment**, where the coefficients will come from a *prior* season
+  and cannot be tuned to the one being predicted.
 - **Survivorship (spec §7, reported, not disqualifying).** Seeds exist only for
   players in *today's* 2026/27 bootstrap, so the gate population is 326 of the 741
   players who appeared in 2025/26 GW1–5. Everyone who left the league is gone —

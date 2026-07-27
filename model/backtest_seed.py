@@ -106,8 +106,15 @@ def load_eval_history(path: str = HISTORY_CSV) -> pd.DataFrame:
     df = pd.read_csv(path)
     wh = df["was_home"]
     if wh.dtype != bool:
-        df["was_home"] = wh.map({"t": True, "f": False,
-                                 "True": True, "False": False}).astype(bool)
+        # Map FIRST and check for NaN before astype(bool): an unmapped value
+        # becomes NaN, and bool(NaN) is True — the same silent-home failure the
+        # dtype guard caused. The both-classes assert below only catches an
+        # ALL-unmapped column, so it cannot stand in for this.
+        mapped = wh.map({"t": True, "f": False, "True": True, "False": False})
+        if mapped.isna().any():
+            raise ValueError(
+                f"unexpected was_home values: {sorted(set(wh[mapped.isna()]))}")
+        df["was_home"] = mapped.astype(bool)
     assert set(df["was_home"].unique()) == {True, False}, \
         "was_home did not parse to both classes"
     return df
@@ -148,6 +155,12 @@ def _rates_by_player(seeded: pd.DataFrame) -> tuple[dict[int, dict], dict[int, f
 
 def _newcomer_pool(rates: dict[int, dict], end_cost: dict[int, float],
                    code_map: pd.DataFrame) -> list[dict]:
+    """Reason to exist: the inclusive-G2 check. The k-NN path feeds no gate
+    criterion — its MAE diagnostic proves nothing, because the unseeded backtest
+    population is departed veterans, not newcomers. What it DOES buy is a
+    ranking pool that includes unseeded players, so G2 can be asked whether an
+    unproven player tops the board once they are allowed in (`inclusive_passes`).
+    """
     pos_by_id = code_map.set_index("id")["position"].to_dict()
     code_by_id = code_map.set_index("id")["code"].to_dict()
     return [
