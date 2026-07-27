@@ -78,6 +78,49 @@ export interface IngestSeasonHistoryDeps {
 const CALL_DELAY_MS = 120;
 const UPSERT_CHUNK = 500;
 
+const PAGE_SIZE = 1000;
+// One real run already produces 2000+ rows (563 players' full FPL history);
+// this bounds a runaway loop well above realistic size without ever silently
+// truncating the way the unpaginated read below used to.
+const MAX_SEEN_ROWS = 200_000;
+
+// PostgREST caps EVERY read at `max_rows` (1000 here and on hosted) and
+// supabase-js does not paginate. An unpaginated select('element_code') on this
+// table returns an arbitrary slice once it grows past that cap — which
+// happens on the FIRST real run — so `seen` silently missed most
+// already-ingested players and the "skip once everyone has a row" design
+// never actually reached a skip. Mirrors fpl-project's fetchSeasonHistory.
+export async function fetchSeenElementCodes(supabase: SupabaseClient): Promise<Set<number>> {
+  const seen = new Set<number>();
+  let from = 0;
+  let processed = 0;
+  for (;;) {
+    const { data, error } = await supabase
+      .from('player_season_history')
+      .select('season, element_code')
+      // Range paging is only stable under a total order; the primary key is
+      // (season, element_code).
+      .order('season', { ascending: true })
+      .order('element_code', { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    const batch = (data ?? []) as { element_code: number }[];
+    for (const r of batch) seen.add(r.element_code);
+    // Advance by what actually came back rather than by PAGE_SIZE, so a
+    // server-side cap lower than ours can't skip rows; stop on an empty page
+    // rather than a short one, for the same reason.
+    if (batch.length === 0) break;
+    from += batch.length;
+    processed += batch.length;
+    if (processed > MAX_SEEN_ROWS) {
+      throw new Error(
+        `player_season_history paging exceeded ${MAX_SEEN_ROWS} rows — refusing to continue`,
+      );
+    }
+  }
+  return seen;
+}
+
 export async function ingestSeasonHistory(
   runId: string,
   deps: IngestSeasonHistoryDeps,
@@ -91,11 +134,7 @@ export async function ingestSeasonHistory(
   if (playersRes.error) throw playersRes.error;
   const players = (playersRes.data ?? []) as { id: number; code: number }[];
 
-  const seenRes = await deps.supabase
-    .from('player_season_history')
-    .select('element_code');
-  if (seenRes.error) throw seenRes.error;
-  const seen = new Set((seenRes.data ?? []).map((r) => (r as { element_code: number }).element_code));
+  const seen = await fetchSeenElementCodes(deps.supabase);
 
   // Incremental: a player already represented for ANY season is skipped
   // wholesale. history_past is immutable for completed seasons, so re-fetching
