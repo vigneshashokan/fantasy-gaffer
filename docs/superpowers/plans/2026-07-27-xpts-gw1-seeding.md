@@ -624,36 +624,51 @@ def test_pseudo_rows_carry_fractional_starts():
     assert rows[0]["starts"] == pytest.approx(0.5)
 
 
-def test_newcomer_takes_k_nearest_by_price_within_position():
-    pool = [
-        {"position": "MID", "end_cost": 50 + i, "element_code": i,
-         "rates": {**{s: 0.0 for s in FORM_STATS}, "total_points": float(i), "starts": 1.0}}
-        for i in range(40)
-    ]
-    pool.append({"position": "FWD", "end_cost": 90, "element_code": 999,
-                 "rates": {**{s: 0.0 for s in FORM_STATS}, "total_points": 1000.0, "starts": 1.0}})
+def mk(position, end_cost, code, total_points):
+    return {"position": position, "end_cost": end_cost, "element_code": code,
+            "rates": {**{s: 0.0 for s in FORM_STATS},
+                      "total_points": float(total_points), "starts": 1.0}}
+
+
+def test_newcomer_takes_exactly_k_nearest_by_price_within_position():
+    # end_cost 50..89, total_points == end_cost, so the expected mean is
+    # computable exactly. Asserting the precise value is the point: a loose
+    # bound would pass for almost any wrong selection.
+    pool = [mk("MID", 50 + i, i, 50 + i) for i in range(40)]
+    # An outlier in another position at the exact target price: if position
+    # filtering is broken this dominates the mean and the assert fails loudly.
+    pool.append(mk("FWD", 90, 999, 100000.0))
+
     r = newcomer_rates("MID", 90, pool)
-    # Nearest MIDs to 90 are end_cost 85..89 (codes 35..39) plus the next
-    # nearest below; the FWD outlier must not leak in.
-    assert r["total_points"] < 100.0
+    # The 10 MIDs nearest 90 are end_cost 80..89; mean total_points = 84.5.
+    assert r["total_points"] == pytest.approx(84.5)
+    assert r["starts"] == pytest.approx(1.0)
 
 
 def test_newcomer_no_pool_returns_none():
     assert newcomer_rates("GKP", 45, []) is None
 
 
-def test_newcomer_tie_break_is_deterministic():
-    # Two candidates equidistant from the target must resolve the same way on
-    # every run and in the TS port, or the parity fixture will flake.
-    pool = [
-        {"position": "DEF", "end_cost": 45, "element_code": 2,
-         "rates": {**{s: 0.0 for s in FORM_STATS}, "total_points": 2.0, "starts": 1.0}},
-        {"position": "DEF", "end_cost": 55, "element_code": 1,
-         "rates": {**{s: 0.0 for s in FORM_STATS}, "total_points": 1.0, "starts": 1.0}},
-    ]
-    first = [newcomer_rates("DEF", 50, list(reversed(pool)))["total_points"]
-             for _ in range(5)]
-    assert len(set(first)) == 1
+def test_newcomer_pool_smaller_than_k_uses_all_of_it():
+    pool = [mk("GKP", 45, 1, 3.0), mk("GKP", 55, 2, 5.0)]
+    assert newcomer_rates("GKP", 50, pool)["total_points"] == pytest.approx(4.0)
+
+
+def test_newcomer_tie_break_is_order_independent():
+    # The k-th and (k+1)-th candidates are EQUIDISTANT from the target, so
+    # which one lands inside k is decided purely by the tie-break. Shuffling
+    # the input must not change the answer, or the TS port will diverge here
+    # and the parity fixture will flake intermittently.
+    pool = [mk("DEF", 50 + i, 100 + i, 50 + i) for i in range(9)]   # dist 0..8
+    pool.append(mk("DEF", 41, 200, 41))   # dist 9, lower end_cost -> wins
+    pool.append(mk("DEF", 59, 201, 59))   # dist 9, loses the tie
+
+    forward = newcomer_rates("DEF", 50, pool)["total_points"]
+    reverse = newcomer_rates("DEF", 50, list(reversed(pool)))["total_points"]
+    assert forward == pytest.approx(reverse)
+    # 50..58 plus 41 => mean 52.7. Had 59 won the tie instead it would be 54.5,
+    # so this assertion actually discriminates between the two orderings.
+    assert forward == pytest.approx(52.7)
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
