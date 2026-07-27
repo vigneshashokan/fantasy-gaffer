@@ -14,12 +14,12 @@ from __future__ import annotations
 
 import argparse
 
-import numpy as np
 import pandas as pd
 
 from feature_spec import FEATURE_COLUMNS, FORM_STATS
 from features import build_feature_row
 from seed import blend_rates, pseudo_rows
+from seed_spec import SEED_DENOMINATOR
 
 TRAIN_THROUGH_GW = 19
 EVAL_GWS = (20, 21, 22, 23, 24)
@@ -28,13 +28,14 @@ EVAL_GWS = (20, 21, 22, 23, 24)
 def season_aggregate(rows: pd.DataFrame, n_fixtures: int) -> dict:
     """Collapse per-fixture rows into a history_past-shaped aggregate.
 
-    n_fixtures is passed rather than assumed so this can use the TRUE window
-    length (19) here, while serving uses SEED_DENOMINATOR (38). That difference
-    is exactly what Step 7 measures.
+    Scale to a full-season equivalent so blend_rates' fixed SEED_DENOMINATOR
+    yields the true per-fixture rate. Production always seeds from complete
+    38-fixture seasons; this smoke test deliberately uses a 19-gameweek
+    window, so without this the whole comparison is off by exactly 19/38.
     """
-    agg = {stat: float(rows[stat].sum()) for stat in FORM_STATS}
-    agg["starts"] = float(rows["starts"].sum())
-    agg["_n_fixtures"] = n_fixtures
+    scale = SEED_DENOMINATOR / float(n_fixtures)
+    agg = {stat: float(rows[stat].sum()) * scale for stat in FORM_STATS}
+    agg["starts"] = float(rows["starts"].sum()) * scale
     return agg
 
 
@@ -74,16 +75,32 @@ def main() -> None:
         print(f"{col:<34} {s.mean():>10.4f} {r.mean():>10.4f} "
               f"{ratio:>7.3f} {s.corr(r):>7.3f}")
 
-    print("\nDenominator check — which divisor reproduces real form best?")
-    for label, denom in (("window length (19)", 19), ("SEED_DENOMINATOR (38)", 38),
-                         ("mean appearances", None)):
-        errs = []
-        for pid, pdf in prior.groupby("player_id"):
-            d = denom or max(1.0, float((pdf["minutes"] > 0).sum()))
-            last6 = pdf.sort_values(["gw", "fixture_id"], ascending=False).head(6)
-            errs.append(abs(float(pdf["total_points"].sum()) / d
-                            - float(last6["total_points"].mean())))
-        print(f"  {label:<24} MAE vs real form_total_points: {np.mean(errs):.4f}")
+    print("\nDenominator check — the question production actually faces: given a")
+    print("player's FULL-season total, does /38 (blank-inclusive, our current")
+    print("choice) or /actual-appearances better reproduce v1's real form?")
+    rows = []
+    for pid, pdf in hist.groupby("player_id"):
+        apps = int((pdf["minutes"] > 0).sum())
+        total = float(pdf["total_points"].sum())
+        last6 = pdf.sort_values(["gw", "fixture_id"], ascending=False).head(6)
+        real = float(last6["total_points"].mean())
+        rows.append({
+            "apps": apps,
+            "err_38": abs(total / 38 - real),
+            "err_apps": abs(total / max(1, apps) - real),
+        })
+    dcheck = pd.DataFrame(rows)
+    # "most of the window" vs "few": split at 19, half of the 38-gw season —
+    # the approximation is only suspected to hurt partial-season players, so a
+    # single pooled number would hide that.
+    groups = (
+        ("all players", dcheck),
+        ("regular (apps>=19)", dcheck[dcheck.apps >= 19]),
+        ("partial (apps<19)", dcheck[dcheck.apps < 19]),
+    )
+    print(f"  {'group':<22} {'n':>5} {'/38 MAE':>10} {'/apps MAE':>10}")
+    for label, g in groups:
+        print(f"  {label:<22} {len(g):>5} {g.err_38.mean():>10.4f} {g.err_apps.mean():>10.4f}")
 
     print(f"\neval rows available GW{EVAL_GWS[0]}-{EVAL_GWS[-1]}: {len(evalr)}")
     print("\nRead this as: ratios near 1.0 and correlations >0.7 mean the "
