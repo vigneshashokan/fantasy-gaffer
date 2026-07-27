@@ -134,7 +134,7 @@ Deno.test('liveToHistoryRows: passes through the points-component fields', () =>
 
 function elt(id: number, team: number, element_type: number): BootstrapElement {
   return {
-    id, web_name: `P${id}`, first_name: 'F', second_name: 'L', team, element_type,
+    id, code: id, web_name: `P${id}`, first_name: 'F', second_name: 'L', team, element_type,
     now_cost: 50, form: '0.0', total_points: 0, status: 'a', news: '', news_added: null,
     chance_of_playing_next_round: 100, ep_next: '0.0', ep_this: '0.0',
     selected_by_percent: '0.0', ict_index: '0.0', bps: 0, transfers_in_event: 0,
