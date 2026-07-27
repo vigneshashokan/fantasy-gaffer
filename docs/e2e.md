@@ -88,6 +88,46 @@ flow run — under `~/.maestro/tests/<timestamp>/`; that's the first place to lo
 flow fails on a specific step, since it shows exactly what was on screen at the point of
 failure.
 
+## Hands-on against the fixture stack (`e2e/dev.sh`)
+
+`run.sh` drives the stack with Maestro and tears it down. `dev.sh` brings up the **same**
+stack and holds it, with the app running on the simulator, for manual use:
+
+```bash
+./e2e/dev.sh                                            # iPhone 16 Pro
+E2E_SIM_NAME="iPhone SE (3rd generation)" ./e2e/dev.sh   # narrowest sim
+E2E_METRO_PORT=8082 ./e2e/dev.sh                        # beside another dev server
+```
+
+Sign in with `e2e-a@fantasygaffer.test` / `e2e-password-1` — that user already has the
+captured entry connected, so **the pitch renders fully populated**. `e2e-b@` has no team,
+for empty states. `src/` edits hot-reload as normal.
+
+**Why you'd want this.** FPL 404s `/entry/{id}/event/{gw}/picks/` until a gameweek's
+deadline has passed. Between seasons that means there is no squad to read at all and the
+pitch cannot render — `useApexTeam` surfaces `noSquad` and the Team and Transfer tabs show
+an empty state (correctly; see the comment in `src/api/squad.ts`). So any work needing a
+populated pitch — pitch/player visual bugs, an Accessibility Inspector pass on
+Team/Transfer, store screenshots — is otherwise blocked on the real GW1 deadline. This
+runs it against the committed capture instead.
+
+It also gives you **narrow-width testing**, which no physical device can: the narrowest
+modern iPhone is 375pt, and layout bugs like jersey bleed show up worst below that.
+
+**Caveats.**
+
+- The data is the committed 2025/26 capture, not live FPL. Fine for layout and
+  interaction; misleading for anything about *current* prices, form or fixtures.
+- The seeded Supabase and the fixture server come from the **same** bootstrap capture, and
+  that pairing is load-bearing — FPL element ids reset every season, so serving these
+  picks against a live-season `players` table would join every pick to a different
+  footballer. Don't mix one with the other.
+- Supabase is deliberately left running on Ctrl-C (slow to start, harmless idle);
+  `supabase stop` when you're done.
+- The service setup is duplicated from `run.sh` rather than shared, deliberately — that
+  script is the suite #152 will wire into CI, and the duplication is cheaper than the risk
+  of refactoring it. **Keep the two in sync by hand** if the stack changes.
+
 ## How it stays hermetic
 
 Every network call the app makes during a run stays on `127.0.0.1`: Supabase is the local
