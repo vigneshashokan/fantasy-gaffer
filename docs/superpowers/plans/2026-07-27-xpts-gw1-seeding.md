@@ -1156,11 +1156,26 @@ Verdict: <SHIP S|SHIP H|SHIP NOTHING>."
 
 **Stop here and report the verdict before continuing.**
 
-| Verdict | Next |
-|---|---|
-| G0 fails | **Stop.** Ship nothing; `ep_next` holds. Tasks 1–4 remain merged — the data is permanent and the finding is real. Go to Task 7. |
-| S wins | Continue to Task 5 as written. |
-| H wins | Continue to Task 5, but implement **only** `blendTotalPointsRate` (H needs no form vector), and add interval synthesis to Task 6 per spec §6. Use `model_version = 'seed-h-1.0.0'`. |
+**RESOLVED 2026-07-27. Verdict: G0 PASS · G1 PASS (S 1.9689 vs H 2.3178 capped) ·
+G2 PASS all arms. Decision: SHIP S, SCOPED TO GW1 ONLY.**
+
+The registered gate passed for S, so Task 5 proceeds as written. But the gate's
+own reference arm V — real v1 on its 1–4 rows, i.e. what ships today — **beat S
+at every one of GW2, 3, 4 and 5** (1.8318 vs 1.9002 capped MAE). The design's
+"this also fixes GW2–6" claim is therefore **falsified**, and Task 6 is rescoped
+so seeding applies only when the season has no finished gameweeks.
+
+That is a pure scope reduction: the GW1 predictions shipped are byte-identical to
+the ones the gate scored. Nothing is promoted that was not gated.
+
+Two caveats recorded, neither overriding the verdict:
+- GW1 is row-level out-of-sample (`build_samples` skips no-prior rows) but the
+  coefficients were fit on GW2–38 of the same season and players, so S's +0.0762
+  GW1 margin is an **upper bound** on deployment behaviour.
+- A post-hoc GW1-only slice (**not** a registered criterion) shows the arms are
+  statistically indistinguishable there — S MAE 2.2769/ρ 0.1082 vs H 2.3531/ρ
+  0.1527 capped, n=200 — and S's decisive pooled win comes from GW2–5, where it
+  mixes in real rows and H stays frozen. Prospective eval settles it.
 
 ---
 
@@ -1330,15 +1345,36 @@ Deno.test('projects from seeds alone when the season has no history yet', async 
   assertEquals(body.rows > 0, true);
 });
 
-Deno.test('a player with six real gameweeks sees no seed influence', async () => {
-  // The G3 assertion. head(FORM_WINDOW) provably cannot reach a pseudo-row
-  // once six real rows exist, so seeded and unseeded runs must agree exactly.
-  const real = Array.from({ length: 6 }, (_, i) => makeHistoryRow({ gw: i + 1 }));
+Deno.test('ANY real history makes seeds inert — even one gameweek', async () => {
+  // The G3 assertion, strengthened by the GW1-only scoping decision. The gate
+  // measured that real v1 on 1-4 rows BEATS seeded v1 at every one of GW2-5
+  // (arm V 1.8318 vs arm S 1.9002), so the seed must yield the instant any real
+  // row exists — not decay across six gameweeks as originally designed.
+  //
+  // ONE real row is the load-bearing case: under the original blend it would
+  // still have carried ~76% prior weight. If this test passes with six rows but
+  // not one, the scoping was not actually applied.
+  const one = [makeHistoryRow({ gw: 1 })];
   const withSeed = await handler(new Request('http://x/'),
-    makeDeps({ historyRows: real, seasonHistoryRows: [SEED_ROW] }));
+    makeDeps({ historyRows: one, seasonHistoryRows: [SEED_ROW] }));
   const without = await handler(new Request('http://x/'),
-    makeDeps({ historyRows: real, seasonHistoryRows: [] }));
+    makeDeps({ historyRows: one, seasonHistoryRows: [] }));
   assertEquals(await withSeed.json(), await without.json());
+});
+
+Deno.test('seeded rows carry the seed model_version, not v1.0.0', async () => {
+  // eval_prospective.py splits arms by model_version. If seeded rows shipped as
+  // 'v1.0.0' they would pool with unseeded v1 and the prospective comparison
+  // that ultimately validates this feature would silently mean nothing.
+  const deps = makeDeps({
+    historyRows: [],
+    seasonHistoryRows: [SEED_ROW],
+    players: [{ id: 411, code: 223094, position: 'FWD', team_id: 13, now_cost: 155 }],
+  });
+  await handler(new Request('http://x/'), deps);
+  const upserted = deps.captured.projections;
+  assertEquals(upserted.length > 0, true);
+  assertEquals(upserted.every((r) => r.model_version === SEED_MODEL_VERSION), true);
 });
 ```
 
@@ -1382,16 +1418,35 @@ Replace the block at lines ~143–153:
         { status: 200 },
       );
     }
+    const seeding = historyRows.length === 0;   // see Step 5's scope note
 ```
 
-- [ ] **Step 5: Prepend the pseudo-rows**
+- [ ] **Step 5: Build the seeded history — INSIDE the zero-history branch only**
 
-After the `historyByPlayer` loop (line ~184), build the newcomer pool and prepend. Seasons must be sorted **most recent first** before `blendRates` — it takes the first `SEED_DEPTH`, so reversed input silently seeds from the oldest data:
+> **SCOPE CHANGE, decided after the Task 4 gate. Read this before writing code.**
+> The original design prepended pseudo-rows to every player unconditionally and
+> let the 6-row exp-decay window blend the prior out across GW1–6. **The gate
+> measured that this is harmful.** Reference arm V (real v1 on its 1–4 rows of
+> in-season history — i.e. current shipped behaviour) beat seeded arm S at
+> **every one of GW2, 3, 4 and 5** (1.8318 vs 1.9002 capped MAE). Shipping the
+> blend would knowingly regress four gameweeks.
+>
+> So seeding applies **only when the season has no finished gameweeks at all**,
+> which is exactly the condition where this function already skips. The branch
+> with real history is left completely untouched.
+>
+> This makes the change far smaller than originally planned, and it makes the
+> old G3 property trivially true: pseudo-rows and real rows now never coexist.
+
+Replace the `return` inside the skip branch from Step 4. When there is no
+in-season history but seeds exist, build a history map consisting **purely** of
+pseudo-rows and fall through to the normal `buildProjections` call:
 
 ```ts
-    // Group aggregates by code, most-recent season FIRST (blendRates takes the
-    // leading SEED_DEPTH). Season labels sort lexicographically: '2024/25' <
-    // '2025/26', so descending string order is descending chronological order.
+    // Seasons most-recent FIRST — blendRates takes the leading SEED_DEPTH, so
+    // reversed input would silently seed from the oldest data. Season labels
+    // sort lexicographically ('2024/25' < '2025/26'), so descending string
+    // order is descending chronological order.
     const seasonsByCode: Record<number, SeasonAggregate[]> = {};
     for (const r of seasonHistoryRows) {
       (seasonsByCode[r.element_code] ??= []).push(r);
@@ -1400,6 +1455,9 @@ After the `historyByPlayer` loop (line ~184), build the newcomer pool and prepen
       list.sort((a, b) => (a.season < b.season ? 1 : a.season > b.season ? -1 : 0));
     }
 
+    // Two passes, and the order matters: the newcomer pool must be COMPLETE
+    // before any newcomer is resolved against it, or early players would match
+    // against a partial pool and the output would depend on iteration order.
     const pool: NewcomerPoolEntry[] = [];
     const ratesByPlayer = new Map<number, SeedRates>();
     for (const p of players) {
@@ -1419,14 +1477,18 @@ After the `historyByPlayer` loop (line ~184), build the newcomer pool and prepen
       const rates = ratesByPlayer.get(p.id)
         ?? newcomerRates(p.position, p.now_cost, pool);
       const seeded = pseudoRows(rates);
-      if (seeded.length === 0) continue;
-      (historyByPlayer[p.id] ??= []).push(...seeded);
+      if (seeded.length > 0) historyByPlayer[p.id] = seeded;
     }
 ```
 
-Note the two-pass shape: the pool must be complete before any newcomer is resolved against it, or early players see a partial pool and the result depends on iteration order.
+Note `historyByPlayer[p.id] = seeded` — a plain assignment, not a push. In this
+branch there is by definition nothing to append to, and an assignment states
+that invariant rather than relying on it.
 
-Set `model_version` on the emitted rows to `SEED_MODEL_VERSION` when the player's window contains any pseudo-row, and to the existing v1 version otherwise.
+Every row emitted from this branch carries `model_version = SEED_MODEL_VERSION`.
+Rows from the real-history branch keep the existing v1 version, unchanged. There
+is no mixed case any more, so no per-row conditional is needed — which is the
+point of the scoping.
 
 - [ ] **Step 6: Run the tests to verify they pass**
 
@@ -1454,6 +1516,11 @@ docker exec supabase_db_fantasy-gaffer psql -U postgres -c \
 ```
 
 Expected: several hundred rows, `model_version` = the seeded version, and a **spread** of `p50` — not the 23-value clustering that motivated this. Sanity-check that the top few by `p50` are recognisable premium players and that none is a goalkeeper.
+
+Then confirm the scoping holds end-to-end: insert a single `player_gw_history`
+row for the current season, re-run, and verify the emitted rows revert to the
+plain v1 `model_version` and that no projection changes because of a seed. One
+real row must switch seeding off entirely.
 
 - [ ] **Step 8: Verify in the app**
 
