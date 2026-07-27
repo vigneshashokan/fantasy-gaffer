@@ -1,7 +1,7 @@
 // src/__tests__/api/players.test.tsx
 import { renderHook, waitFor } from '@testing-library/react-native';
 import { QueryClientProvider } from '@tanstack/react-query';
-import { playersFromRows, useTopPicks } from '@/api/players';
+import { playersFromRows, useTopPicks, type PlayerRow } from '@/api/players';
 import { makeTestQueryClient } from '../utils/renderWithProviders';
 
 jest.mock('@/lib/supabase', () => ({
@@ -10,7 +10,7 @@ jest.mock('@/lib/supabase', () => ({
 
 import { supabase } from '@/lib/supabase';
 
-const FIXTURE_ROWS = [
+const FIXTURE_ROWS: PlayerRow[] = [
   {
     id: 401, web_name: 'Haaland', team_id: 13,
     position: 'FWD', now_cost: 142, form: '8.4',

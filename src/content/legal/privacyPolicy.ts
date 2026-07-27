@@ -2,7 +2,7 @@ import type { LegalDoc } from './types';
 
 export const privacyPolicy: LegalDoc = {
   title: 'Privacy Policy',
-  lastUpdated: '2026-07-25',
+  lastUpdated: '2026-07-26',
   intro:
     'This Privacy Policy explains what information Fantasy Gaffer ("the app", "we", "us") collects, how we use it, and the choices you have. Fantasy Gaffer is operated by Vignesh Ashokan. We recommend reviewing this policy together with our Terms of Service.',
   sections: [
@@ -40,6 +40,24 @@ export const privacyPolicy: LegalDoc = {
       ],
     },
     {
+      heading: 'Legal bases for processing',
+      blocks: [
+        {
+          type: 'paragraph',
+          text: 'If you are in the European Economic Area or the United Kingdom, we process your personal data on the following legal bases under the GDPR:',
+        },
+        {
+          type: 'bullets',
+          items: [
+            'Performance of a contract — creating and securing your account, connecting your Fantasy Premier League team, and generating the projections and advice the app exists to provide. Without this information we cannot deliver the service.',
+            'Legitimate interests — diagnosing crashes, maintaining security and stability, and understanding aggregate product usage so we can decide what to improve. We weigh these interests against your rights, keep the data to a minimum, and you can switch off usage analytics at any time in Settings.',
+            'Consent — sending push notifications, which happens only after you grant permission on your device. You can withdraw it at any time in your device settings.',
+            'Legal obligation — retaining limited records where the law requires us to.',
+          ],
+        },
+      ],
+    },
+    {
       heading: 'Third-party services',
       blocks: [
         {
@@ -49,9 +67,9 @@ export const privacyPolicy: LegalDoc = {
         {
           type: 'bullets',
           items: [
-            'Supabase — authentication and backend database (account and profile data).',
-            'PostHog — anonymous product analytics.',
-            'Sentry — crash and error reporting.',
+            'Supabase — authentication and backend database (account and profile data), hosted on Amazon Web Services (AWS) infrastructure in the United States.',
+            'PostHog — anonymous product analytics, processed in the United States.',
+            'Sentry — crash and error reporting, processed in the United States.',
             'RevenueCat — subscription management, if and when you purchase a paid plan.',
             'Apple and Google — sign-in providers and app distribution through their stores.',
           ],
@@ -99,7 +117,7 @@ export const privacyPolicy: LegalDoc = {
       blocks: [
         {
           type: 'paragraph',
-          text: 'Some of our providers process data on servers located outside your country, including in the United States. Where we transfer data internationally, we take steps to ensure it remains protected.',
+          text: 'Fantasy Gaffer stores and processes data in the United States. Our database and authentication provider, Supabase, hosts our data on Amazon Web Services (AWS) infrastructure in the US East (N. Virginia) region, and our analytics and crash-reporting providers process data in the United States as well. If you are located in the European Economic Area, the United Kingdom, or another region that restricts international data transfers, this means your personal data is transferred outside your country. Where that happens, the transfer is made under the European Commission’s Standard Contractual Clauses — together with the UK International Data Transfer Addendum where it applies — and under data processing agreements with each provider that require them to protect your data to those standards.',
         },
       ],
     },

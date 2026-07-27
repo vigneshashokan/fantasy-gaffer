@@ -13,7 +13,7 @@ import type { Player, Position, TopPickPlayer, ClubCode, PlayerStatus } from '@/
 import { useCurrentGameweek } from './fixtures';
 import { useProjections, type ProjectionStat } from './projections';
 
-interface PlayerRow {
+export interface PlayerRow {
   id: number;
   web_name: string;
   team_id: number;
