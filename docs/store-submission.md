@@ -41,22 +41,22 @@ Note that PostHog's autocapture is **off** (`autocapture={false}` in
 `provider.tsx`) — only the explicitly declared events in `events.ts` are sent.
 There is no session replay in either tool.
 
-### One thing to settle before submitting
+### GeoIP — already settled, no Location row
 
-PostHog derives coarse geography from the request IP server-side (`$geoip_*`
-properties). If that stays on, **Location → Coarse Location** has to be
-disclosed as collected for Analytics, and the privacy policy should say so.
+PostHog can derive coarse geography from the request IP server-side (`$geoip_*`
+properties), which would force a **Location → Coarse Location** disclosure. It
+is **off**, and it is off in code rather than in the dashboard:
+`src/lib/analytics/index.ts` passes `disableGeoip: true` to the client
+constructor, so the SDK tells ingest to skip the lookup on every request.
 
-Two options, pick one:
+Do not go looking for a project setting to toggle — there isn't one to find,
+and the code is the authority. If anyone ever removes that line, the Coarse
+Location row has to be added here *and* a matching line added to
+`src/content/legal/privacyPolicy.ts` (then re-run `npm run legal:html`, or the
+parity test fails).
 
-- **Turn it off** — PostHog project settings → disable GeoIP enrichment. Then
-  the table above is complete as written. Recommended: nothing in the product
-  uses geography.
-- **Keep it** — add the Coarse Location row to the questionnaire and a matching
-  line to `src/content/legal/privacyPolicy.ts` (then re-run `npm run legal:html`,
-  or the parity test fails).
-
-This is the only row in the questionnaire that isn't determined by our own code.
+So the table above is complete as written: every row in this questionnaire is
+determined by our own code.
 
 ## Review notes (the "App Review Information" box)
 
