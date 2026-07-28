@@ -2,7 +2,9 @@
 
 **Issue:** [#212](https://github.com/vigneshashokan/fantasy-gaffer/issues/212)
 **Date:** 2026-07-27
-**Status:** designed, not built
+**Status:** shipped (`spec/gw1-seeding-212`, commits `586f441..d39e73b`) — gate verdict **SHIP S**,
+rescoped to GW1-only. See the correction notes in §4.2, §7 and §12, and the xPts GW1 cold-start seeding
+bullet in `CLAUDE.md` for the full record.
 **Hard deadline:** 2026-08-21 (GW1 deadline). The value window extends to ~GW7.
 
 ---
@@ -139,6 +141,20 @@ is `prior["starts"].mean()`, so a fractional pseudo-row yields the intended
 availability with no separate handling.
 
 ### 4.2 Accepted approximation — the denominator
+
+> **Correction, post-Stage-0 (2026-07-27): this is not an approximation, it is
+> correct — see the Stage 0 verdict in `progress.md` and the finding recorded in
+> `CLAUDE.md`.** Measured against the true blank structure, ÷38 beat ÷actual-
+> appearance-count in **every** bucket tested, including the partial-season
+> players this section predicted it would hurt (all players 0.5216 vs 0.8071;
+> regular apps≥19 1.0089 vs 1.2208; partial apps<19 0.1973 vs 0.5317). Reason:
+> v1's form features are blank-inclusive, so ÷38 preserves exactly the dilution
+> the model trained on, while ÷apps strips it out and inflates rates above
+> anything v1 has seen. The concern below (under-rating mid-season arrivals) was
+> a reasonable hypothesis going in; it did not survive contact with the data.
+> The §12 follow-up lever this section spawned is retired for the same reason —
+> see the note there. The paragraphs below are the original reasoning, kept for
+> the record.
 
 `history_past` gives no appearance count, so per-fixture rates use a fixed
 denominator of 38. This matches v1's blank-inclusive semantics (`player_gw_history`
@@ -313,6 +329,19 @@ structure available.
 
 ### Stage 1 — the gate
 
+> **Correction, post-gate (2026-07-27): the "seeding also fixes GW2–6" premise
+> behind including arm V below was FALSIFIED, and the feature was rescoped
+> because of it — see `progress.md`'s Task 4 entry and the gate verdict in
+> `docs/xpts-model.md` (`<!-- xpts-seed-results -->`).** V — real v1 running on
+> its actual 1–4 rows of in-season history, i.e. what was already shipping —
+> **beat** the seeded arm S at every one of GW2, 3, 4 and 5 (1.8318 vs 1.9002
+> capped MAE on V's own defined subset). A full 6-row blend riding the decaying
+> window (§1's "the window is wider than GW1" framing) would have shipped a
+> measured regression over doing nothing. **Consequence: seeding ships GW1-only**
+> — it fires when a season has zero finished gameweeks, not on a decay schedule,
+> and one real history row switches it off entirely. The gate below is otherwise
+> unchanged and its G0/G1/G2 verdict (SHIP S) stands.
+
 Seed from 2024/25 (0.7) + 2023/24 (0.3) → predict 2025/26 GW1–5 → score against
 `player_gw_history` actuals.
 
@@ -419,7 +448,10 @@ project.
 
 ## 12. Follow-up levers (not in scope)
 
-- Derive a true appearance denominator instead of 38 (§4.2), if Stage 0 indicates
-  it matters.
+- ~~Derive a true appearance denominator instead of 38 (§4.2), if Stage 0 indicates
+  it matters.~~ **Retired, post-Stage-0 (2026-07-27):** Stage 0 ran this exact
+  comparison and ÷38 won in every bucket, including the partial-season players
+  this lever targeted — see the correction note on §4.2. There is no better
+  denominator to derive; the fixed 38 is not a compromise.
 - Apply the same seeding to v3.1's `rates_v3.py` per-90 rates.
 - Revisit the 0.7/0.3 split empirically once two seasons of prospective data exist.

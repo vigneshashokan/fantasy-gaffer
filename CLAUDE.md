@@ -112,6 +112,62 @@ The app's expected-points number is now a **real owned model**, not the old `xPt
   - **v2 model — the arc is in its off-season END-STATE: five cycles complete (#144 v3.1 ✅ PASSED, first in arc); the #128/#130 revival is BUILT + DEPLOYED (PR #148) — v1 STILL serving, v3.1 shadow-armed (nightly GH Actions batch → `projections_shadow`, off-season no-op), prospective eval + strict promotion runbook registered pre-season; promotion decision earliest ~Oct 2026; has its own section below** (`## xPts v2 (#107)`): the old lever list here (external xG, factor set, xGI fix, minutes classifier, GBM, Approach C) was decomposed into a designed, issue-tracked arc — see that section for the destination architecture, ship policy, the gate verdicts, and per-issue status.
   - **Monetization instrumentation (likely Phase 4):** PostHog usage tracking on the now-free decision features → find the "aha" feature → data-driven paywall placement (see Monetization strategy). PostHog also gives feature-flags for the wall + A/B.
   - Serving-side p-value flooring/calibration (a documented v2 lever — now v2.2, see the xPts v2 section).
+  - **GW1 cold-start seeding — SHIPPED (#212, branch `spec/gw1-seeding-212`, commits `586f441..d39e73b`).** At
+    season start, `fpl-project` used to skip (`no-history-for-season`) and the client fell back to FPL's
+    `ep_next` — **degenerate pre-season** (23 distinct values across 563 players, capped at 4.0, a four-way
+    tie at the top with one player per position; #211's "Raya over Haaland" bug). Fix: **when a season has
+    zero finished gameweeks**, `fpl-project` synthesizes **6 identical pseudo-fixture rows per player** from
+    the prior two seasons' per-stat rates (0.7/0.3 weighted, ÷38) and prepends them to that player's
+    (empty) history — the existing `FORM_WINDOW=6` exp-decay window and v1 feature builder are **completely
+    unchanged**; only the input rows are synthetic. Source: new `player_season_history` table (raw
+    `element-summary/{id}.history_past` aggregates, PK `(season, element_code)`, no FK — same season-scoped
+    reasoning as `player_gw_history`), fed by a new `fpl-ingest?source=season-history` daily cron, joined
+    against a new **`players.code`** column (FPL's season-stable identifier — `players.id` resets ~99%
+    every season, `code` does not). Local-stack result: 1689 rows, p50 spread 0.0–3.7, B.Fernandes top at
+    3.70, no goalkeeper near the top. Seeded rows carry `model_version = 'v1.0.0-seed'` (never plain
+    `v1.0.0`) so `eval_prospective.py` can split them, and seeding is a **season-level flag, not per-player**
+    — verified end-to-end: inserting a single real `player_gw_history` row flips all 1689 rows back to
+    plain `v1.0.0`.
+    - **Gate: SHIP S** — G0 (beats a strictly-prior per-position floor), G1 (binding MAE: seeded arm S
+      1.9689 vs the heuristic arm H — a simple 0.7/0.3 blended points rate — 2.3178 capped), G2 (no
+      goalkeeper top-picked, min prior-season 33.9 starts — the #211 pathology does not reproduce) all
+      **PASS**. Full verdict in `docs/xpts-model.md` under `<!-- xpts-seed-results -->`.
+    - **The spec's "this also fixes GW2–6" claim was FALSIFIED, and the feature was rescoped because of
+      it.** The gate's reference arm V — real v1 running on its actual 1–4 rows of in-season history, i.e.
+      **what already shipped** — beat the seeded arm S at every one of GW2, 3, 4, 5 (1.8318 vs 1.9002
+      capped MAE on V's defined subset). Seeding now fires **only when a season has zero finished
+      gameweeks**, not on a decaying window; one real history row switches it off entirely.
+    - **Spec §4.2's "accepted approximation" (per-fixture rate = season total ÷ a fixed 38, not actual
+      appearance count) turned out to be correct, not an approximation — the §12 follow-up lever to derive
+      a true appearance denominator is retired.** ÷38 beat ÷apps in every bucket tested, *including* the
+      partial-season players it was predicted to hurt (all players 0.5216 vs 0.8071; regular apps≥19
+      1.0089 vs 1.2208; partial apps<19 0.1973 vs 0.5317): v1's form features are blank-inclusive, so ÷38
+      preserves exactly the dilution the model trained on, while ÷apps strips it out and inflates rates
+      above anything v1 has ever seen.
+    - **Independent finding, relevant to #107's arc:** v1's L1 penalty has zeroed all four fixture-context
+      coefficients — `was_home`, `opp_strength_def`, `opp_strength_att`, `value_scaled` are all ~1e-7 across
+      all four positions. v1 is a pure form-extrapolation model; it ignores home/away, opponent strength
+      and price entirely. This independently explains #125's finding that adding match features scored
+      identically to v1 — the features weren't weak, the penalized linear head can't use them.
+    - **Honest limits of the verdict.** GW1 rows are row-level out-of-sample (`features.py` skips any row
+      with no in-season prior), but the coefficients were still fit on GW2–38 of the *same* season over the
+      *same* players — arm H has no fitted params — so S's +0.0762 GW1-only margin over H is an **upper
+      bound** on deployment. On a post-hoc GW1-only slice (not a registered gate criterion), S and H are
+      statistically indistinguishable, with H ranking marginally better. Ships because it won the
+      registered pooled G1 metric, not because GW1 alone was decisive; prospective evaluation on real
+      2026/27 GW1 data (existing #123/#130 harness) settles it.
+    - **Two traps for whoever touches this next.** (a) **Do not read prior-season aggregates off the
+      bootstrap `elements` payload** — pre-season it is *currently* still serving last season's totals, so
+      code written against it passes every test runnable today and returns zeros on the first day of the
+      new season; `history_past` is unambiguous. (b) `history_past` returns up to **20 seasons for
+      veterans, not 4**, and `defensive_contribution` comes back as a **literal `0`** for seasons before
+      2024/25 rather than omitted — which is why blend depth is capped at 2 seasons, and why going deeper
+      would silently dilute that feature toward zero with no error anywhere.
+    - **Parity-fixture obligation:** `fpl-project/lib/seed.ts` (Deno) mirrors `model/seed.py` byte-for-byte,
+      guarded by a `seed` block in the golden parity fixture — same discipline, same skew guard, as
+      `feature-spec.ts` ↔ `feature_spec.py`. Keep it green after any change to synthesis.
+    - Spec (§4.2/§7/§12 corrected post-gate, marked inline):
+      `docs/superpowers/specs/2026-07-27-xpts-gw1-seeding-design.md`.
 
 ## xPts v2 (#107) — the decomposed-model arc: decisions, status & gotchas
 
