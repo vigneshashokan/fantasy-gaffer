@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { fetchJson } from '../lib/fpl-client.ts';
 import { finishRun, skipRun } from '../lib/ingestion-runs.ts';
+import { currentSeasonLabel, isPLSeasonActive } from '../lib/calendar.ts';
 
 // element-summary/{id}.history_past — one row per season the player has been in
 // the game, oldest first. Numeric-looking stats arrive as STRINGS.
@@ -78,6 +79,21 @@ export interface IngestSeasonHistoryDeps {
 const CALL_DELAY_MS = 120;
 const UPSERT_CHUNK = 500;
 
+// The season label a player's `history_past` should carry as its newest row,
+// as of `now`. While a season is active (mid-season), the newest COMPLETED
+// season is the one before it; before a season starts, and in the summer gap
+// after one ends, currentSeasonLabel(now) already names the season that just
+// finished. Shares currentSeasonLabel's ~2-week pre-season imprecision (its
+// month-based cutover fires ~2 weeks before PL_SEASON_START) — harmless here,
+// it only costs a few extra nights of full refetch in early August, not
+// stale data.
+export function mostRecentlyCompletedSeason(now: Date): string {
+  if (!isPLSeasonActive(now)) return currentSeasonLabel(now);
+  const [startYear] = currentSeasonLabel(now).split('/');
+  const y = Number(startYear) - 1;
+  return `${y}/${String((y + 1) % 100).padStart(2, '0')}`;
+}
+
 const PAGE_SIZE = 1000;
 // One real run already produces 2000+ rows (563 players' full FPL history);
 // this bounds a runaway loop well above realistic size without ever silently
@@ -90,17 +106,23 @@ const MAX_SEEN_ROWS = 200_000;
 // happens on the FIRST real run — so `seen` silently missed most
 // already-ingested players and the "skip once everyone has a row" design
 // never actually reached a skip. Mirrors fpl-project's fetchSeasonHistory.
-export async function fetchSeenElementCodes(supabase: SupabaseClient): Promise<Set<number>> {
+//
+// Filtered to a single `season` (see mostRecentlyCompletedSeason) so the skip
+// is season-aware: a player who has a row for an OLDER season only still
+// counts as `todo`.
+export async function fetchSeenElementCodes(
+  supabase: SupabaseClient,
+  season: string,
+): Promise<Set<number>> {
   const seen = new Set<number>();
   let from = 0;
   let processed = 0;
   for (;;) {
     const { data, error } = await supabase
       .from('player_season_history')
-      .select('season, element_code')
-      // Range paging is only stable under a total order; the primary key is
-      // (season, element_code).
-      .order('season', { ascending: true })
+      .select('element_code')
+      .eq('season', season)
+      // Range paging is only stable under a total order.
       .order('element_code', { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
     if (error) throw error;
@@ -134,15 +156,18 @@ export async function ingestSeasonHistory(
   if (playersRes.error) throw playersRes.error;
   const players = (playersRes.data ?? []) as { id: number; code: number }[];
 
-  const seen = await fetchSeenElementCodes(deps.supabase);
+  const targetSeason = mostRecentlyCompletedSeason(deps.now());
+  const seen = await fetchSeenElementCodes(deps.supabase, targetSeason);
 
-  // Incremental: a player already represented for ANY season is skipped
-  // wholesale. history_past is immutable for completed seasons, so re-fetching
-  // buys nothing — only genuinely new entrants cost a call after the first run.
+  // Incremental: skip a player only if they already have a row for the
+  // most-recently-completed season. Rows already stored for a completed
+  // season are immutable, but a NEW season is appended to history_past every
+  // August once FPL rolls the game over — skipping on "any row, ever" would
+  // freeze the table forever at whichever season first got captured.
   const todo = players.filter((p) => !seen.has(p.code));
 
   if (todo.length === 0) {
-    await skipRun(deps.supabase, runId, 'all players already have season history');
+    await skipRun(deps.supabase, runId, `all players already have ${targetSeason} season history`);
     return;
   }
 

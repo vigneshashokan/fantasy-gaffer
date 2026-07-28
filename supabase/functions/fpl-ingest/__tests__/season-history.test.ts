@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   fetchSeenElementCodes,
   ingestSeasonHistory,
+  mostRecentlyCompletedSeason,
   normalizeSeasonHistory,
   type IngestSeasonHistoryDeps,
 } from '../sources/season-history.ts';
@@ -53,6 +54,28 @@ Deno.test('normalizeSeasonHistory defaults a missing stat to 0, not NaN', () => 
   assertEquals(row.defensive_contribution, 0);
 });
 
+// #212 review (finding 2): the incremental skip must be season-aware — a
+// player with a row for an OLDER season only must still be treated as `todo`
+// once a new season completes, or player_season_history freezes forever at
+// whichever season first got captured.
+Deno.test('mostRecentlyCompletedSeason: mid-season names the PRIOR season (current one is not done yet)', () => {
+  // Within [PL_SEASON_START, PL_SEASON_END) for 2026/27.
+  assertEquals(mostRecentlyCompletedSeason(new Date('2027-01-15T00:00:00Z')), '2025/26');
+  assertEquals(mostRecentlyCompletedSeason(new Date('2026-08-15T00:00:00Z')), '2025/26');
+});
+
+Deno.test('mostRecentlyCompletedSeason: pre-season names the season that just ended', () => {
+  // Before 2026/27 kicks off (today, in-repo: 2026-07-27) — 2025/26 already
+  // finished and is what a fresh element-summary call would carry as newest.
+  assertEquals(mostRecentlyCompletedSeason(new Date('2026-07-27T00:00:00Z')), '2025/26');
+});
+
+Deno.test('mostRecentlyCompletedSeason: the summer gap after a season ends still names it', () => {
+  // Past PL_SEASON_END (2027-05-26) but before currentSeasonLabel flips to
+  // the next season (August) — 2026/27 just finished.
+  assertEquals(mostRecentlyCompletedSeason(new Date('2027-06-01T00:00:00Z')), '2026/27');
+});
+
 // #212 follow-up: PostgREST caps every read at max_rows (1000 here and on
 // hosted) and supabase-js does not paginate. An unpaginated
 // select('element_code') silently returned only the first 1000 of the
@@ -78,6 +101,7 @@ function makeSeenSupabase(
         select: () => {
           // deno-lint-ignore no-explicit-any
           const self: any = {
+            eq: () => self,
             order: () => self,
             range: (from: number, to: number) => {
               rec.ranges.push([from, to]);
@@ -101,7 +125,7 @@ Deno.test('fetchSeenElementCodes pages until an empty request, keeping codes bey
   const page2 = [{ element_code: 1500 }]; // beyond a single page
   const supabase = makeSeenSupabase(rec, [page1, page2, []]);
 
-  const seen = await fetchSeenElementCodes(supabase);
+  const seen = await fetchSeenElementCodes(supabase, '2025/26');
 
   assertEquals(seen.has(1500), true, 'a code that only appears on page 2 must still be captured');
   assertEquals(seen.size, 1001);
@@ -111,6 +135,7 @@ Deno.test('fetchSeenElementCodes pages until an empty request, keeping codes bey
 function makeIngestDeps(opts: {
   players: { id: number; code: number }[];
   seenPages: { element_code: number }[][];
+  now?: Date;
 }): { deps: IngestSeasonHistoryDeps; fetchedIds: number[]; runUpdates: Record<string, unknown>[] } {
   const fetchedIds: number[] = [];
   const runUpdates: Record<string, unknown>[] = [];
@@ -131,6 +156,7 @@ function makeIngestDeps(opts: {
           select: () => {
             // deno-lint-ignore no-explicit-any
             const self: any = {
+              eq: () => self,
               order: () => self,
               range: (_from: number, _to: number) => {
                 const page = opts.seenPages[seenCall++] ?? [];
@@ -167,7 +193,12 @@ function makeIngestDeps(opts: {
   };
 
   return {
-    deps: { supabase, fetch: fetchStub, now: () => new Date('2026-07-27'), sleep: async () => {} },
+    deps: {
+      supabase,
+      fetch: fetchStub,
+      now: () => opts.now ?? new Date('2026-07-27'),
+      sleep: async () => {},
+    },
     fetchedIds,
     runUpdates,
   };
@@ -190,3 +221,94 @@ Deno.test('ingestSeasonHistory: a player whose code lives beyond the first seen-
   assertEquals(fetchedIds, [], 'the player is already represented beyond page 1 and must not be re-fetched');
   assertEquals(runUpdates.at(-1)?.status, 'skipped');
 });
+
+// Finding 2: `seen` is now filtered to the target season server-side (the
+// `.eq('season', …)` in fetchSeenElementCodes), so a fake DB that actually
+// honors that filter is needed to prove a stale-season row does NOT count as
+// "already have it" — a mock that ignores season (like makeIngestDeps above)
+// can't exercise this.
+function makeSeasonAwareIngestDeps(opts: {
+  players: { id: number; code: number }[];
+  storedRows: { season: string; element_code: number }[];
+  now: Date;
+}): { deps: IngestSeasonHistoryDeps; fetchedIds: number[] } {
+  const fetchedIds: number[] = [];
+
+  // deno-lint-ignore no-explicit-any
+  const supabase: any = {
+    from(table: string) {
+      if (table === 'players') {
+        return {
+          select: () => ({
+            not: () => Promise.resolve({ data: opts.players, error: null }),
+          }),
+        };
+      }
+      if (table === 'player_season_history') {
+        return {
+          select: () => {
+            let filterSeason: string | null = null;
+            // deno-lint-ignore no-explicit-any
+            const self: any = {
+              eq: (_col: string, val: string) => {
+                filterSeason = val;
+                return self;
+              },
+              order: () => self,
+              range: (from: number, to: number) => {
+                const rows = opts.storedRows.filter((r) => r.season === filterSeason);
+                return Promise.resolve({ data: rows.slice(from, to + 1), error: null });
+              },
+            };
+            return self;
+          },
+          upsert: () => Promise.resolve({ error: null }),
+        };
+      }
+      if (table === 'ingestion_runs') {
+        return { update: () => ({ eq: () => Promise.resolve({ error: null }) }) };
+      }
+      throw new Error(`unexpected table ${table}`);
+    },
+  };
+
+  const fetchStub: typeof fetch = (input: string | URL | Request) => {
+    const m = String(input).match(/element-summary\/(\d+)/);
+    if (m) fetchedIds.push(Number(m[1]));
+    return Promise.resolve(new Response(JSON.stringify({ history_past: [] }), { status: 200 }));
+  };
+
+  return {
+    deps: { supabase, fetch: fetchStub, now: () => opts.now, sleep: async () => {} },
+    fetchedIds,
+  };
+}
+
+Deno.test('ingestSeasonHistory: a player whose only stored row is for a stale season IS re-fetched', async () => {
+  // now = mid-2026/27 season -> target season is 2025/26. This player only
+  // has a 2024/25 row stored (imagine last summer's run captured them, and
+  // no run has completed since 2025/26 wrapped) — the old flat-set `seen`
+  // would have skipped them forever; season-aware `seen` must not.
+  const { deps, fetchedIds } = makeSeasonAwareIngestDeps({
+    players: [{ id: 42, code: 4242 }],
+    storedRows: [{ season: '2024/25', element_code: 4242 }],
+    now: new Date('2027-01-15T00:00:00Z'),
+  });
+
+  await ingestSeasonHistory('run-2', deps);
+
+  assertEquals(fetchedIds, [42], 'a player without a row for the target season must be re-fetched');
+});
+
+Deno.test('ingestSeasonHistory: a player who already has the target-season row is skipped', async () => {
+  const { deps, fetchedIds } = makeSeasonAwareIngestDeps({
+    players: [{ id: 42, code: 4242 }],
+    storedRows: [{ season: '2025/26', element_code: 4242 }],
+    now: new Date('2027-01-15T00:00:00Z'), // target season = 2025/26
+  });
+
+  await ingestSeasonHistory('run-3', deps);
+
+  assertEquals(fetchedIds, [], 'a player who already has the target season is not re-fetched');
+});
+
