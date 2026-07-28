@@ -194,9 +194,16 @@ def build_v2_cases() -> dict:
             "team_history": _TEAM_HISTORY_ROWS, "cases": cases}
 
 
+# Distinct non-zero value per FORM_STAT (rather than an all-zero base) so
+# every stat's expectation is individually discriminating in the committed
+# fixture below. With an all-zero base, a per-stat divergence between the
+# Python and TS ports (a dropped stat, a swapped assignment) reads as
+# 0 == 0 and passes the guard silently (#212 review finding 3).
+_SEED_STAT_BASE = {s: float(i + 1) for i, s in enumerate(FORM_STATS)}
+
+
 def _seed_season(**over):
-    base = {s: 0.0 for s in FORM_STATS}
-    base.update({"starts": 0.0, "end_cost": 100, "element_code": 1})
+    base = {**_SEED_STAT_BASE, "starts": 0.0, "end_cost": 100, "element_code": 1}
     base.update(over)
     return base
 
@@ -206,7 +213,7 @@ def _seed_newcomer(position, end_cost, code, total_points):
         "position": position,
         "end_cost": end_cost,
         "element_code": code,
-        "rates": {**{s: 0.0 for s in FORM_STATS}, "total_points": float(total_points), "starts": 1.0},
+        "rates": {**_SEED_STAT_BASE, "total_points": float(total_points), "starts": 1.0},
     }
 
 
