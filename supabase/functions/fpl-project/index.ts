@@ -10,6 +10,15 @@ import { fetchJson } from './lib/fpl-client.ts';
 import { artifact } from './lib/scorer.ts';
 import { buildProjections, type FixtureLite, type PlayerInput } from './lib/project.ts';
 import type { ClubStrength, HistoryRow } from './lib/features.ts';
+import {
+  blendRates,
+  newcomerRates,
+  pseudoRows,
+  type NewcomerPoolEntry,
+  type SeasonAggregate,
+  type SeedRates,
+} from './lib/seed.ts';
+import { SEED_MODEL_VERSION } from './feature-spec.ts';
 
 export interface Deps {
   supabase: SupabaseClient;
@@ -23,6 +32,12 @@ interface EventLite {
   is_next: boolean;
   deadline_time?: string;
 }
+
+// `players` gains `code` for the seed lookup (#212); `player_season_history`
+// rows need a `season` label alongside the SeasonAggregate fields to sort and
+// group by, which the frozen seed.ts interface itself doesn't carry.
+type PlayerRow = PlayerInput & { code: number | null };
+type SeasonRow = SeasonAggregate & { season: string };
 
 export function upcomingGws(events: EventLite[], max = 38): number[] {
   const cur = events.find((e) => e.is_current) ?? events.find((e) => e.is_next);
@@ -101,6 +116,42 @@ export async function fetchSeasonHistory(
   return rows;
 }
 
+const SEASON_HISTORY_COLUMNS =
+  'season, element_code, end_cost, total_points, minutes, starts, bps, ' +
+  'defensive_contribution, influence, creativity, threat, ' +
+  'expected_goals, expected_assists, expected_goal_involvements';
+
+// Same PostgREST max_rows cap as fetchSeasonHistory above, and the table
+// already holds ~2000 rows (multiple seasons x the player pool) — a plain
+// select here would just as silently truncate the seed pool as an
+// unpaginated read of player_gw_history truncated the form window (#163).
+export async function fetchSeasonAggregates(
+  supabase: SupabaseClient,
+): Promise<Record<string, unknown>[]> {
+  const rows: Record<string, unknown>[] = [];
+  let from = 0;
+  for (;;) {
+    const { data, error } = await supabase
+      .from('player_season_history')
+      .select(SEASON_HISTORY_COLUMNS)
+      // PK is (season, element_code); order on it for a stable paging order.
+      .order('season', { ascending: true })
+      .order('element_code', { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    const batch = (data ?? []) as unknown as Record<string, unknown>[];
+    rows.push(...batch);
+    if (batch.length === 0) break;
+    from += batch.length;
+    if (rows.length > MAX_HISTORY_ROWS) {
+      throw new Error(
+        `player_season_history paging exceeded ${MAX_HISTORY_ROWS} rows — refusing to continue`,
+      );
+    }
+  }
+  return rows;
+}
+
 const num = (v: unknown): number => {
   const n = typeof v === 'number' ? v : parseFloat(String(v ?? ''));
   return Number.isFinite(n) ? n : 0;
@@ -128,32 +179,41 @@ export async function handler(req: Request, depsOverride?: Deps): Promise<Respon
     const gws = upcomingGws(boot.events);
     const season = seasonForGw(boot.events, gws[0], deps.now());
 
-    const [playersRes, clubsRes, fixturesRes, historyRows] = await Promise.all([
-      deps.supabase.from('players').select('id, position, team_id, now_cost'),
+    const [playersRes, clubsRes, fixturesRes, historyRows, seasonHistoryRows] = await Promise.all([
+      deps.supabase.from('players').select('id, code, position, team_id, now_cost'),
       deps.supabase.from('clubs').select(
         'id, strength_defence_home, strength_defence_away, strength_attack_home, strength_attack_away',
       ),
       deps.supabase.from('fixtures').select('event, team_h, team_a').in('event', gws),
       fetchSeasonHistory(deps.supabase, season),
+      fetchSeasonAggregates(deps.supabase),
     ]);
     for (const r of [playersRes, clubsRes, fixturesRes]) {
       if (r.error) throw r.error;
     }
 
     // Pre-season and immediately after rollover the new season has no finished
-    // gameweeks, so every feature row would be near-intercept noise. Writing
-    // that displaces the documented empty-table behaviour, where the client
-    // falls back to FPL's ep_next. Serving nothing is the honest state.
-    if (historyRows.length === 0) {
-      await skipRun(deps.supabase, runId, 'no-history-for-season');
+    // gameweeks. Where a player has prior-season aggregates we can still seed
+    // real features (#212, Step 5 below), so the skip now fires only when
+    // there is NOTHING to work from — an unsaturated season-history cron on
+    // first deploy must fail safe, not project noise.
+    if (historyRows.length === 0 && seasonHistoryRows.length === 0) {
+      await skipRun(deps.supabase, runId, 'no-history-or-seeds');
       return Response.json(
-        { ok: true, runId, season, gws, rows: 0, skipped: 'no-history-for-season' },
+        { ok: true, runId, season, gws, rows: 0, skipped: 'no-history-or-seeds' },
         { status: 200 },
       );
     }
+    // Seeding REPLACES the history input wholesale — it does not blend with
+    // real rows. The gate found blending across GW1-6 regresses GW2-5 against
+    // real (even 1-4-row) in-season history, so the instant one real row
+    // exists this branch is never taken again; see the Step 5 note in the
+    // #212 plan for the measured numbers.
+    const seeding = historyRows.length === 0;
 
-    const players: PlayerInput[] = (playersRes.data ?? []).map((p: Record<string, unknown>) => ({
+    const players: PlayerRow[] = (playersRes.data ?? []).map((p: Record<string, unknown>) => ({
       id: num(p.id),
+      code: p.code == null ? null : num(p.code),
       position: String(p.position ?? ''),
       team_id: num(p.team_id),
       now_cost: num(p.now_cost),
@@ -171,21 +231,82 @@ export async function handler(req: Request, depsOverride?: Deps): Promise<Respon
     for (const f of (fixturesRes.data ?? []) as FixtureLite[]) {
       (fixturesByGw[f.event] ??= []).push(f);
     }
+
     const historyByPlayer: Record<number, HistoryRow[]> = {};
-    for (const h of historyRows) {
-      const pid = num(h.player_id);
-      (historyByPlayer[pid] ??= []).push({
-        gw: num(h.gw), fixture_id: num(h.fixture_id), starts: num(h.starts),
-        expected_goals: num(h.expected_goals), expected_assists: num(h.expected_assists),
-        expected_goal_involvements: num(h.expected_goal_involvements), threat: num(h.threat),
-        creativity: num(h.creativity), influence: num(h.influence), bps: num(h.bps),
-        defensive_contribution: num(h.defensive_contribution), total_points: num(h.total_points),
-      });
+    if (seeding) {
+      // Seasons most-recent FIRST — blendRates takes the leading SEED_DEPTH,
+      // so reversed input would silently seed from the oldest data. Season
+      // labels sort lexicographically ('2024/25' < '2025/26'), so descending
+      // string order is descending chronological order.
+      const seasonsByCode: Record<number, SeasonRow[]> = {};
+      for (const r of seasonHistoryRows) {
+        const code = num(r.element_code);
+        (seasonsByCode[code] ??= []).push({
+          season: String(r.season ?? ''),
+          starts: num(r.starts),
+          end_cost: num(r.end_cost),
+          element_code: code,
+          expected_goals: num(r.expected_goals),
+          expected_assists: num(r.expected_assists),
+          expected_goal_involvements: num(r.expected_goal_involvements),
+          threat: num(r.threat),
+          creativity: num(r.creativity),
+          influence: num(r.influence),
+          bps: num(r.bps),
+          defensive_contribution: num(r.defensive_contribution),
+          total_points: num(r.total_points),
+        });
+      }
+      for (const list of Object.values(seasonsByCode)) {
+        list.sort((a, b) => (a.season < b.season ? 1 : a.season > b.season ? -1 : 0));
+      }
+
+      // Two passes, and the order matters: the newcomer pool must be
+      // COMPLETE before any newcomer is resolved against it, or early players
+      // would match against a partial pool and the output would depend on
+      // iteration order.
+      const pool: NewcomerPoolEntry[] = [];
+      const ratesByPlayer = new Map<number, SeedRates>();
+      for (const p of players) {
+        if (p.code == null) continue; // pre-backfill row; self-heals
+        const rates = blendRates(seasonsByCode[p.code] ?? []);
+        if (!rates) continue;
+        ratesByPlayer.set(p.id, rates);
+        pool.push({
+          position: p.position,
+          end_cost: seasonsByCode[p.code][0].end_cost,
+          element_code: p.code,
+          rates,
+        });
+      }
+
+      for (const p of players) {
+        const rates = ratesByPlayer.get(p.id) ?? newcomerRates(p.position, p.now_cost, pool);
+        const seeded = pseudoRows(rates);
+        // A plain assignment, not a push: in this branch there is by
+        // definition nothing real to append to.
+        if (seeded.length > 0) historyByPlayer[p.id] = seeded;
+      }
+    } else {
+      for (const h of historyRows) {
+        const pid = num(h.player_id);
+        (historyByPlayer[pid] ??= []).push({
+          gw: num(h.gw), fixture_id: num(h.fixture_id), starts: num(h.starts),
+          expected_goals: num(h.expected_goals), expected_assists: num(h.expected_assists),
+          expected_goal_involvements: num(h.expected_goal_involvements), threat: num(h.threat),
+          creativity: num(h.creativity), influence: num(h.influence), bps: num(h.bps),
+          defensive_contribution: num(h.defensive_contribution), total_points: num(h.total_points),
+        });
+      }
     }
 
+    // Every row from the seeding branch carries the seed model_version, never
+    // v1.0.0 — eval_prospective.py splits arms by model_version, so a seeded
+    // row shipping as plain v1 would silently pool with unseeded v1 and mean
+    // nothing in the comparison that validates this feature.
     const rows = buildProjections({
       players, historyByPlayer, fixturesByGw, clubStrengths, artifact, gws,
-    });
+    }).map((r) => (seeding ? { ...r, model_version: SEED_MODEL_VERSION } : r));
     // One timestamp for the whole run, so the stale-row sweep below can compare
     // against it exactly.
     const computedAt = deps.now().toISOString();
