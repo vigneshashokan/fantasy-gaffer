@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { BootstrapElement, Position } from './bootstrap.ts';
+import type { HistoryPastRow } from './season-history.ts';
 import { fetchJson } from '../lib/fpl-client.ts';
 import { finishRun, skipRun } from '../lib/ingestion-runs.ts';
 import { currentSeasonLabel } from '../lib/calendar.ts';
@@ -39,6 +40,7 @@ export interface ElementSummaryHistoryRow {
 
 export interface ElementSummaryResponse {
   history: ElementSummaryHistoryRow[];
+  history_past?: HistoryPastRow[];
 }
 
 export interface PlayerGwHistoryRow {

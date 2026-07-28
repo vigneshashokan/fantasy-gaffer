@@ -90,6 +90,39 @@ This makes the gate visible to the user (they understand what's happening) rathe
 
 `service_role` bypasses RLS by design — used only server-side by future jobs (e.g. the push-send worker). The `anon` role has no access; it only powers session bootstrap via Supabase Auth.
 
+## `public.player_season_history`
+
+Raw per-player-season aggregates from FPL's `element-summary/{id}.history_past`, fetched by
+`fpl-ingest?source=season-history` (#212) and consumed by `fpl-project` to synthesize pseudo-fixture
+rows at the start of a season, before any real `player_gw_history` exists — see the xPts GW1 cold-start
+seeding bullet in `CLAUDE.md`. Season-scoped with **no FK to `players`**, same reasoning as
+`player_gw_history`: FPL element ids reset every season, so a row here can outlive the `players` row it
+was fetched for.
+
+| Column | Type | Notes |
+|---|---|---|
+| `season` | `text NOT NULL` | e.g. `'2024/25'` |
+| `element_code` | `integer NOT NULL` | FPL's stable cross-season identifier (`code`, not `id`) — the join key. See `players.code` below |
+| `start_cost` / `end_cost` | `smallint NOT NULL` | Season-open / season-close price, tenths of millions |
+| `total_points`, `minutes`, `starts`, `bps`, `defensive_contribution` | `smallint` / `integer NOT NULL` | Season totals |
+| `expected_goals`, `expected_assists`, `expected_goal_involvements` | `numeric(6,2) NOT NULL` | |
+| `threat`, `creativity`, `influence` | `numeric(7,1) NOT NULL` | |
+| `ingested_at` | `timestamptz NOT NULL default now()` | |
+| `primary key (season, element_code)` | — | |
+
+Stores **every** season the payload returns (up to 20 for veterans, not the 4 originally assumed), not
+only the two seasons the model currently blends — depth is a synthesis decision in model code
+(`SEED_DEPTH`), not a schema decision. **RLS enabled with no policies** (service-role only, same as
+`player_gw_history`); the client never reads this table.
+
+**`players.code`** — added alongside (migration `20260727090000_player_season_history.sql`), a nullable
+`integer` on the existing `players` table: FPL's season-stable identifier, as opposed to `players.id`
+(FPL's `element` id), which resets almost entirely every season (98.9% churn measured 2025/26 → 2026/27)
+and is therefore useless as a cross-season join key. Nullable deliberately — `add column ... not null`
+fails on a populated table without a default, and defaulting to `0` would write a lie into the one column
+this whole join depends on; it backfills on the next `bootstrap` run, and the seed join skips null-code
+rows, so the system self-heals after one ingest cycle.
+
 ## Future tables (deferred to other issues)
 
 - `squads` — server-side cache for the live-scoring push job (#37). Until then, squads are fetched live from FPL on every render and cached client-side via TanStack Query.

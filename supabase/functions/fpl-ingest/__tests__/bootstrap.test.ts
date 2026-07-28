@@ -86,3 +86,34 @@ Deno.test('normalizePlayers passes through team_id, bps, transfers_in_event, tot
   assertEquals(salah.total_points, 198);
   assertEquals(salah.now_cost, 130);
 });
+
+Deno.test('normalizePlayers maps element.code onto the players row', () => {
+  const raw = {
+    teams: [],
+    elements: [{
+      id: 411,
+      code: 223094,
+      web_name: 'Haaland',
+      first_name: 'Erling',
+      second_name: 'Haaland',
+      team: 13,
+      element_type: 4,
+      now_cost: 155,
+      form: '0.0',
+      total_points: 0,
+      status: 'a',
+      news: '',
+      news_added: null,
+      chance_of_playing_next_round: null,
+      ep_next: '4.0',
+      ep_this: '0.0',
+      selected_by_percent: '55.0',
+      ict_index: '0.0',
+      bps: 0,
+      transfers_in_event: 0,
+    }],
+  };
+  const players = normalizePlayers(raw as never);
+  assertEquals(players[0].code, 223094);
+  assertEquals(players[0].id, 411);
+});

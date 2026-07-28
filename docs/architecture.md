@@ -62,6 +62,22 @@ database or upstream access.)
 
 The `fpl-ingest` Edge Function reads `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from its runtime environment. **No setup required** — the Supabase platform auto-injects both into every Edge Function. (The CLI actively refuses `supabase secrets set` for any name starting with `SUPABASE_` because they're reserved for the platform.)
 
+## Scheduled jobs (pg_cron)
+
+All FPL-ingest jobs share one Vault-backed `x-ingest-secret` (see above) and are offset a few minutes apart so they don't hit FPL concurrently from one egress IP. Authoritative source: the `cron.schedule(...)` calls in `supabase/migrations/` (most recently consolidated in `20260726120000_cron_shared_secret_and_daily_fixtures.sql`; `season-history`'s own migration name and file link below).
+
+| Job (`cron.schedule` name) | Schedule (UTC) | Calls | Notes |
+|---|---|---|---|
+| `fpl-ingest-bootstrap` | `0 3 * * *` (daily) | `fpl-ingest?source=bootstrap` | Players/clubs; calendar-gated off-season |
+| `fpl-ingest-fixtures` | `15 3 * * *` (daily) | `fpl-ingest?source=fixtures` | Content-hash gated no-op on quiet days |
+| `fpl-ingest-history` | `30 3 * * *` (daily) | `fpl-ingest?source=history` | Self-healing `player_gw_history` capture |
+| `fpl-ingest-season-history` | `45 3 * * *` (daily) | `fpl-ingest?source=season-history` | **New (#212).** Runs after bootstrap (so `players.code` is fresh) and after history, before `fpl-project` reads the seeds. Self-limiting: skips wholesale once every player has a `player_season_history` row, so a saturated run is one cheap query. Migration: `20260727090100_season_history_cron.sql` |
+| `fpl-project` | `0 4 * * *` (daily) | `fpl-project` | xPts serving; reads the fresh `players`/`fixtures`/history above |
+| `fpl-ingest-snapshot` | `15 0,6,12,18 * * *` (6-hourly) | `fpl-ingest?source=snapshot` | Live-only bootstrap fields (`ep_next`, ownership, set-piece order) — unrecoverable if missed, so frequency is the redundancy |
+| `purge-expired-account-deletions` | `0 3 * * *` (daily) | `purge_expired_account_deletions()` (SQL function, not an Edge Function) | Account deletion grace-period sweep (#19) |
+
+`xpts-serve.yml` (the v3.1 shadow-serving batch, #128/#130) runs on **GitHub Actions**, not `pg_cron` — nightly 04:30 UTC, after `fpl-project`. See the xPts v2 section of `CLAUDE.md`.
+
 ## Repo layout
 
 ```

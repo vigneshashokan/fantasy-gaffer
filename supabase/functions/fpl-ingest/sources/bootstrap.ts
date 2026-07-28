@@ -18,6 +18,7 @@ export interface BootstrapTeam {
 
 export interface BootstrapElement {
   id: number;
+  code: number;
   web_name: string;
   first_name: string;
   second_name: string;
@@ -60,6 +61,7 @@ export type Position = 'GKP' | 'DEF' | 'MID' | 'FWD';
 
 export interface PlayerRow {
   id: number;
+  code: number;
   web_name: string;
   full_name: string;
   team_id: number;
@@ -111,6 +113,7 @@ export function normalizePlayers(raw: BootstrapStaticResponse): PlayerRow[] {
     .filter((e) => POSITION_MAP[e.element_type] !== undefined)
     .map((e) => ({
       id: e.id,
+      code: e.code,
       web_name: e.web_name,
       full_name: `${e.first_name} ${e.second_name}`,
       team_id: e.team,

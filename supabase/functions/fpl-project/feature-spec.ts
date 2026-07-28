@@ -28,3 +28,12 @@ export const FEATURE_COLUMNS: string[] = [
   'was_home',
   'value_scaled',
 ];
+
+// #212 seeding contract. MUST stay byte-identical in meaning to
+// model/seed_spec.py — the `seed` block of the parity fixture is the guard.
+export const SEED_ROWS = FORM_WINDOW;
+export const SEED_DENOMINATOR = 38;
+export const SEASON_WEIGHTS = [0.7, 0.3] as const;
+export const SEED_DEPTH = SEASON_WEIGHTS.length;
+export const NEWCOMER_K = 10;
+export const SEED_MODEL_VERSION = 'v1.0.0-seed';

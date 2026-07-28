@@ -6,12 +6,14 @@ import { ingestBootstrap } from './sources/bootstrap.ts';
 import { ingestFixtures } from './sources/fixtures.ts';
 import { ingestHistory } from './sources/history.ts';
 import { ingestSnapshot } from './sources/snapshot.ts';
+import { ingestSeasonHistory } from './sources/season-history.ts';
 import { authorize } from './lib/auth.ts';
 
-type Source = 'bootstrap' | 'fixtures' | 'history' | 'snapshot';
+type Source = 'bootstrap' | 'fixtures' | 'history' | 'snapshot' | 'season-history';
 
 const isSource = (s: string | null): s is Source =>
-  s === 'bootstrap' || s === 'fixtures' || s === 'history' || s === 'snapshot';
+  s === 'bootstrap' || s === 'fixtures' || s === 'history' ||
+  s === 'snapshot' || s === 'season-history';
 
 export interface Deps {
   supabase: SupabaseClient;
@@ -40,7 +42,7 @@ export async function handler(req: Request, depsOverride?: Deps): Promise<Respon
 
   if (!isSource(source)) {
     return Response.json(
-      { error: 'missing or invalid ?source= (expected bootstrap|fixtures|history|snapshot)' },
+      { error: 'missing or invalid ?source= (expected bootstrap|fixtures|history|snapshot|season-history)' },
       { status: 400 },
     );
   }
@@ -55,8 +57,10 @@ export async function handler(req: Request, depsOverride?: Deps): Promise<Respon
       await ingestFixtures(runId, deps);
     } else if (source === 'history') {
       await ingestHistory(runId, deps);
-    } else {
+    } else if (source === 'snapshot') {
       await ingestSnapshot(runId, deps);
+    } else {
+      await ingestSeasonHistory(runId, deps);
     }
     return Response.json({ ok: true, runId, source }, { status: 200 });
   } catch (err) {
