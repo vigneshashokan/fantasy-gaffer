@@ -8,7 +8,7 @@ import os
 
 import pandas as pd
 
-from feature_spec import FEATURE_COLUMNS, MODEL_VERSION, POSITIONS
+from feature_spec import FEATURE_COLUMNS, FORM_STATS, MODEL_VERSION, POSITIONS
 from features import build_feature_row
 from train import predict
 
@@ -19,6 +19,8 @@ from match_engine import MatchEngine, build_team_fixtures
 from feature_spec_v21 import FEATURE_COLUMNS_V21, MINUTES_FEATURE_COLUMNS, MODEL_VERSION_V21
 from features_v21 import build_feature_row_v21
 from minutes_model import build_minutes_feature_row, predict_minutes
+
+from seed import blend_rates, newcomer_rates
 
 _ART = os.path.join(os.path.dirname(__file__), "artifacts", "xpts-v1.json")
 _OUT = os.path.join(os.path.dirname(__file__), "artifacts", "parity-fixture.json")
@@ -192,6 +194,71 @@ def build_v2_cases() -> dict:
             "team_history": _TEAM_HISTORY_ROWS, "cases": cases}
 
 
+def _seed_season(**over):
+    base = {s: 0.0 for s in FORM_STATS}
+    base.update({"starts": 0.0, "end_cost": 100, "element_code": 1})
+    base.update(over)
+    return base
+
+
+def _seed_newcomer(position, end_cost, code, total_points):
+    return {
+        "position": position,
+        "end_cost": end_cost,
+        "element_code": code,
+        "rates": {**{s: 0.0 for s in FORM_STATS}, "total_points": float(total_points), "starts": 1.0},
+    }
+
+
+def build_seed_cases() -> dict:
+    """#212 GW1 seeding parity cases (seed.py's blend_rates/newcomer_rates).
+
+    Covers: a two-season blend, a single-season blend (renormalises to 1.0,
+    not 0.7), a fractional-starts case, a newcomer k-NN case, and a newcomer
+    EXACT-TIE case — the likeliest divergence between the two ports (see
+    seed.py's newcomer_rates docstring and
+    test_seed.py::test_newcomer_tie_break_is_order_independent).
+    """
+    blend_cases = []
+
+    two_season = [
+        _seed_season(total_points=380, starts=38),
+        _seed_season(total_points=38, starts=0),
+    ]
+    blend_cases.append({"input": two_season, "expected": blend_rates(two_season)})
+
+    single_season = [_seed_season(total_points=380, starts=38)]
+    blend_cases.append({"input": single_season, "expected": blend_rates(single_season)})
+
+    fractional = [_seed_season(starts=19, total_points=190)]
+    blend_cases.append({"input": fractional, "expected": blend_rates(fractional)})
+
+    newcomer_cases = []
+
+    knn_pool = [_seed_newcomer("MID", 50 + i, i, 50 + i) for i in range(40)]
+    knn_pool.append(_seed_newcomer("FWD", 90, 999, 100000.0))
+    newcomer_cases.append({
+        "position": "MID", "now_cost": 90, "pool": knn_pool,
+        "expected": newcomer_rates("MID", 90, knn_pool),
+    })
+
+    # Exact tie: both boundary candidates sit at dist=9, end_cost=41 — only
+    # element_code discriminates. Listed with the higher (losing) code
+    # FIRST: a TS port whose sort key is missing element_code would treat
+    # the pair as equal and (JS sort is stable, like Python's) keep this
+    # input order, silently picking the WRONG winner and diverging from
+    # Python's answer below, which is order-independent by construction.
+    tie_pool = [_seed_newcomer("DEF", 50 + i, 100 + i, 50 + i) for i in range(9)]
+    tie_pool.append(_seed_newcomer("DEF", 41, 201, 141))  # loses tie
+    tie_pool.append(_seed_newcomer("DEF", 41, 200, 41))  # wins tie
+    newcomer_cases.append({
+        "position": "DEF", "now_cost": 50, "pool": tie_pool,
+        "expected": newcomer_rates("DEF", 50, tie_pool),
+    })
+
+    return {"blend": blend_cases, "newcomer": newcomer_cases}
+
+
 def main() -> None:
     with open(_ART) as f:
         artifact = json.load(f)
@@ -217,7 +284,8 @@ def main() -> None:
             },
         })
     out = {"model_version": MODEL_VERSION, "cases": cases,
-           "v2": build_v2_cases(), "v21": build_v21_cases()}
+           "v2": build_v2_cases(), "v21": build_v21_cases(),
+           "seed": build_seed_cases()}
     with open(_OUT, "w") as f:
         json.dump(out, f, indent=2, sort_keys=True)
         f.write("\n")

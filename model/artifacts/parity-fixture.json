@@ -270,6 +270,1036 @@
     }
   ],
   "model_version": "v1.0.0",
+  "seed": {
+    "blend": [
+      {
+        "expected": {
+          "bps": 0.0,
+          "creativity": 0.0,
+          "defensive_contribution": 0.0,
+          "expected_assists": 0.0,
+          "expected_goal_involvements": 0.0,
+          "expected_goals": 0.0,
+          "influence": 0.0,
+          "starts": 0.7,
+          "threat": 0.0,
+          "total_points": 7.3
+        },
+        "input": [
+          {
+            "bps": 0.0,
+            "creativity": 0.0,
+            "defensive_contribution": 0.0,
+            "element_code": 1,
+            "end_cost": 100,
+            "expected_assists": 0.0,
+            "expected_goal_involvements": 0.0,
+            "expected_goals": 0.0,
+            "influence": 0.0,
+            "starts": 38,
+            "threat": 0.0,
+            "total_points": 380
+          },
+          {
+            "bps": 0.0,
+            "creativity": 0.0,
+            "defensive_contribution": 0.0,
+            "element_code": 1,
+            "end_cost": 100,
+            "expected_assists": 0.0,
+            "expected_goal_involvements": 0.0,
+            "expected_goals": 0.0,
+            "influence": 0.0,
+            "starts": 0,
+            "threat": 0.0,
+            "total_points": 38
+          }
+        ]
+      },
+      {
+        "expected": {
+          "bps": 0.0,
+          "creativity": 0.0,
+          "defensive_contribution": 0.0,
+          "expected_assists": 0.0,
+          "expected_goal_involvements": 0.0,
+          "expected_goals": 0.0,
+          "influence": 0.0,
+          "starts": 1.0,
+          "threat": 0.0,
+          "total_points": 10.0
+        },
+        "input": [
+          {
+            "bps": 0.0,
+            "creativity": 0.0,
+            "defensive_contribution": 0.0,
+            "element_code": 1,
+            "end_cost": 100,
+            "expected_assists": 0.0,
+            "expected_goal_involvements": 0.0,
+            "expected_goals": 0.0,
+            "influence": 0.0,
+            "starts": 38,
+            "threat": 0.0,
+            "total_points": 380
+          }
+        ]
+      },
+      {
+        "expected": {
+          "bps": 0.0,
+          "creativity": 0.0,
+          "defensive_contribution": 0.0,
+          "expected_assists": 0.0,
+          "expected_goal_involvements": 0.0,
+          "expected_goals": 0.0,
+          "influence": 0.0,
+          "starts": 0.5,
+          "threat": 0.0,
+          "total_points": 5.0
+        },
+        "input": [
+          {
+            "bps": 0.0,
+            "creativity": 0.0,
+            "defensive_contribution": 0.0,
+            "element_code": 1,
+            "end_cost": 100,
+            "expected_assists": 0.0,
+            "expected_goal_involvements": 0.0,
+            "expected_goals": 0.0,
+            "influence": 0.0,
+            "starts": 19,
+            "threat": 0.0,
+            "total_points": 190
+          }
+        ]
+      }
+    ],
+    "newcomer": [
+      {
+        "expected": {
+          "bps": 0.0,
+          "creativity": 0.0,
+          "defensive_contribution": 0.0,
+          "expected_assists": 0.0,
+          "expected_goal_involvements": 0.0,
+          "expected_goals": 0.0,
+          "influence": 0.0,
+          "starts": 1.0,
+          "threat": 0.0,
+          "total_points": 84.5
+        },
+        "now_cost": 90,
+        "pool": [
+          {
+            "element_code": 0,
+            "end_cost": 50,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 50.0
+            }
+          },
+          {
+            "element_code": 1,
+            "end_cost": 51,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 51.0
+            }
+          },
+          {
+            "element_code": 2,
+            "end_cost": 52,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 52.0
+            }
+          },
+          {
+            "element_code": 3,
+            "end_cost": 53,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 53.0
+            }
+          },
+          {
+            "element_code": 4,
+            "end_cost": 54,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 54.0
+            }
+          },
+          {
+            "element_code": 5,
+            "end_cost": 55,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 55.0
+            }
+          },
+          {
+            "element_code": 6,
+            "end_cost": 56,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 56.0
+            }
+          },
+          {
+            "element_code": 7,
+            "end_cost": 57,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 57.0
+            }
+          },
+          {
+            "element_code": 8,
+            "end_cost": 58,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 58.0
+            }
+          },
+          {
+            "element_code": 9,
+            "end_cost": 59,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 59.0
+            }
+          },
+          {
+            "element_code": 10,
+            "end_cost": 60,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 60.0
+            }
+          },
+          {
+            "element_code": 11,
+            "end_cost": 61,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 61.0
+            }
+          },
+          {
+            "element_code": 12,
+            "end_cost": 62,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 62.0
+            }
+          },
+          {
+            "element_code": 13,
+            "end_cost": 63,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 63.0
+            }
+          },
+          {
+            "element_code": 14,
+            "end_cost": 64,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 64.0
+            }
+          },
+          {
+            "element_code": 15,
+            "end_cost": 65,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 65.0
+            }
+          },
+          {
+            "element_code": 16,
+            "end_cost": 66,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 66.0
+            }
+          },
+          {
+            "element_code": 17,
+            "end_cost": 67,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 67.0
+            }
+          },
+          {
+            "element_code": 18,
+            "end_cost": 68,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 68.0
+            }
+          },
+          {
+            "element_code": 19,
+            "end_cost": 69,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 69.0
+            }
+          },
+          {
+            "element_code": 20,
+            "end_cost": 70,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 70.0
+            }
+          },
+          {
+            "element_code": 21,
+            "end_cost": 71,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 71.0
+            }
+          },
+          {
+            "element_code": 22,
+            "end_cost": 72,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 72.0
+            }
+          },
+          {
+            "element_code": 23,
+            "end_cost": 73,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 73.0
+            }
+          },
+          {
+            "element_code": 24,
+            "end_cost": 74,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 74.0
+            }
+          },
+          {
+            "element_code": 25,
+            "end_cost": 75,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 75.0
+            }
+          },
+          {
+            "element_code": 26,
+            "end_cost": 76,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 76.0
+            }
+          },
+          {
+            "element_code": 27,
+            "end_cost": 77,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 77.0
+            }
+          },
+          {
+            "element_code": 28,
+            "end_cost": 78,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 78.0
+            }
+          },
+          {
+            "element_code": 29,
+            "end_cost": 79,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 79.0
+            }
+          },
+          {
+            "element_code": 30,
+            "end_cost": 80,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 80.0
+            }
+          },
+          {
+            "element_code": 31,
+            "end_cost": 81,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 81.0
+            }
+          },
+          {
+            "element_code": 32,
+            "end_cost": 82,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 82.0
+            }
+          },
+          {
+            "element_code": 33,
+            "end_cost": 83,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 83.0
+            }
+          },
+          {
+            "element_code": 34,
+            "end_cost": 84,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 84.0
+            }
+          },
+          {
+            "element_code": 35,
+            "end_cost": 85,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 85.0
+            }
+          },
+          {
+            "element_code": 36,
+            "end_cost": 86,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 86.0
+            }
+          },
+          {
+            "element_code": 37,
+            "end_cost": 87,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 87.0
+            }
+          },
+          {
+            "element_code": 38,
+            "end_cost": 88,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 88.0
+            }
+          },
+          {
+            "element_code": 39,
+            "end_cost": 89,
+            "position": "MID",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 89.0
+            }
+          },
+          {
+            "element_code": 999,
+            "end_cost": 90,
+            "position": "FWD",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 100000.0
+            }
+          }
+        ],
+        "position": "MID"
+      },
+      {
+        "expected": {
+          "bps": 0.0,
+          "creativity": 0.0,
+          "defensive_contribution": 0.0,
+          "expected_assists": 0.0,
+          "expected_goal_involvements": 0.0,
+          "expected_goals": 0.0,
+          "influence": 0.0,
+          "starts": 1.0,
+          "threat": 0.0,
+          "total_points": 52.7
+        },
+        "now_cost": 50,
+        "pool": [
+          {
+            "element_code": 100,
+            "end_cost": 50,
+            "position": "DEF",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 50.0
+            }
+          },
+          {
+            "element_code": 101,
+            "end_cost": 51,
+            "position": "DEF",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 51.0
+            }
+          },
+          {
+            "element_code": 102,
+            "end_cost": 52,
+            "position": "DEF",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 52.0
+            }
+          },
+          {
+            "element_code": 103,
+            "end_cost": 53,
+            "position": "DEF",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 53.0
+            }
+          },
+          {
+            "element_code": 104,
+            "end_cost": 54,
+            "position": "DEF",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 54.0
+            }
+          },
+          {
+            "element_code": 105,
+            "end_cost": 55,
+            "position": "DEF",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 55.0
+            }
+          },
+          {
+            "element_code": 106,
+            "end_cost": 56,
+            "position": "DEF",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 56.0
+            }
+          },
+          {
+            "element_code": 107,
+            "end_cost": 57,
+            "position": "DEF",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 57.0
+            }
+          },
+          {
+            "element_code": 108,
+            "end_cost": 58,
+            "position": "DEF",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 58.0
+            }
+          },
+          {
+            "element_code": 201,
+            "end_cost": 41,
+            "position": "DEF",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 141.0
+            }
+          },
+          {
+            "element_code": 200,
+            "end_cost": 41,
+            "position": "DEF",
+            "rates": {
+              "bps": 0.0,
+              "creativity": 0.0,
+              "defensive_contribution": 0.0,
+              "expected_assists": 0.0,
+              "expected_goal_involvements": 0.0,
+              "expected_goals": 0.0,
+              "influence": 0.0,
+              "starts": 1.0,
+              "threat": 0.0,
+              "total_points": 41.0
+            }
+          }
+        ],
+        "position": "DEF"
+      }
+    ]
+  },
   "v2": {
     "cases": [
       {
