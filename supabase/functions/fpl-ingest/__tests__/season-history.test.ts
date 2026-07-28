@@ -1,11 +1,13 @@
-import { assertEquals } from 'jsr:@std/assert';
+import { assertEquals, assertRejects } from 'jsr:@std/assert';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   fetchSeenElementCodes,
   ingestSeasonHistory,
   mostRecentlyCompletedSeason,
   normalizeSeasonHistory,
+  type HistoryPastRow,
   type IngestSeasonHistoryDeps,
+  type PlayerSeasonHistoryRow,
 } from '../sources/season-history.ts';
 
 const HAALAND_2025_26 = {
@@ -312,3 +314,83 @@ Deno.test('ingestSeasonHistory: a player who already has the target-season row i
   assertEquals(fetchedIds, [], 'a player who already has the target season is not re-fetched');
 });
 
+// Finding 1 (the blocker): the upsert used to happen once, after the whole
+// player loop. Any terminal failure partway through — a 4xx, a rate-limit
+// burst, the isolate killed on wall-clock — discarded everything fetched so
+// far, so the next night's run repeated the same doomed work. This proves
+// partial progress now survives: the chunk-sized flush (UPSERT_CHUNK=500)
+// fires mid-loop, so a failure after it has already reached the DB.
+Deno.test('ingestSeasonHistory: rows fetched before a mid-run failure are upserted, not discarded', async () => {
+  const UPSERT_CHUNK = 500;
+  const totalPlayers = UPSERT_CHUNK + 1; // the (UPSERT_CHUNK + 1)th call fails
+  const players = Array.from({ length: totalPlayers }, (_, i) => ({ id: i + 1, code: i + 1 }));
+
+  const upsertBatches: PlayerSeasonHistoryRow[][] = [];
+  let fetchCalls = 0;
+  const fetchedIds: number[] = [];
+
+  // deno-lint-ignore no-explicit-any
+  const supabase: any = {
+    from(table: string) {
+      if (table === 'players') {
+        return { select: () => ({ not: () => Promise.resolve({ data: players, error: null }) }) };
+      }
+      if (table === 'player_season_history') {
+        return {
+          // No existing rows — every player starts as `todo`.
+          select: () => {
+            // deno-lint-ignore no-explicit-any
+            const self: any = {
+              eq: () => self,
+              order: () => self,
+              range: () => Promise.resolve({ data: [], error: null }),
+            };
+            return self;
+          },
+          upsert: (rows: PlayerSeasonHistoryRow[]) => {
+            upsertBatches.push(rows);
+            return Promise.resolve({ error: null });
+          },
+        };
+      }
+      if (table === 'ingestion_runs') {
+        return { update: () => ({ eq: () => Promise.resolve({ error: null }) }) };
+      }
+      throw new Error(`unexpected table ${table}`);
+    },
+  };
+
+  // Each of the first UPSERT_CHUNK players contributes exactly one row (so
+  // the buffer hits the chunk boundary exactly at the flush point); the next
+  // call returns a terminal 4xx, which fpl-client's fetchJson does not retry
+  // and turns into a thrown Error.
+  const fetchStub: typeof fetch = (input: string | URL | Request) => {
+    fetchCalls++;
+    const m = String(input).match(/element-summary\/(\d+)/);
+    const id = m ? Number(m[1]) : 0;
+    fetchedIds.push(id);
+    if (fetchCalls > UPSERT_CHUNK) {
+      return Promise.resolve(new Response(null, { status: 404, statusText: 'Not Found' }));
+    }
+    const row: HistoryPastRow = { ...HAALAND_2025_26, element_code: id };
+    return Promise.resolve(new Response(JSON.stringify({ history_past: [row] }), { status: 200 }));
+  };
+
+  const deps: IngestSeasonHistoryDeps = {
+    supabase,
+    fetch: fetchStub,
+    now: () => new Date('2026-07-27'),
+    sleep: async () => {},
+  };
+
+  await assertRejects(() => ingestSeasonHistory('run-4', deps));
+
+  assertEquals(fetchedIds.length, UPSERT_CHUNK + 1, 'the failing call itself still happened');
+  assertEquals(upsertBatches.length, 1, 'the chunk flush fired exactly once, mid-loop, before the throw');
+  assertEquals(upsertBatches[0].length, UPSERT_CHUNK);
+  assertEquals(
+    upsertBatches[0].map((r) => r.element_code).sort((a, b) => a - b),
+    players.slice(0, UPSERT_CHUNK).map((p) => p.code).sort((a, b) => a - b),
+    'every row from the first UPSERT_CHUNK players reached the DB before the throw propagated',
+  );
+});

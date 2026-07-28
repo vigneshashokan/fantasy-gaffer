@@ -171,24 +171,36 @@ export async function ingestSeasonHistory(
     return;
   }
 
+  // Chunked upsert runs INSIDE the loop so a failure partway through (a 4xx
+  // after retry, a rate-limit burst, the isolate killed on wall-clock — ~563
+  // calls at ~350ms is ~200s) persists everything fetched so far instead of
+  // discarding the whole run. The `seen` filter above means tomorrow's run
+  // resumes from here rather than restarting.
   const rows: PlayerSeasonHistoryRow[] = [];
+  let upserted = 0;
   for (const p of todo) {
     const summary = await fetchJson<{ history_past: HistoryPastRow[] }>(
       `https://fantasy.premierleague.com/api/element-summary/${p.id}/`,
       { fetch: deps.fetch },
     );
     rows.push(...normalizeSeasonHistory(summary.history_past ?? []));
+    while (rows.length >= UPSERT_CHUNK) {
+      const chunk = rows.splice(0, UPSERT_CHUNK);
+      const { error } = await deps.supabase
+        .from('player_season_history')
+        .upsert(chunk, { onConflict: 'season,element_code' });
+      if (error) throw error;
+      upserted += chunk.length;
+    }
     if (CALL_DELAY_MS > 0) await sleep(CALL_DELAY_MS);
   }
 
-  let upserted = 0;
-  for (let i = 0; i < rows.length; i += UPSERT_CHUNK) {
-    const chunk = rows.slice(i, i + UPSERT_CHUNK);
+  if (rows.length > 0) {
     const { error } = await deps.supabase
       .from('player_season_history')
-      .upsert(chunk, { onConflict: 'season,element_code' });
+      .upsert(rows, { onConflict: 'season,element_code' });
     if (error) throw error;
-    upserted += chunk.length;
+    upserted += rows.length;
   }
 
   await finishRun(deps.supabase, runId, { rowsUpserted: upserted });
