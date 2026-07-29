@@ -5,7 +5,10 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { squadFromPicks, useSquad, transferChipsFromHistory, useApexTeam } from '@/api/squad';
 import { makeTestQueryClient } from '../utils/renderWithProviders';
 import type { Player, TeamInfo } from '@/types/fpl';
-import type { CurrentGameweek, SeasonFixtures } from '@/api/fixtures';
+// NextDeadline belongs on this type-only line, NOT inline in the value import
+// below: import/no-duplicates allows a type-only import beside a value import,
+// but flags it beside a MIXED one.
+import type { CurrentGameweek, SeasonFixtures, NextDeadline } from '@/api/fixtures';
 import type { FplHistory } from '@/api/manager';
 import type { ProjectionStat } from '@/api/projections';
 
@@ -25,7 +28,7 @@ jest.mock('@/api/manager', () => ({
 
 import { fplGet } from '@/api/fpl-client';
 import { useProfile } from '@/api/profile';
-import { useCurrentGameweek, useEventStats, useEventLive, useFixturesByGw, useAllFixtures, useNextDeadline, type NextDeadline } from '@/api/fixtures';
+import { useCurrentGameweek, useEventStats, useEventLive, useFixturesByGw, useAllFixtures, useNextDeadline } from '@/api/fixtures';
 import { usePlayers } from '@/api/players';
 import { useProjections } from '@/api/projections';
 import { useManager, useManagerHistory } from '@/api/manager';
