@@ -6,6 +6,8 @@ import {
   seasonFixturesFromRows,
   currentGwFromEvents,
   eventStatsFromEvents,
+  nextDeadlineFromEvents,
+  formatDeadline,
   useCurrentGameweek,
   useEventLive,
   useEventStats,
@@ -268,5 +270,69 @@ describe('useAllFixtures', () => {
     // GW2: LIV plays once (home)
     expect(result.current.data?.get(2)?.LIV?.count).toBe(1);
     expect(result.current.data?.get(2)?.MCI?.count).toBe(1);
+  });
+});
+
+// Feeds DeadlineBanner, which reads "Deadline for Gameweek {nextGw}: {deadline}".
+// Both halves were broken: `deadline` was hardcoded '' in buildApexTeam, and
+// `nextGw` was derived as currentGw + 1, which is off by one pre-season.
+describe('nextDeadlineFromEvents', () => {
+  // Mirrors the live 2026/27 pre-season bootstrap, verified 2026-07-28:
+  // nothing is_current, GW1 is_next, 0 finished.
+  const EVENTS = [
+    { id: 1, is_current: false, is_next: true,  finished: false, deadline_time: '2026-08-21T17:30:00Z' },
+    { id: 2, is_current: false, is_next: false, finished: false, deadline_time: '2026-08-28T17:30:00Z' },
+  ];
+  const PRESEASON = new Date('2026-07-28T12:00:00Z');
+
+  it('returns the first gameweek whose deadline has not passed', () => {
+    expect(nextDeadlineFromEvents(EVENTS, PRESEASON))
+      .toEqual({ gw: 1, iso: '2026-08-21T17:30:00Z' });
+  });
+
+  // The off-by-one this replaces: with nothing is_current, currentGwFromEvents
+  // falls back to is_next (GW1), so `currentGw + 1` labelled the banner
+  // "Gameweek 2" before GW1 had been played.
+  it('picks GW1 pre-season, where currentGw + 1 would say GW2', () => {
+    expect(currentGwFromEvents(EVENTS) + 1).toBe(2);
+    expect(nextDeadlineFromEvents(EVENTS, PRESEASON)?.gw).toBe(1);
+  });
+
+  it('moves to the next gameweek once a deadline has passed', () => {
+    expect(nextDeadlineFromEvents(EVENTS, new Date('2026-08-22T09:00:00Z'))?.gw).toBe(2);
+  });
+
+  // A deadline is a lockout: at exactly the deadline the gameweek is closed.
+  it('treats a deadline exactly at now as passed', () => {
+    expect(nextDeadlineFromEvents(EVENTS, new Date('2026-08-21T17:30:00Z'))?.gw).toBe(2);
+  });
+
+  it('returns null once every deadline has passed (season over)', () => {
+    expect(nextDeadlineFromEvents(EVENTS, new Date('2027-06-01T00:00:00Z'))).toBeNull();
+  });
+
+  it('skips an event with no deadline_time instead of crashing', () => {
+    const partial = [
+      { id: 1, is_current: false, is_next: true, finished: false },
+      ...EVENTS.slice(1),
+    ];
+    expect(nextDeadlineFromEvents(partial, PRESEASON)?.gw).toBe(2);
+  });
+});
+
+describe('formatDeadline', () => {
+  // Renders in the DEVICE timezone by design, so the exact string is
+  // machine-dependent — assert only what holds in every timezone. 17:30Z on
+  // 21 Aug stays in August from UTC-11 to UTC+14, but the day and weekday can
+  // both shift, so neither is asserted.
+  it('renders a human deadline, not a raw ISO string', () => {
+    const out = formatDeadline('2026-08-21T17:30:00Z');
+    expect(out).toContain('Aug');
+    expect(out).toMatch(/\d{1,2}:\d{2}/);
+    expect(out).not.toContain('T17:30');
+  });
+
+  it('does not produce "Invalid Date" for a well-formed deadline', () => {
+    expect(formatDeadline('2026-08-21T17:30:00Z')).not.toMatch(/Invalid/);
   });
 });

@@ -17,7 +17,7 @@ import type {
 } from '@/types/fpl';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { useCurrentGameweek, useEventLive, useEventStats, useFixturesByGw, useAllFixtures, type SeasonFixtures } from './fixtures';
+import { useCurrentGameweek, useEventLive, useEventStats, useFixturesByGw, useAllFixtures, useNextDeadline, formatDeadline, type SeasonFixtures, type NextDeadline } from './fixtures';
 import { pitchEventFields, type LivePlayerStat } from './liveStats';
 import { fplGet, FplFetchError } from './fpl-client';
 import { chipsFromHistory, gwPointsFromHistory, useManager, useManagerHistory } from './manager';
@@ -110,6 +110,7 @@ export function useApexTeam(targetGw?: number) {
   const gw = targetGw ?? liveGw;
 
   const eventStatsQ = useEventStats(gw);
+  const nextDeadlineQ = useNextDeadline();
   const squadQ = useSquad(targetGw);
   const managerQ = useManager();
   const historyQ = useManagerHistory();
@@ -200,6 +201,7 @@ export function useApexTeam(targetGw?: number) {
       [projQ0.data ?? new Map(), projQ1.data ?? new Map(), projQ2.data ?? new Map()],
       playersQ.data ?? [],
       allFixturesQ.data,
+      nextDeadlineQ.data,
     );
   }, [
     noTeam,
@@ -216,6 +218,7 @@ export function useApexTeam(targetGw?: number) {
     projQ2.data,
     playersQ.data,
     allFixturesQ.data,
+    nextDeadlineQ.data,
   ]);
 
   return { data, isPending, isError, error, noTeam, noSquad, isRefetching, refetch };
@@ -258,6 +261,7 @@ function buildApexTeam(
   projMaps: Map<string, ProjectionStat>[],
   allPlayers: Player[],
   seasonFixtures: SeasonFixtures | undefined,
+  nextDeadline: NextDeadline | null,
 ) {
   const gw = eventStats.gw;
   // For the live GW, manager.summary_event_points is the freshest value; for
@@ -315,8 +319,15 @@ function buildApexTeam(
       freeTransfers: 1,
       squadValue: sumPrice([...squad.starters, ...squad.bench]),
       inBank: bank,
-      nextGw: Math.min(38, liveCurrent.gw + 1),
-      deadline: '',
+      // The gameweek still open for transfers, and when it closes. Both come
+      // from the same event so the banner can never pair a GW with another
+      // GW's deadline. `liveCurrent.gw + 1` was off by one pre-season (GW1 is
+      // is_next, so it read "Gameweek 2"), and `deadline` was hardcoded '' —
+      // the banner rendered a dangling "Deadline for Gameweek 2: ".
+      // Falls back only once the season is over, when there is no next
+      // deadline; the banner hides itself on the empty string.
+      nextGw: nextDeadline?.gw ?? Math.min(38, liveCurrent.gw + 1),
+      deadline: nextDeadline ? formatDeadline(nextDeadline.iso) : '',
       captain: parseCaptain(squad.starters.find((p) => p.capt)?.name ?? ''),
       transferSuggestions,
       chips: attachChipTips(transferChipsFromHistory(history), chipAdvice),

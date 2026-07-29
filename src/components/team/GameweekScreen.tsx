@@ -146,7 +146,10 @@ export function GameweekScreen({
 
         {isUpcoming && (
           <View style={{ marginBottom: 16 }}>
-            <DeadlineBanner nextGw={gw} deadline={at.transfer.deadline} tk={tk} />
+            {/* nextGw, not this page's gw: the deadline is always the next one
+                you can act on. Passing `gw` labelled GW5's page with GW2's
+                deadline while browsing ahead in the carousel. */}
+            <DeadlineBanner nextGw={at.transfer.nextGw} deadline={at.transfer.deadline} tk={tk} />
           </View>
         )}
 

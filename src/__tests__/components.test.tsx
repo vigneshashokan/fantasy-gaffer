@@ -556,6 +556,16 @@ describe('DeadlineBanner', () => {
     );
     expect(getByText('Deadline for Gameweek 25: Sat 11:00AM PST')).toBeTruthy();
   });
+
+  // buildApexTeam hardcoded deadline: '' for the whole of Phase 1-5, so this
+  // shipped rendering "Deadline for Gameweek 2: " with a dangling colon. It
+  // was invisible only because both call sites need a squad, and FPL serves
+  // none until the first deadline passes.
+  it('renders nothing without a deadline, rather than a dangling colon', () => {
+    const tk = apexTokens(false, 'classic');
+    const { queryByText } = render(<DeadlineBanner nextGw={2} deadline="" tk={tk} />);
+    expect(queryByText(/Deadline for Gameweek/)).toBeNull();
+  });
 });
 
 // ── SeasonCompleteBanner ──────────────────────────────────────

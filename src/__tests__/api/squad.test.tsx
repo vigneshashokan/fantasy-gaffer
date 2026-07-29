@@ -11,7 +11,10 @@ import type { ProjectionStat } from '@/api/projections';
 
 jest.mock('@/api/fpl-client', () => ({ fplGet: jest.fn() }));
 jest.mock('@/api/profile',    () => ({ useProfile: jest.fn() }));
-jest.mock('@/api/fixtures',   () => ({ useCurrentGameweek: jest.fn(), useEventStats: jest.fn(), useEventLive: jest.fn(), useFixturesByGw: jest.fn(), useAllFixtures: jest.fn() }));
+// No requireActual: fixtures.ts imports @/lib/supabase, which pulls in
+// AsyncStorage and fails the whole suite. formatDeadline is stubbed to a
+// recognisable marker here and unit-tested for real in api/fixtures.test.tsx.
+jest.mock('@/api/fixtures',   () => ({ useCurrentGameweek: jest.fn(), useEventStats: jest.fn(), useEventLive: jest.fn(), useFixturesByGw: jest.fn(), useAllFixtures: jest.fn(), useNextDeadline: jest.fn(), formatDeadline: (iso: string) => `fmt(${iso})` }));
 jest.mock('@/api/players',    () => ({ usePlayers: jest.fn() }));
 jest.mock('@/api/projections', () => ({ useProjections: jest.fn() }));
 jest.mock('@/api/manager', () => ({
@@ -22,7 +25,7 @@ jest.mock('@/api/manager', () => ({
 
 import { fplGet } from '@/api/fpl-client';
 import { useProfile } from '@/api/profile';
-import { useCurrentGameweek, useEventStats, useEventLive, useFixturesByGw, useAllFixtures } from '@/api/fixtures';
+import { useCurrentGameweek, useEventStats, useEventLive, useFixturesByGw, useAllFixtures, useNextDeadline, type NextDeadline } from '@/api/fixtures';
 import { usePlayers } from '@/api/players';
 import { useProjections } from '@/api/projections';
 import { useManager, useManagerHistory } from '@/api/manager';
@@ -30,6 +33,9 @@ import { useManager, useManagerHistory } from '@/api/manager';
 beforeEach(() => {
   jest.clearAllMocks();
   (useAllFixtures as jest.Mock).mockReturnValue({ data: undefined });
+  // Default to the season-over case (no upcoming deadline); the deadline
+  // wiring test below overrides it.
+  (useNextDeadline as jest.Mock).mockReturnValue({ data: null });
 });
 
 const PICKS_FIXTURE = {
@@ -192,6 +198,57 @@ describe('useApexTeam advice wiring', () => {
     // The user captained a defender (id 3); the optimizer recommends F1 instead.
     expect(team.captainApplied).toBe('D1');
     expect(Array.isArray(team.suggestions)).toBe(true);
+  });
+});
+
+// Regression guard: transfer.deadline was hardcoded '' and transfer.nextGw was
+// derived as liveGw + 1, so DeadlineBanner rendered "Deadline for Gameweek 2: "
+// — wrong gameweek pre-season, and no date at all, ever.
+describe('useApexTeam deadline wiring', () => {
+  function mockCommon() {
+    (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 99 }, isPending: false, isError: false, error: null });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false } satisfies CurrentGameweek, isPending: false, isError: false, error: null, isSuccess: true });
+    (useEventStats as jest.Mock).mockReturnValue({ data: { gw: 24, avgPoints: 50, highestPoints: 99, finished: false, dataChecked: false } satisfies CurrentGameweek });
+    (useEventLive as jest.Mock).mockReturnValue({ data: undefined });
+    (useFixturesByGw as jest.Mock).mockReturnValue({ data: {} });
+    (usePlayers as jest.Mock).mockReturnValue({ data: ADVICE_PLAYERS, isSuccess: true });
+    (useManager as jest.Mock).mockReturnValue({ data: { name: 'Test FC', gw: 24, gwPoints: 50, totalPoints: 1200, rank: 1000, bank: 0 } satisfies TeamInfo, isPending: false, isError: false, error: null });
+    (useManagerHistory as jest.Mock).mockReturnValue({ data: { current: [], chips: [] } satisfies FplHistory, isPending: false, isError: false, error: null });
+    (useProjections as jest.Mock).mockReturnValue({ data: new Map() satisfies Map<string, ProjectionStat> });
+    (fplGet as jest.Mock).mockResolvedValueOnce(ADVICE_PICKS);
+    const client = makeTestQueryClient();
+    return ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+  }
+
+  // The live gameweek is 24, so the old `liveGw + 1` would have said 25. The
+  // real next deadline is GW26's — a gap that opens whenever a gameweek is
+  // finished but the next deadline has not arrived.
+  it('takes nextGw and deadline from the next deadline, not liveGw + 1', async () => {
+    const wrapper = mockCommon();
+    (useNextDeadline as jest.Mock).mockReturnValue({
+      data: { gw: 26, iso: '2027-02-14T11:30:00Z' } satisfies NextDeadline,
+    });
+
+    const { result } = renderHook(() => useApexTeam(), { wrapper });
+    await waitFor(() => expect(result.current.data).toBeTruthy());
+
+    expect(result.current.data!.transfer.nextGw).toBe(26);
+    // Formatted, never the raw ISO, and never the old hardcoded ''.
+    expect(result.current.data!.transfer.deadline).toBe('fmt(2027-02-14T11:30:00Z)');
+  });
+
+  it('falls back to an empty deadline once the season is over', async () => {
+    const wrapper = mockCommon();
+    (useNextDeadline as jest.Mock).mockReturnValue({ data: null });
+
+    const { result } = renderHook(() => useApexTeam(), { wrapper });
+    await waitFor(() => expect(result.current.data).toBeTruthy());
+
+    // DeadlineBanner renders nothing on '' — asserted in components.test.tsx.
+    expect(result.current.data!.transfer.deadline).toBe('');
+    expect(result.current.data!.transfer.nextGw).toBe(25);
   });
 });
 

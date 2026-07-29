@@ -18,6 +18,7 @@ interface BootstrapEvent {
   data_checked?: boolean;
   average_entry_score?: number;
   highest_score?: number | null;
+  deadline_time?: string;
 }
 
 interface BootstrapResponse {
@@ -72,6 +73,45 @@ export function seasonStateFromEvents(events: BootstrapEvent[]): SeasonPhase {
   return { kind: 'complete' };
 }
 
+export interface NextDeadline {
+  gw: number;
+  /** Raw ISO-8601 UTC string, exactly as FPL serves it. */
+  iso: string;
+}
+
+// The gameweek a manager can still act on: the FIRST event whose deadline has
+// not passed.
+//
+// Deliberately NOT `currentGw + 1`, which is off by one in two live states:
+// pre-season (nothing is_current, so currentGwFromEvents falls back to is_next
+// = GW1, giving "GW2" while GW1 has not been played) and the window between a
+// finished GW and the next deadline. Comparing deadlines to now has neither
+// failure mode and needs no flag archaeology — same approach as the
+// snapshotter's freeze check (fpl-ingest/sources/snapshot.ts).
+//
+// Returns null once the last deadline has passed (season over) — callers must
+// treat that as "no deadline to show", not as zero.
+export function nextDeadlineFromEvents(
+  events: BootstrapEvent[],
+  now: Date = new Date(),
+): NextDeadline | null {
+  const upcoming = events.find(
+    (e) => e.deadline_time && new Date(e.deadline_time).getTime() > now.getTime(),
+  );
+  return upcoming?.deadline_time ? { gw: upcoming.id, iso: upcoming.deadline_time } : null;
+}
+
+// Rendered in the reader's OWN timezone: FPL publishes deadlines in UTC, but a
+// deadline is only actionable in local time. No timeZone option, so the device
+// decides — e.g. 2026-08-21T17:30:00Z reads "Fri 21 Aug, 18:30" in London and
+// "Fri 21 Aug, 10:30" in Los Angeles.
+export function formatDeadline(iso: string): string {
+  return new Date(iso).toLocaleString('en-GB', {
+    weekday: 'short', day: 'numeric', month: 'short',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
 // PL seasons span Aug–May, so before August the "current" season started the
 // previous calendar year. Derives e.g. "2025/26" rather than hard-coding it.
 export function currentSeasonLabel(now: Date = new Date()): string {
@@ -109,6 +149,13 @@ export function useSeasonState() {
     isPending: q.isPending,
     isError: q.isError,
   };
+}
+
+// Reads the bootstrap query that is already cached (staleTime 1h) — no extra
+// network. Supplementary: callers fall back rather than gate rendering on it.
+export function useNextDeadline() {
+  const q = useBootstrap();
+  return { data: q.data ? nextDeadlineFromEvents(q.data.events) : null };
 }
 
 export function useEventStats(gw: number) {

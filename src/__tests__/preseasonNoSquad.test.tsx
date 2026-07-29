@@ -34,6 +34,8 @@ jest.mock('@/api/fixtures', () => ({
   useEventLive: jest.fn(),
   useFixturesByGw: jest.fn(),
   useAllFixtures: jest.fn(),
+  useNextDeadline: jest.fn(),
+  formatDeadline: (iso: string) => iso,
 }));
 jest.mock('@/api/players', () => ({ usePlayers: jest.fn() }));
 jest.mock('@/api/projections', () => ({ useProjections: jest.fn() }));
@@ -47,6 +49,7 @@ import { fplGet } from '@/api/fpl-client';
 import { useProfile } from '@/api/profile';
 import {
   useCurrentGameweek, useEventStats, useEventLive, useFixturesByGw, useAllFixtures,
+  useNextDeadline,
 } from '@/api/fixtures';
 import { usePlayers } from '@/api/players';
 import { useProjections } from '@/api/projections';
@@ -80,6 +83,9 @@ beforeEach(() => {
   (useEventLive as jest.Mock).mockReturnValue({ data: undefined });
   (useFixturesByGw as jest.Mock).mockReturnValue({ data: undefined });
   (useAllFixtures as jest.Mock).mockReturnValue({ data: undefined });
+  (useNextDeadline as jest.Mock).mockReturnValue({
+    data: { gw: 1, iso: '2026-08-21T17:30:00Z' },
+  });
   (usePlayers as jest.Mock).mockReturnValue({ data: [], isPending: false, isError: false });
   (useProjections as jest.Mock).mockReturnValue({ data: undefined });
   (useManager as jest.Mock).mockReturnValue({

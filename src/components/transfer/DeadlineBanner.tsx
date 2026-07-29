@@ -10,6 +10,10 @@ interface DeadlineBannerProps {
 }
 
 export function DeadlineBanner({ nextGw, deadline, tk }: DeadlineBannerProps) {
+  // No deadline (season over, or bootstrap not loaded) renders nothing rather
+  // than a dangling "Deadline for Gameweek 2: ". Guarded here, not at the call
+  // sites, so a future caller cannot forget it.
+  if (!deadline) return null;
   return (
     <View accessibilityLiveRegion="polite" style={[styles.container, { backgroundColor: tk.deadlineBg }]}>
       <Svg width={17} height={17} viewBox="0 0 24 24" fill="none">
