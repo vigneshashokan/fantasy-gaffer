@@ -10,6 +10,15 @@
 // Neither is a failure, so this must not look like one: an error card with a
 // Retry would offer a button that cannot succeed until the deadline passes.
 // Distinct from LinkTeamCta, which is for a user with no team linked at all.
+//
+// The copy states the MECHANISM and promises nothing. An earlier version told
+// the user to "pick your squad in the official FPL app and it will appear here"
+// — false in both cases above, and it produced a real bug report: a user who
+// had already picked read the empty state as the app being broken. Pre-deadline
+// squads are only readable via the authenticated /my-team/{id}/ endpoint
+// (Phase 6, #23-#27), so there is no action the user can take to fill this
+// screen. Verified 2026-07-28: /entry/{id}/event/1/picks/ 404s for EVERY entry
+// (1, 100, 12345, ...), not just new ones.
 
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, Linking } from 'react-native';
@@ -34,8 +43,9 @@ export function NoSquadCta({ tk, gw }: NoSquadCtaProps) {
         {gw ? `No squad for GW${gw} yet` : 'No squad to show yet'}
       </Text>
       <Text style={[styles.body, { color: tk.faint }]}>
-        Your team is linked, but FPL has no picks for this gameweek. Pick your squad
-        in the official FPL app before the deadline and it will appear here.
+        Your team is linked. FPL keeps squads private until the gameweek deadline
+        has passed — so a squad you have already picked will not show here until
+        then.
       </Text>
       <Pressable
         testID="open-fpl-cta"
