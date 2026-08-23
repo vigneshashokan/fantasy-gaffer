@@ -295,11 +295,11 @@ None of these block anything today; fold each in when its file is next touched:
   the Metro run. Repo convention keeps keys in `.env`, so this is a corner; prefixing the
   `npx expo start` invocation with `env -u EXPO_PUBLIC_POSTHOG_KEY -u EXPO_PUBLIC_SENTRY_DSN`
   closes it.
-- **The `picks-gw{t+1}` synthesis in `transform.mjs` lives in `run()` (I/O glue) and has no
-  unit test** — the pure transforms are tested and every suite run exercises it live.
-  Cheapest meaningful cover: extract `synthesizeUpcomingPicks(livePicks, t)` as a pure
-  export, and/or assert the synthesized route exists in `fixture-server.test.mjs` (its
-  `before()` already runs the transform).
+- **`transform.mjs` wipes its output directory before writing.** `run()` only ever adds
+  files, so anything it stops emitting would otherwise survive in an existing
+  `.artifacts/` and keep being served — a deleted fixture going on passing the suite.
+  Removing the `picks-gw{t+1}` synthesis hit exactly that: the stale file was still
+  there and still served after the code producing it was gone.
 - **`fixture-server.test.mjs`'s element-summary fallback test** compares body equality but
   would pass vacuously (`undefined == undefined`) if the template file were ever absent —
   unreachable today (capture always writes it); add an `assert.ok` truthiness guard when
@@ -326,10 +326,20 @@ None of these block anything today; fold each in when its file is next touched:
   references `${EMAIL}`, supplied only via `runFlow: env:`) is never executed standalone. Keep
   shared `runFlow` fragments under `subflows/` and they stay out of the suite automatically; no
   workspace `config.yaml` is needed.
-- **The team carousel's upcoming-GW page (and its chip/captain advice) 404s / stays a skeleton.**
-  Each carousel page fetches `/entry/{id}/event/{gw}/picks/` for *its* gameweek, including the
-  upcoming one (`liveGw+1`). The capture only holds the live + prior GW, so `transform.mjs`
-  **synthesizes `picks-gw{t+1}`** from the live GW's picks (faithful to FPL: a future GW's squad
-  carries over until transfers). If you re-capture a different GW `t`, this stays automatic. A
-  404 for a *past* off-screen GW (`picks-gw28` etc., pre-rendered by FlatList windowing) is
-  harmless — those pages are never asserted on.
+- **The upcoming-GW page's 404 is DELIBERATE, and the suite must keep it that way.** Each
+  carousel page fetches `/entry/{id}/event/{gw}/picks/` for *its* gameweek, including the
+  upcoming one (`liveGw+1`). Real FPL 404s that for every entry, every week of the season —
+  squads are private until the deadline — and the app handles it by carrying the live squad
+  forward (`useSquad`), which is the only reason the decision surfaces render at all.
+  `fixture-server` models the 404 via the exported **`FPL_PRIVATE`** sentinel: quiet log,
+  FPL's own `{"detail":"Not found."}` body, asserted in `fixture-server.test.mjs`.
+
+  **`transform.mjs` used to synthesize `picks-gw{t+1}`** so this page had something to
+  render. That fabricated a squad production could never obtain, and it is why the suite
+  stayed green for a season and a half while the upcoming page was a dead empty state for
+  every real user. **Do not reintroduce it.** If a future dataset gap tempts you the same
+  way, extend the *capture*, never invent a response the API does not serve.
+
+  A 404 for a *past* off-screen GW (`picks-gw28` etc., pre-rendered by FlatList windowing)
+  stays a loud `route not modelled` — that one really is a dataset gap, and the two are
+  deliberately distinguishable in the run log.
