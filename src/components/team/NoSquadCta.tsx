@@ -7,6 +7,10 @@
 //     between seasons — including right now, ahead of 2026/27 GW1); and
 //   * any gameweek earlier than the one the manager joined on.
 //
+// A third 404 case — the UPCOMING gameweek, which 404s every week of the season
+// — does NOT reach here: useSquad carries the live squad forward for it, so the
+// decision layer stays reachable. See CarriedOverNote.
+//
 // Neither is a failure, so this must not look like one: an error card with a
 // Retry would offer a button that cannot succeed until the deadline passes.
 // Distinct from LinkTeamCta, which is for a user with no team linked at all.

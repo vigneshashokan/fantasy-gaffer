@@ -15,6 +15,7 @@ import { HeroCard } from '@/components/team/HeroCard';
 import { ApexDugout } from '@/components/team/ApexDugout';
 import { CaptainPickCard } from '@/components/team/CaptainPickCard';
 import { SuggestionsCard } from '@/components/team/SuggestionsCard';
+import { CarriedOverNote } from '@/components/team/CarriedOverNote';
 import { GwPill } from '@/components/team/GwNav';
 import { ApplyAllCard } from '@/components/team/ApplyAllCard';
 import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
@@ -150,6 +151,7 @@ export function GameweekScreen({
                 you can act on. Passing `gw` labelled GW5's page with GW2's
                 deadline while browsing ahead in the carousel. */}
             <DeadlineBanner nextGw={at.transfer.nextGw} deadline={at.transfer.deadline} tk={tk} />
+            <CarriedOverNote from={at.carriedOverFrom} tk={tk} />
           </View>
         )}
 

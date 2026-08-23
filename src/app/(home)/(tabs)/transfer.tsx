@@ -7,9 +7,10 @@ import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { TransferPitchPlayer } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
-import { useSeasonState, currentSeasonLabel } from '@/api/fixtures';
+import { useSeasonState, useNextDeadline, currentSeasonLabel } from '@/api/fixtures';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
 import { NoSquadCta } from '@/components/team/NoSquadCta';
+import { CarriedOverNote } from '@/components/team/CarriedOverNote';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { TabHeader } from '@/components/ui/TabHeader';
@@ -25,7 +26,16 @@ export default function TransferTab() {
   const { paletteKey, dark, pitchStyle } = useThemeStore();
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
-  const { data: at, isPending, noTeam, noSquad, isError, isRefetching, refetch } = useApexTeam();
+  // Anchor on the gameweek transfers are FOR, not the live one. This tab has no
+  // carousel, so it cannot anchor on "the page being viewed" the way
+  // GameweekScreen does (#168) — left on the default it scored its 3-gameweek
+  // window over [liveGw, +1, +2], starting on a gameweek already in progress
+  // and impossible to transfer into, while the banner above it correctly read
+  // the NEXT deadline. Undefined once the season is over, which falls back to
+  // the live gameweek exactly as before.
+  const nextDeadline = useNextDeadline();
+  const { data: at, isPending, noTeam, noSquad, isError, isRefetching, refetch } =
+    useApexTeam(nextDeadline.data?.gw);
   const { data: seasonState } = useSeasonState();
   const [pendingTransfers, setPendingTransfers] = useState<Record<string, boolean>>({});
   const pendingCount = Object.values(pendingTransfers).filter(Boolean).length;
@@ -120,6 +130,7 @@ export default function TransferTab() {
           ) : (
             <DeadlineBanner nextGw={tr.nextGw} deadline={tr.deadline} tk={tk} />
           )}
+          {!seasonOver && <CarriedOverNote from={at.carriedOverFrom} tk={tk} />}
           <TransferInfoCard
             nextGw={tr.nextGw}
             squadValue={tr.squadValue}

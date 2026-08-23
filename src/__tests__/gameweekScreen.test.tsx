@@ -19,8 +19,10 @@ jest.mock('@/components/team/ApplyAllCard', () => ({ __esModule: true, ApplyAllC
 
 let mockLiveGw = 30;
 let mockLiveFinished = false;
+let mockCarriedOverFrom: number | null = null;
 const makeTeam = (gw: number): ApexTeamData => ({
-  teamName: 'Test FC', gw, liveGw: mockLiveGw, liveGwFinished: mockLiveFinished,
+  teamName: 'Test FC', gw, carriedOverFrom: mockCarriedOverFrom,
+  liveGw: mockLiveGw, liveGwFinished: mockLiveFinished,
   liveGwDataChecked: true, gwPts: 50, totalPoints: 1200, gwFinished: false,
   gwDataChecked: false, avgPoints: 45, highestPoints: 90,
   pitch: [], bench: [], captainPicks: [], captainApplied: '', suggestions: [],
@@ -47,7 +49,24 @@ const baseProps = {
 };
 
 describe('GameweekScreen', () => {
-  beforeEach(() => { mockLiveGw = 30; mockLiveFinished = false; });
+  beforeEach(() => { mockLiveGw = 30; mockLiveFinished = false; mockCarriedOverFrom = null; });
+
+  // FPL never publishes the upcoming gameweek's picks, so useSquad borrows the
+  // live squad to keep the advice reachable. The screen must SAY so: transfers
+  // the user has already made are private until the deadline and will not
+  // appear, and presenting a borrowed squad as current is the false-claim bug
+  // #214 was filed for.
+  it('discloses a carried-over squad on the upcoming gameweek', () => {
+    mockCarriedOverFrom = 30;
+    const { getByTestId } = renderWithProviders(<GameweekScreen {...baseProps} gw={31} />);
+    expect(getByTestId('carried-over-note')).toBeTruthy();
+    expect(getByTestId('carried-over-note').props.children).toContain('30');
+  });
+
+  it('shows no carry-over note when the gameweek has its own squad', () => {
+    const { queryByTestId } = renderWithProviders(<GameweekScreen {...baseProps} gw={31} />);
+    expect(queryByTestId('carried-over-note')).toBeNull();
+  });
 
   it('shows the gameweek label (pill) for the given gw', () => {
     const { getByText } = renderWithProviders(<GameweekScreen {...baseProps} gw={30} />);

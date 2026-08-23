@@ -12,7 +12,7 @@ import type { CurrentGameweek, SeasonFixtures, NextDeadline } from '@/api/fixtur
 import type { FplHistory } from '@/api/manager';
 import type { ProjectionStat } from '@/api/projections';
 
-jest.mock('@/api/fpl-client', () => ({ fplGet: jest.fn() }));
+jest.mock('@/api/fpl-client', () => ({ ...jest.requireActual('@/api/fpl-client'), fplGet: jest.fn() }));
 jest.mock('@/api/profile',    () => ({ useProfile: jest.fn() }));
 // No requireActual: fixtures.ts imports @/lib/supabase, which pulls in
 // AsyncStorage and fails the whole suite. formatDeadline is stubbed to a
@@ -26,7 +26,7 @@ jest.mock('@/api/manager', () => ({
   useManagerHistory: jest.fn(),
 }));
 
-import { fplGet } from '@/api/fpl-client';
+import { fplGet, FplFetchError } from '@/api/fpl-client';
 import { useProfile } from '@/api/profile';
 import { useCurrentGameweek, useEventStats, useEventLive, useFixturesByGw, useAllFixtures, useNextDeadline } from '@/api/fixtures';
 import { usePlayers } from '@/api/players';
@@ -131,6 +131,123 @@ describe('useSquad', () => {
     const { result } = renderHook(() => useSquad(), { wrapper });
     expect(result.current.fetchStatus).toBe('idle');
     expect(fplGet).not.toHaveBeenCalled();
+  });
+
+  // FPL publishes picks only once a gameweek's deadline has passed, so the
+  // UPCOMING gameweek -- the only one the decision layer is actionable for --
+  // 404s every week of the season. Verified against the live API 2026-08-23,
+  // GW1 in progress:
+  //   /entry/2022303/event/1/picks/ -> 200
+  //   /entry/2022303/event/2/picks/ -> 404
+  // Without the carry-over the advice surfaces are unreachable all season:
+  // useSquad returns null -> noSquad -> GameweekScreen renders NoSquadCta
+  // before any advice. e2e/transform.mjs synthesizes these picks, which is why
+  // the Maestro suite never caught it.
+  const LIVE_GW = (gw: number): CurrentGameweek =>
+    ({ gw, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false });
+
+  function mountSquad(targetGw?: number) {
+    const client = makeTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    return renderHook(() => useSquad(targetGw), { wrapper });
+  }
+
+  function notFound() {
+    return new FplFetchError('FPL 404 for picks', 404);
+  }
+
+  // mockReset, not clearAllMocks: the outer beforeEach clears call records but
+  // leaves queued *Once implementations, so an unconsumed mockResolvedValueOnce
+  // here would resolve inside the NEXT test.
+  describe('upcoming gameweek carry-over', () => {
+    beforeEach(() => { (fplGet as jest.Mock).mockReset(); });
+
+  it('carries the live squad forward when the upcoming gameweek 404s', async () => {
+    (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 12345 }, isSuccess: true });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: LIVE_GW(1), isSuccess: true });
+    (useNextDeadline as jest.Mock).mockReturnValue({
+      data: { gw: 2, iso: '2026-08-28T17:30:00Z' } satisfies NextDeadline,
+    });
+    (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE, isSuccess: true });
+    (fplGet as jest.Mock)
+      .mockRejectedValueOnce(notFound())
+      .mockResolvedValueOnce(PICKS_FIXTURE);
+
+    const { result } = mountSquad(2);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(fplGet).toHaveBeenNthCalledWith(1, '/entry/12345/event/2/picks/');
+    expect(fplGet).toHaveBeenNthCalledWith(2, '/entry/12345/event/1/picks/');
+    expect(result.current.data?.starters).toHaveLength(2);
+    expect(result.current.data?.carriedOverFrom).toBe(1);
+  });
+
+  it('does not carry over pre-season, when the upcoming gameweek IS the live one', async () => {
+    // Nothing is_current, so currentGwFromEvents falls back to is_next = GW1 --
+    // GW1 is both the live gameweek and the next deadline. There is no earlier
+    // squad to carry, and #214's honest empty state must survive.
+    (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 12345 }, isSuccess: true });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: LIVE_GW(1), isSuccess: true });
+    (useNextDeadline as jest.Mock).mockReturnValue({
+      data: { gw: 1, iso: '2026-08-21T17:30:00Z' } satisfies NextDeadline,
+    });
+    (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE, isSuccess: true });
+    (fplGet as jest.Mock).mockRejectedValue(notFound());
+
+    const { result } = mountSquad(1);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toBeNull();
+    expect(fplGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not carry over for a past gameweek the manager did not play', async () => {
+    (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 12345 }, isSuccess: true });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: LIVE_GW(9), isSuccess: true });
+    (useNextDeadline as jest.Mock).mockReturnValue({
+      data: { gw: 10, iso: '2026-10-30T17:30:00Z' } satisfies NextDeadline,
+    });
+    (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE, isSuccess: true });
+    (fplGet as jest.Mock).mockRejectedValue(notFound());
+
+    const { result } = mountSquad(3);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toBeNull();
+    expect(fplGet).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports no squad when the carried-over gameweek 404s too', async () => {
+    (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 12345 }, isSuccess: true });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: LIVE_GW(1), isSuccess: true });
+    (useNextDeadline as jest.Mock).mockReturnValue({
+      data: { gw: 2, iso: '2026-08-28T17:30:00Z' } satisfies NextDeadline,
+    });
+    (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE, isSuccess: true });
+    (fplGet as jest.Mock).mockRejectedValue(notFound());
+
+    const { result } = mountSquad(2);
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(result.current.data).toBeNull();
+    expect(fplGet).toHaveBeenCalledTimes(2);
+  });
+
+  it('still propagates a genuine outage on the upcoming gameweek', async () => {
+    (useProfile as jest.Mock).mockReturnValue({ data: { fplTeamId: 12345 }, isSuccess: true });
+    (useCurrentGameweek as jest.Mock).mockReturnValue({ data: LIVE_GW(1), isSuccess: true });
+    (useNextDeadline as jest.Mock).mockReturnValue({
+      data: { gw: 2, iso: '2026-08-28T17:30:00Z' } satisfies NextDeadline,
+    });
+    (usePlayers as jest.Mock).mockReturnValue({ data: PLAYERS_FIXTURE, isSuccess: true });
+    (fplGet as jest.Mock).mockRejectedValue(new FplFetchError('FPL 500', 500));
+
+    const { result } = mountSquad(2);
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.data).toBeUndefined();
+  });
   });
 });
 
@@ -240,6 +357,44 @@ describe('useApexTeam deadline wiring', () => {
     expect(result.current.data!.transfer.nextGw).toBe(26);
     // Formatted, never the raw ISO, and never the old hardcoded ''.
     expect(result.current.data!.transfer.deadline).toBe('fmt(2027-02-14T11:30:00Z)');
+  });
+
+  // The upcoming gameweek is the only page where advice is editable, and FPL
+  // never publishes its picks — so useSquad borrows the live squad. That has to
+  // reach the screen: presenting a borrowed squad as the user's current one is
+  // the same class of false claim #214 was filed for.
+  it('surfaces carriedOverFrom when the upcoming gameweek borrowed the live squad', async () => {
+    const wrapper = mockCommon();
+    (useNextDeadline as jest.Mock).mockReturnValue({
+      data: { gw: 25, iso: '2027-02-07T11:30:00Z' } satisfies NextDeadline,
+    });
+    (useEventStats as jest.Mock).mockReturnValue({
+      data: { gw: 25, avgPoints: 0, highestPoints: 0, finished: false, dataChecked: false } satisfies CurrentGameweek,
+    });
+    (fplGet as jest.Mock).mockReset();
+    (fplGet as jest.Mock)
+      .mockRejectedValueOnce(new FplFetchError('FPL 404 for picks', 404))
+      .mockResolvedValueOnce(ADVICE_PICKS);
+
+    const { result } = renderHook(() => useApexTeam(25), { wrapper });
+    await waitFor(() => expect(result.current.data).toBeTruthy());
+
+    expect(result.current.data!.carriedOverFrom).toBe(24);
+    // The whole point: this is no longer an empty state, so the advice renders.
+    expect(result.current.noSquad).toBe(false);
+    expect(result.current.data!.captainPicks.length).toBeGreaterThan(0);
+  });
+
+  it('leaves carriedOverFrom null when the gameweek has its own published squad', async () => {
+    const wrapper = mockCommon();
+    (useNextDeadline as jest.Mock).mockReturnValue({
+      data: { gw: 25, iso: '2027-02-07T11:30:00Z' } satisfies NextDeadline,
+    });
+
+    const { result } = renderHook(() => useApexTeam(), { wrapper });
+    await waitFor(() => expect(result.current.data).toBeTruthy());
+
+    expect(result.current.data!.carriedOverFrom).toBeNull();
   });
 
   it('falls back to an empty deadline once the season is over', async () => {
