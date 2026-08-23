@@ -1,4 +1,6 @@
 // e2e/transform.mjs — derive the run-time E2E dataset from the raw captures.
+// Transforms only: it must never INVENT a response real FPL would not serve
+// (see the note on t+1 picks at the end of run()).
 // Pins GW t (from meta) as the live gameweek: t's deadline is 3 days in the
 // past, t+1's is 4 days ahead. GW t's FIXTURES are played (finished, real
 // scores) while the EVENT keeps finished=false/data_checked=false — FPL's
@@ -6,7 +8,7 @@
 // event.finished only flips once FPL finalizes a gameweek.
 // Dates are run-relative, which is why output is generated per-run
 // (e2e/.artifacts/fixtures/, gitignored) instead of committed.
-import { mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile, readdir } from 'node:fs/promises';
 import { gunzipSync } from 'node:zlib';
 import { pathToFileURL } from 'node:url';
 
@@ -62,6 +64,11 @@ export async function run(
   const t = meta.gw;
   const bootstrap = transformBootstrap(await loadRaw(rawDir, 'bootstrap-static'), t, nowMs);
   const fixtures = transformFixtures(await loadRaw(rawDir, 'fixtures'), bootstrap, t);
+  // Wipe first. run() only ever ADDS files, so anything it stops emitting would
+  // otherwise survive in a developer's existing .artifacts and keep being served
+  // — which is how a deleted fixture goes on passing a suite. Safe: outDir is
+  // the gitignored per-run output, rebuilt in full on the next four lines.
+  await rm(outDir, { recursive: true, force: true });
   await mkdir(outDir, { recursive: true });
   await writeFile(`${outDir}/bootstrap-static.json`, JSON.stringify(bootstrap));
   await writeFile(`${outDir}/fixtures.json`, JSON.stringify(fixtures));
@@ -71,21 +78,17 @@ export async function run(
     if (name === 'bootstrap-static' || name === 'fixtures') continue;
     await writeFile(`${outDir}/${name}.json`, JSON.stringify(await loadRaw(rawDir, name)));
   }
-  // Synthesize the UPCOMING gameweek's picks (t+1) from the live GW's. The team
-  // carousel's upcoming page fetches /entry/{id}/event/{t+1}/picks/, but the
-  // capture only holds the live + prior GW — so t+1 would 404 and that page
-  // (with its chip-tips / captain advice, the only place isUpcoming decision
-  // surfaces render) never leaves its loading skeleton. This is faithful to FPL:
-  // once the current GW is finished, a future GW's squad carries over from it
-  // (same 15, no auto-subs yet, no active chip) until transfers are made.
-  const livePicks = await loadRaw(rawDir, `picks-gw${t}`);
-  const upcomingPicks = {
-    ...livePicks,
-    active_chip: null,
-    automatic_subs: [],
-    entry_history: { ...livePicks.entry_history, event: t + 1 },
-  };
-  await writeFile(`${outDir}/picks-gw${t + 1}.json`, JSON.stringify(upcomingPicks));
+  // NOTE: picks for t+1 are deliberately NOT written. Real FPL 404s
+  // /entry/{id}/event/{gw}/picks/ until that gameweek's deadline passes, and
+  // the app now depends on that: useSquad carries the live squad forward when
+  // the upcoming gameweek 404s, which is the ONLY way the decision surfaces
+  // render. fixture-server models the 404 (see FPL_PRIVATE there).
+  //
+  // This file used to synthesize picks-gw{t+1} from the live GW's, so the suite
+  // ran against a squad production could never obtain. That is exactly why the
+  // suite stayed green for a season and a half while the upcoming page was a
+  // dead empty state for every real user. A fixture that invents data the API
+  // does not serve tests nothing.
   return { t, entry: meta.entry };
 }
 

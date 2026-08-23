@@ -46,6 +46,11 @@ export type SquadPlayer = Player & { multiplier?: number };
 // hand-mocked `useApexTeam` fixtures against the real shape (see #155).
 export type ApexTeamData = ReturnType<typeof buildApexTeam>;
 
+// What useSquad resolves to. `carriedOverFrom` is set only when the requested
+// gameweek had no published picks and the live gameweek's squad was carried
+// forward in its place (see useSquad) — screens must disclose it.
+export type SquadData = { starters: SquadPlayer[]; bench: SquadPlayer[]; carriedOverFrom?: number };
+
 export function squadFromPicks(
   picks: PicksResponse,
   players: Player[],
@@ -74,29 +79,66 @@ const SEASON_FINAL_GW = 38;
 export function useSquad(targetGw?: number) {
   const profile = useProfile();
   const currentGw = useCurrentGameweek();
+  const nextDeadline = useNextDeadline();
   const players = usePlayers();
   const teamId = profile.data?.fplTeamId ?? null;
-  const gwId = targetGw ?? currentGw.data?.gw ?? null;
+  const liveGw = currentGw.data?.gw ?? null;
+  const gwId = targetGw ?? liveGw ?? null;
+  // FPL publishes /event/{gw}/picks/ only AFTER that gameweek's deadline, so
+  // the upcoming gameweek — the only one the decision layer is actionable for
+  // — 404s every week of the season, not just pre-season. Left unhandled that
+  // made captain/bench/chip advice permanently unreachable in production: the
+  // 404 became noSquad and GameweekScreen returned NoSquadCta before any
+  // advice rendered. Verified against the live API 2026-08-23 with GW1 in
+  // progress — event/1/picks/ 200, event/2/picks/ 404, for every entry.
+  //
+  // So carry the live squad forward, which is exactly what FPL does until a
+  // transfer is made (same 15, captain included). e2e/transform.mjs already
+  // synthesized these picks for the Maestro suite for this reason — which is
+  // also why the suite never caught the gap.
+  //
+  // `liveGw < gwId` keeps pre-season honest: nothing is_current then, so both
+  // the live gameweek and the next deadline resolve to GW1 and there is no
+  // earlier squad to carry — #214's empty state stands.
+  const carryFrom =
+    gwId !== null && liveGw !== null && liveGw < gwId && gwId === nextDeadline.data?.gw
+      ? liveGw
+      : null;
 
-  return useQuery({
+  return useQuery<SquadData | null>({
     queryKey: queryKeys.squad(teamId ?? 0, gwId ?? 0),
     queryFn: async () => {
+      const fetchSquad = async (gw: number) =>
+        squadFromPicks(
+          await fplGet<PicksResponse>(`/entry/${teamId}/event/${gw}/picks/`),
+          players.data ?? [],
+        );
       try {
-        const picks = await fplGet<PicksResponse>(`/entry/${teamId}/event/${gwId}/picks/`);
-        return squadFromPicks(picks, players.data ?? []);
+        return await fetchSquad(gwId as number);
       } catch (err) {
         // FPL 404s this endpoint whenever the manager has no squad for the
-        // gameweek: pre-season before the first deadline has passed, or any
-        // gameweek earlier than the one they joined on. That is a legitimate
-        // state, not a failure — the entry itself still resolves, which is why
-        // useManager succeeds alongside this. Returning null lets the UI say so
-        // instead of offering a Retry that cannot succeed until the deadline.
+        // gameweek: pre-season before the first deadline has passed, the
+        // upcoming gameweek (handled by the carry-over above), or any gameweek
+        // earlier than the one they joined on. That is a legitimate state, not
+        // a failure — the entry itself still resolves, which is why useManager
+        // succeeds alongside this. Returning null lets the UI say so instead of
+        // offering a Retry that cannot succeed until the deadline.
         // Anything other than a 404 is a real error and still propagates.
-        if (err instanceof FplFetchError && err.status === 404) return null;
-        throw err;
+        if (!(err instanceof FplFetchError) || err.status !== 404) throw err;
+        if (carryFrom === null) return null;
+        try {
+          return { ...(await fetchSquad(carryFrom)), carriedOverFrom: carryFrom };
+        } catch (carryErr) {
+          if (carryErr instanceof FplFetchError && carryErr.status === 404) return null;
+          throw carryErr;
+        }
       }
     },
-    enabled: teamId !== null && gwId !== null && gwId > 0 && Array.isArray(players.data),
+    // liveGw gates the query as well: without it a targetGw fetched before the
+    // bootstrap resolved would decide carryFrom === null, 404, and cache the
+    // empty state under a key that never refetches.
+    enabled:
+      teamId !== null && gwId !== null && gwId > 0 && liveGw !== null && Array.isArray(players.data),
     staleTime: FPL_STALE,
   });
 }
@@ -251,7 +293,7 @@ export function transferChipsFromHistory(
 }
 
 function buildApexTeam(
-  squad: { starters: SquadPlayer[]; bench: SquadPlayer[] },
+  squad: SquadData,
   manager: { name: string; gw: number; gwPoints: number; totalPoints: number; rank: number; bank: number },
   eventStats: { gw: number; avgPoints: number; highestPoints: number; finished: boolean; dataChecked: boolean },
   liveCurrent: { gw: number; finished: boolean; dataChecked: boolean },
@@ -295,6 +337,11 @@ function buildApexTeam(
   return {
     teamName: manager.name,
     gw,
+    // Set when FPL had no squad for this gameweek and the live one was carried
+    // forward (useSquad). Screens MUST disclose it — a carried squad does not
+    // include transfers the user has already made for this gameweek, which are
+    // private until the deadline.
+    carriedOverFrom: squad.carriedOverFrom ?? null,
     liveGw: liveCurrent.gw,
     liveGwFinished: liveCurrent.finished,
     liveGwDataChecked: liveCurrent.dataChecked,

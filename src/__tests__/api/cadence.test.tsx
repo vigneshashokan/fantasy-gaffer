@@ -17,6 +17,9 @@ jest.mock('@/api/fixtures', () => ({
   useEventLive: jest.fn(),
   useFixturesByGw: jest.fn(),
   useAllFixtures: jest.fn(() => ({ data: undefined })),
+  // useSquad consults it to decide whether the requested gameweek is the
+  // upcoming one, whose picks FPL never publishes (the carry-over path).
+  useNextDeadline: () => ({ data: { gw: 6, iso: '2026-10-02T17:30:00Z' } satisfies NextDeadline }),
 }));
 jest.mock('@/api/players', () => ({ usePlayers: () => ({ data: [] as Player[] }) }));
 jest.mock('@/api/projections', () => ({ useProjections: () => ({ data: undefined }) }));
@@ -25,7 +28,7 @@ import { renderHook } from '@testing-library/react-native';
 import { useManager } from '@/api/manager';
 import { useSquad } from '@/api/squad';
 import type { Profile, Player } from '@/types/fpl';
-import type { CurrentGameweek } from '@/api/fixtures';
+import type { CurrentGameweek, NextDeadline } from '@/api/fixtures';
 
 describe('FPL hook cadence (#80)', () => {
   beforeEach(() => mockUseQuery.mockClear());

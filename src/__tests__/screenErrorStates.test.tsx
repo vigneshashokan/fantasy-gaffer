@@ -71,6 +71,7 @@ jest.mock('@/api/fixtures', () => ({
   __esModule: true,
   useSeasonState: () => ({ data: { kind: 'live', gw: 23 } }),
   useCurrentGameweek: () => ({ data: { gw: 23 } }),
+  useNextDeadline: () => ({ data: { gw: 24, iso: '2026-08-28T17:30:00Z' } }),
   useFixturesByGw: () => ({ data: {} }),
   currentSeasonLabel: () => '2025/26',
 }));
