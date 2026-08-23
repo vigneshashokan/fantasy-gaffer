@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Image } from 'react-native';
+import { View, Image, Text } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { jerseyForClub } from '@/constants/jerseys';
+import { clubColorsFor } from '@/constants/clubColors';
 import type { ClubCode } from '@/types/fpl';
 
 interface AvatarDiscPlayer {
@@ -34,6 +35,34 @@ export function AvatarDisc({ size = 54, glyph = '#FFFFFF', player }: AvatarDiscP
           style={{ width: size * 1.32, height: size * 1.32 }}
           resizeMode="contain"
         />
+      </View>
+    );
+  }
+  // No kit for this club. Reachable whenever FPL promotes a club before we ship
+  // its art — codes arrive from Supabase as plain strings, so ClubCode does not
+  // prevent it. Show a club-coloured disc with the code rather than an
+  // anonymous person glyph: on the green pitch that glyph read as broken or
+  // still-loading, which is how #218 hid 26% of the league in plain sight.
+  const colors = clubColorsFor(player?.club);
+  if (player?.club) {
+    return (
+      <View
+        style={{
+          width: size, height: size, borderRadius: size / 2,
+          alignItems: 'center', justifyContent: 'center',
+          backgroundColor: colors?.kit ?? 'rgba(255,255,255,0.22)',
+        }}
+      >
+        <Text
+          allowFontScaling={false}
+          style={{
+            fontFamily: 'Archivo_700Bold',
+            fontSize: size * 0.3,
+            color: colors?.ink ?? glyph,
+          }}
+        >
+          {player.club}
+        </Text>
       </View>
     );
   }

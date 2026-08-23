@@ -21,7 +21,20 @@ export const CLUB_COLORS: Record<ClubCode, { kit: string; kit2: string; ink: str
   BRE: { kit: '#E30613', kit2: '#fff',    ink: '#fff' },
   CRY: { kit: '#1B458F', kit2: '#C4122E', ink: '#fff' },
   EVE: { kit: '#003399', kit2: '#fff',    ink: '#fff' },
-  WOL: { kit: '#FDB913', kit2: '#231F20', ink: '#231F20' },
   FUL: { kit: '#F4F4F4', kit2: '#000',    ink: '#222' },
-  WHU: { kit: '#7A263A', kit2: '#1BB1E7', ink: '#fff' },
+  COV: { kit: '#6CACE4', kit2: '#fff',    ink: '#0a2d5e' },
+  HUL: { kit: '#F18A00', kit2: '#000',    ink: '#000' },
+  IPS: { kit: '#0044A9', kit2: '#fff',    ink: '#fff' },
+  LEE: { kit: '#F4F4F4', kit2: '#1D428A', ink: '#1D428A' },
+  SUN: { kit: '#EB172B', kit2: '#fff',    ink: '#fff' },
 };
+
+// Mirrors jerseyForClub: the Record is complete against ClubCode, but club
+// codes arrive from Supabase as plain strings, so a code from a club we have
+// not shipped yet reaches this at runtime and resolves to undefined despite
+// what the type says. Callers must handle that (#218).
+export function clubColorsFor(
+  code: ClubCode | undefined,
+): { kit: string; kit2: string; ink: string } | undefined {
+  return code ? CLUB_COLORS[code] : undefined;
+}

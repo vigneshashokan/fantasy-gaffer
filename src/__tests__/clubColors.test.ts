@@ -5,7 +5,7 @@ import type { ClubCode } from '@/types/fpl';
 const ALL_CODES: ClubCode[] = [
   'ARS','LIV','MCI','CHE','MUN','NEW','TOT',
   'AVL','NFO','BHA','BOU','BRE','CRY','EVE',
-  'WOL','FUL','WHU',
+  'FUL','COV','HUL','IPS','LEE','SUN',
 ];
 
 describe('CLUB_COLORS', () => {

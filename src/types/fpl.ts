@@ -3,10 +3,17 @@
 // All UI-facing shape types for FPL data. Hooks in src/api/ return these
 // shapes; screens import types from here, never from src/constants/data.ts.
 
+// The 20 clubs of the CURRENT Premier League season. Promotion and relegation
+// change this every August — see the note on jerseyForClub. NOTE this union is
+// a compile-time convenience only: club codes reach the app as plain strings
+// from Supabase, so a code outside it is perfectly reachable at RUNTIME and
+// every lookup keyed on it must degrade rather than assume. That is exactly how
+// COV/HUL/IPS/LEE/SUN rendered blank for a whole season while tsc stayed green
+// (#218) — the union still listed WOL and WHU, relegated two seasons prior.
 export type ClubCode =
   | 'ARS' | 'LIV' | 'MCI' | 'CHE' | 'MUN' | 'NEW' | 'TOT'
   | 'AVL' | 'NFO' | 'BHA' | 'BOU' | 'BRE' | 'CRY' | 'EVE'
-  | 'WOL' | 'FUL' | 'WHU';
+  | 'FUL' | 'COV' | 'HUL' | 'IPS' | 'LEE' | 'SUN';
 
 export type Position = 'GKP' | 'DEF' | 'MID' | 'FWD';
 
