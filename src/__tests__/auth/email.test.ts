@@ -77,6 +77,9 @@ describe('signInWithEmail', () => {
     const r = await signInWithEmail('a@b.co', 'Secret123');
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toBe('unknown');
+    // …and carries the server's message, so an unmapped code (same_password,
+    // reauthentication_needed) still tells the user what happened.
+    if (!r.ok) expect(r.message).toBe('???');
   });
 
   it('maps message-only "Invalid login credentials" (no code field) to invalid_credentials', async () => {
