@@ -13,7 +13,7 @@ export type AuthErrorKind =
 
 export type Result<T = void> =
   | { ok: true; value: T }
-  | { ok: false; error: AuthErrorKind };
+  | { ok: false; error: AuthErrorKind; message?: string };
 
 function classify(err: { code?: string; status?: number; message?: string }): AuthErrorKind {
   if (err.code === 'invalid_credentials') return 'invalid_credentials';
@@ -33,6 +33,14 @@ function classify(err: { code?: string; status?: number; message?: string }): Au
   return 'unknown';
 }
 
+// Carries Supabase's own message alongside the kind. GoTrue's messages are
+// user-facing quality ("New password should be different from the old
+// password.") and several of its codes have no branch here — without this
+// every one of them collapsed into an unactionable "Something went wrong".
+function fail(err: { code?: string; status?: number; message?: string }): Result<never> {
+  return { ok: false, error: classify(err), message: err.message };
+}
+
 function classifyThrown(err: unknown): AuthErrorKind {
   const msg = err instanceof Error ? err.message : String(err);
   if (/network/i.test(msg) || /fetch/i.test(msg)) return 'network';
@@ -42,7 +50,7 @@ function classifyThrown(err: unknown): AuthErrorKind {
 export async function signInWithEmail(email: string, password: string): Promise<Result> {
   try {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { ok: false, error: classify(error) };
+    if (error) return fail(error);
     return { ok: true, value: undefined };
   } catch (err) {
     return { ok: false, error: classifyThrown(err) };
@@ -64,7 +72,7 @@ export async function signUpWithEmail(args: {
         emailRedirectTo: VERIFY_URL,
       },
     });
-    if (error) return { ok: false, error: classify(error) };
+    if (error) return fail(error);
     return { ok: true, value: undefined };
   } catch (err) {
     return { ok: false, error: classifyThrown(err) };
@@ -89,7 +97,7 @@ export async function sendPasswordReset(email: string): Promise<Result> {
 export async function resetPassword(newPassword: string): Promise<Result> {
   try {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) return { ok: false, error: classify(error) };
+    if (error) return fail(error);
   } catch (err) {
     return { ok: false, error: classifyThrown(err) };
   }
@@ -105,7 +113,7 @@ export async function resetPassword(newPassword: string): Promise<Result> {
 export async function resendVerification(email: string): Promise<Result> {
   try {
     const { error } = await supabase.auth.resend({ type: 'signup', email });
-    if (error) return { ok: false, error: classify(error) };
+    if (error) return fail(error);
     return { ok: true, value: undefined };
   } catch (err) {
     return { ok: false, error: classifyThrown(err) };
@@ -133,7 +141,7 @@ export async function changePassword(current: string, next: string): Promise<Res
   // 2. Update to the new password.
   try {
     const { error } = await supabase.auth.updateUser({ password: next });
-    if (error) return { ok: false, error: classify(error) };
+    if (error) return fail(error);
   } catch (err) {
     return { ok: false, error: classifyThrown(err) };
   }

@@ -84,7 +84,10 @@ export default function ResetPassword() {
       } else if (r.error === 'expired_link') {
         setErrors({ form: 'This reset link has expired — request a new one' });
       } else {
-        setErrors({ form: 'Something went wrong. Please try again' });
+        // Supabase's own copy when it has some: `same_password` (retrying the
+        // existing password) and `reauthentication_needed` both land here and
+        // are otherwise indistinguishable from a real failure.
+        setErrors({ form: r.message ?? 'Something went wrong. Please try again' });
       }
     } finally {
       setSubmitting(false);

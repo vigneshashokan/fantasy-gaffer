@@ -13,7 +13,7 @@ export function ChangePassword({ tk }: ChangePasswordProps) {
   const [open, setOpen] = useState(false);
   const [done, setDone] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<AuthErrorKind | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [cur, setCur] = useState('');
   const [nw, setNw] = useState('');
   const [cf, setCf] = useState('');
@@ -33,7 +33,7 @@ export function ChangePassword({ tk }: ChangePasswordProps) {
     const r = await changePassword(cur, nw);
     setSaving(false);
     if (!r.ok) {
-      setError(r.error);
+      setError(errorCopy(r.error, r.message));
       return;
     }
     setDone(true);
@@ -87,7 +87,7 @@ export function ChangePassword({ tk }: ChangePasswordProps) {
           )}
           {error && (
             <Text style={[styles.errorText, { color: tk.pink }]}>
-              {errorCopy(error)}
+              {error}
             </Text>
           )}
           <Pressable
@@ -162,7 +162,7 @@ function PasswordField({
   );
 }
 
-function errorCopy(kind: AuthErrorKind): string {
+function errorCopy(kind: AuthErrorKind, message?: string): string {
   switch (kind) {
     case 'invalid_credentials':
       return 'Current password is incorrect.';
@@ -173,7 +173,9 @@ function errorCopy(kind: AuthErrorKind): string {
     case 'rate_limited':
       return 'Too many attempts — try again shortly.';
     default:
-      return "Couldn't update password — try again.";
+      // Prefer Supabase's own copy — `same_password` and friends have no
+      // branch here and are useless as a generic failure.
+      return message ?? "Couldn't update password — try again.";
   }
 }
 
