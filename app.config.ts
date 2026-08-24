@@ -1,5 +1,24 @@
 import type { ExpoConfig } from 'expo/config';
 
+// Bundle-time vars. `extra` below is the ONLY place these are read (app code goes
+// through Constants.expoConfig.extra) — and an unset one produces `undefined`
+// silently, which src/lib/supabase.ts then throws on at import time. That is a
+// launch crash, not a build failure: it shipped as TestFlight build 4, where
+// the EAS `production` environment had the Sentry vars but not these two.
+// Fail the build instead.
+//
+// EAS_BUILD-only on purpose: the EAS CLI resolves this config with no .env for
+// plain commands (env:list, project:info), so an unconditional throw breaks
+// them. The builder is the only place a bundle is actually produced.
+for (const name of ['EXPO_PUBLIC_SUPABASE_URL', 'EXPO_PUBLIC_SUPABASE_ANON_KEY'] as const) {
+  if (process.env.EAS_BUILD && !process.env[name]) {
+    throw new Error(
+      `${name} is not set. Local dev: copy .env.example to .env. ` +
+        `EAS Build: eas env:set --environment <production|preview> --name ${name}`,
+    );
+  }
+}
+
 const config: ExpoConfig = {
   name: 'Fantasy Gaffer',
   slug: 'fantasy-gaffer',
