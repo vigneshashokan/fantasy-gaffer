@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native
 import { useRouter } from 'expo-router';
 import { track } from '@/lib/analytics';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme, GUTTER } from '@/constants/theme';
+import { FLOATING_NAV_SPACE, getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { TransferPitchPlayer } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
@@ -127,8 +127,9 @@ export default function TransferTab() {
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={[
-          { paddingBottom: 32 },
-          pendingCount > 0 && { paddingBottom: 140 },
+          // Clears the floating nav, which overlays this screen.
+          { paddingBottom: FLOATING_NAV_SPACE + 32 },
+          pendingCount > 0 && { paddingBottom: FLOATING_NAV_SPACE + 132 },
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: GUTTER,
     right: GUTTER,
-    bottom: 24,
+    bottom: FLOATING_NAV_SPACE + 16,
     zIndex: 20,
   },
 });

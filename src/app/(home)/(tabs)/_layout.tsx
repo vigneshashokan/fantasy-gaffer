@@ -1,29 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Alert } from 'react-native';
+import { View, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Tabs, useRouter, useSegments } from 'expo-router';
-import { Icon } from '@/components/ui/Icon';
 import { AccountMenu } from '@/components/nav/AccountMenu';
+import { FloatingNav, TABS, type TabName } from '@/components/nav/FloatingNav';
 import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useProfile } from '@/api/profile';
 import { initialsOf } from '@/lib/name';
 import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
-import { MAX_FONT_SCALE } from '@/lib/a11y';
 import { TabCoachmark } from '@/components/onboarding/TabCoachmark';
 import { useOfflineStripVisible } from '@/components/OfflineBanner';
 
 const SIGN_OUT_FAILED_TITLE = "Couldn't sign out";
 const SIGN_OUT_FAILED_BODY = 'Check your connection and try again.';
-
-type TabName = 'top-picks' | 'team' | 'transfer';
-
-const TABS: { name: TabName; label: string; icon: 'fire' | 'team' | 'swap' }[] = [
-  { name: 'top-picks', label: 'Top Picks', icon: 'fire' },
-  { name: 'team',      label: 'My Team',   icon: 'team' },
-  { name: 'transfer',  label: 'Transfer',  icon: 'swap' },
-];
 
 export default function TabsLayout() {
   const { paletteKey, dark } = useThemeStore();
@@ -67,81 +58,20 @@ export default function TabsLayout() {
       <Tabs
         initialRouteName="team"
         screenOptions={{ headerShown: false }}
-        tabBar={(props) => {
-          const activeName = props.state.routes[props.state.index].name;
-          return (
-            <View
-              testID="tab-bar"
-              accessibilityRole="tablist"
-              style={[
-                styles.bar,
-                {
-                  backgroundColor: t.surface,
-                  borderTopColor: t.line,
-                  // A hardcoded 22 put the labels inside the home-indicator
-                  // gesture zone on 34pt devices; 12 is the old visual
-                  // breathing room for devices with no inset.
-                  paddingBottom: Math.max(insets.bottom, 12),
-                },
-              ]}
-            >
-              {TABS.map((tab) => {
-                const focused = activeName === tab.name;
-                const color = focused ? tk.activeFill : t.textFaint;
-                return (
-                  <Pressable
-                    key={tab.name}
-                    testID={`tab-${tab.name}`}
-                    accessibilityRole="tab"
-                    accessibilityLabel={tab.label}
-                    accessibilityState={{ selected: focused }}
-                    style={styles.tab}
-                    onPress={() => props.navigation.navigate(tab.name)}
-                  >
-                    {focused && (
-                      <View style={[styles.indicator, { backgroundColor: tk.activeFill }]} />
-                    )}
-                    <Icon name={tab.icon} color={color} size={24} />
-                    <Text
-                      style={[
-                        styles.label,
-                        {
-                          color,
-                          fontFamily: focused
-                            ? 'Archivo_800ExtraBold'
-                            : 'Archivo_600SemiBold',
-                        },
-                      ]}
-                      maxFontSizeMultiplier={MAX_FONT_SCALE}
-                    >
-                      {tab.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-
-              {/* Account opens the account menu popup rather than navigating to
-                  a screen, so it carries no active indicator. */}
-              <Pressable
-                testID="tab-account"
-                accessibilityRole="button"
-                accessibilityLabel="Account"
-                style={styles.tab}
-                onPress={() => setMenuOpen(true)}
-              >
-                <View style={[styles.accountAvatar, { backgroundColor: t.primary }]}>
-                  <Text style={styles.accountInitials}>{initials}</Text>
-                </View>
-                <Text
-                  style={[styles.label, { color: t.textFaint, fontFamily: 'Archivo_600SemiBold' }]}
-                  maxFontSizeMultiplier={MAX_FONT_SCALE}
-                >
-                  Account
-                </Text>
-              </Pressable>
-            </View>
-          );
-        }}
+        // The bar is `position:'absolute'`, so it is taken out of the tab
+        // navigator's column and floats over the screens — which is what makes
+        // the screens full-height and the glass fill worth having. Each tab's
+        // scroll content pays for that with FLOATING_NAV_SPACE at the bottom.
+        tabBar={(props) => (
+          <FloatingNav
+            activeName={props.state.routes[props.state.index].name as TabName}
+            onSelect={(name) => props.navigation.navigate(name)}
+            onAccount={() => setMenuOpen(true)}
+            menuOpen={menuOpen}
+            initials={initials}
+            tk={tk}
+          />
+        )}
       >
         <Tabs.Screen name="top-picks" />
         <Tabs.Screen name="team" />
@@ -178,40 +108,3 @@ export default function TabsLayout() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  bar: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 6,
-    gap: 4,
-    position: 'relative',
-  },
-  indicator: {
-    position: 'absolute',
-    top: 0,
-    width: 28,
-    height: 3,
-    borderRadius: 999,
-  },
-  label: {
-    fontSize: 11,
-  },
-  accountAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  accountInitials: {
-    color: '#fff',
-    fontFamily: 'Archivo_900Black',
-    fontSize: 11,
-  },
-});

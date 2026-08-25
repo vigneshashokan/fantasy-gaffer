@@ -4,6 +4,15 @@
 // an input) is not this and does not follow it.
 export const GUTTER = 8;
 
+/**
+ * Vertical space the floating nav bar occupies at the bottom of every tab
+ * screen — its height plus the gap beneath it. The bar is absolutely
+ * positioned and floats over the screens, so nothing reserves this for them:
+ * a scroll container ends its content `FLOATING_NAV_SPACE` short of the
+ * bottom, and anything docked above the bar sits at `+ 16`.
+ */
+export const FLOATING_NAV_SPACE = 96;
+
 export type PaletteKey = 'classic' | 'pitch' | 'electric';
 
 export interface Theme {

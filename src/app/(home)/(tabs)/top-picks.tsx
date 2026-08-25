@@ -14,7 +14,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme, GUTTER } from '@/constants/theme';
+import { FLOATING_NAV_SPACE, getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { Position } from '@/types/fpl';
 import { useTopPicks } from '@/api/players';
@@ -237,6 +237,7 @@ const styles = StyleSheet.create({
   },
   panelContent: {
     paddingHorizontal: GUTTER,
-    paddingBottom: 24,
+    // Clears the floating nav, which overlays this screen.
+    paddingBottom: FLOATING_NAV_SPACE + 24,
   },
 });

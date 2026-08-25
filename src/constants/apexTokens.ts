@@ -73,6 +73,22 @@ export interface ApexTokens {
   deadlineBg: string;
   deadlineFg: string;
   chipFill: string;
+  /**
+   * Floating nav bar (the pill docked above the home indicator). Values are
+   * lifted verbatim from the v2 mock and are palette-INDEPENDENT, like
+   * `green`/`pink`/`deadlineFg` — the mock has one palette, and the nav is the
+   * first surface being moved onto it.
+   *
+   * `navIdle` is the one deviation: the mock's #A79FB3 / rgba(200,190,220,0.5)
+   * measure 2.53:1 and 3.46:1 on `navBg`, below WCAG AA. These keep the mock's
+   * hue and saturation and only move lightness far enough to clear 4.5:1
+   * (see the contrast guard test).
+   */
+  navBg: string;
+  navBorder: string;
+  navActive: string;
+  navIdle: string;
+  navPill: string;
   heroBg: string;
   /**
    * Second stop of the hero/screen-header gradient (`heroBg` is the first).
@@ -103,6 +119,8 @@ export function apexTokens(dark: boolean, palette: PaletteKey | string = 'classi
       infoCard: B.p1, captCard: B.p1, moneyText: B.moneyD,
       deadlineBg: 'rgba(255,40,90,0.12)', deadlineFg: '#FF7A95',
       chipFill: B.active,
+      navBg: 'rgba(27,17,41,0.85)', navBorder: 'rgba(255,255,255,0.11)',
+      navActive: '#5CF0A9', navIdle: '#847B95', navPill: 'rgba(0,228,120,0.10)',
       heroBg: B.p1, heroBg2: '#0C1018', heroGlow: B.glowD,
       danger: DANGER_DARK,
       dark: true,
@@ -121,6 +139,8 @@ export function apexTokens(dark: boolean, palette: PaletteKey | string = 'classi
     infoCard: B.infoL, captCard: B.infoL, moneyText: B.moneyL,
     deadlineBg: '#FFE3E9', deadlineFg: '#C8102E',
     chipFill: B.active,
+    navBg: 'rgba(255,255,255,0.88)', navBorder: 'rgba(40,10,60,0.08)',
+    navActive: '#37003C', navIdle: '#7C708E', navPill: 'rgba(55,0,60,0.08)',
     heroBg: B.p1, heroBg2: B.p2, heroGlow: B.glowL,
     danger: DANGER_LIGHT,
     dark: false,

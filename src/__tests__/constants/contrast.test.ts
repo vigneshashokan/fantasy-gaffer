@@ -7,6 +7,7 @@ const AA = 4.5; // WCAG AA, normal text
 const themeLight = getTheme('classic', false);
 const themeDark = getTheme('classic', true);
 const apexLight = apexTokens(false, 'classic');
+const apexDark = apexTokens(true, 'classic');
 
 const KEYS: PaletteKey[] = PALETTE.map((p) => p.key);
 
@@ -23,6 +24,13 @@ const pairs: [string, string, string][] = [
   ['apex.light green / card', apexLight.green, apexLight.card],
   ['apex.light yellow / card', apexLight.yellow, apexLight.card],
   ['apex.light pink / card', apexLight.pink, apexLight.card],
+  // The floating nav's labels. The v2 mock's own idle greys measure 2.53:1
+  // (light) and 3.46:1 (dark) here, so `navIdle` keeps the mock's hue but is
+  // lifted to clear AA — this pair is what stops it drifting back.
+  ['apex.light navIdle / navBg', apexLight.navIdle, apexLight.navBg],
+  ['apex.light navActive / navBg', apexLight.navActive, apexLight.navBg],
+  ['apex.dark navIdle / navBg', apexDark.navIdle, apexDark.navBg],
+  ['apex.dark navActive / navBg', apexDark.navActive, apexDark.navBg],
 ];
 
 describe('WCAG AA contrast — text tokens', () => {
