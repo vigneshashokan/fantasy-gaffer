@@ -8,6 +8,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { ApexTokens } from '@/constants/apexTokens';
+import { GUTTER } from '@/constants/theme';
 
 interface TabHeaderProps {
   title: string;
@@ -34,7 +35,7 @@ export function TabHeader({ title, tk, trailing, subtitle }: TabHeaderProps) {
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: 16,
+    paddingHorizontal: GUTTER,
     paddingTop: 18,
     paddingBottom: 14,
   },

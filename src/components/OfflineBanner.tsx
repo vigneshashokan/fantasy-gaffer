@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeStore } from '@/store/themeStore';
 import { apexTokens } from '@/constants/apexTokens';
 import { useA11yAnnounce } from '@/lib/a11y';
+import { GUTTER } from '@/constants/theme';
 
 /**
  * Whether the offline strip is on screen. It is docked above everything and
@@ -43,6 +44,6 @@ export function OfflineBanner() {
 }
 
 const styles = StyleSheet.create({
-  bar: { paddingHorizontal: 16, paddingBottom: 8, alignItems: 'center' },
+  bar: { paddingHorizontal: GUTTER, paddingBottom: 8, alignItems: 'center' },
   text: { fontSize: 13, fontWeight: '600' },
 });

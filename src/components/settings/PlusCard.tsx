@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import { MAX_FONT_SCALE } from '@/lib/a11y';
 import { useFlag } from '@/lib/analytics/flags';
+import { GUTTER } from '@/constants/theme';
 
 interface PlusCardProps {
   gradFrom: string;
@@ -77,7 +78,7 @@ function StarIcon() {
 
 const styles = StyleSheet.create({
   wrap: {
-    marginHorizontal: 16,
+    marginHorizontal: GUTTER,
     marginBottom: 16,
     borderRadius: 18,
     overflow: 'hidden',

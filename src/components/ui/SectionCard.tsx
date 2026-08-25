@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { ApexTokens } from '@/constants/apexTokens';
+import { GUTTER } from '@/constants/theme';
 
 interface SectionCardProps {
   title?: string;
@@ -28,7 +29,7 @@ export function SectionCard({ title, tk, children }: SectionCardProps) {
 
 const styles = StyleSheet.create({
   wrap: {
-    marginHorizontal: 16,
+    marginHorizontal: GUTTER,
     marginBottom: 16,
   },
   title: {

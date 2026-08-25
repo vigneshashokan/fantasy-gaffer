@@ -3,7 +3,7 @@ import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native
 import { useRouter } from 'expo-router';
 import { track } from '@/lib/analytics';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme } from '@/constants/theme';
+import { getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { TransferPitchPlayer } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
@@ -70,7 +70,7 @@ export default function TransferTab() {
   }
   if (isPending || !at) {
     return (
-      <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
+      <View style={{ flex: 1, backgroundColor: tk.bg, padding: GUTTER }}>
         <Skeleton height={72} radius={20} />
         <View style={{ height: 12 }} />
         <Skeleton height={260} radius={20} />
@@ -194,15 +194,15 @@ const styles = StyleSheet.create({
     // load-bearing: the ScrollView clips at its own top edge, so without a
     // band here the scrolling content slices itself against the pinned banner.
     marginTop: -19,
-    paddingHorizontal: 16,
+    paddingHorizontal: GUTTER,
     paddingBottom: 14,
   },
   topGroup: {
-    paddingHorizontal: 16,
+    paddingHorizontal: GUTTER,
     gap: 14,
   },
   pitchWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: GUTTER,
     paddingTop: 14,
   },
   hint: {
@@ -213,13 +213,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   suggestionsWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: GUTTER,
     paddingTop: 6,
   },
   applyWrap: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: GUTTER,
+    right: GUTTER,
     bottom: 24,
     zIndex: 20,
   },

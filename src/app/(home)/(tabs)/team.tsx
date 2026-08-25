@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, FlatList, StyleSheet, Animated, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme } from '@/constants/theme';
+import { getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { PitchPlayer, Suggestion } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
@@ -96,7 +96,7 @@ export default function TeamTab() {
   }
   if (isPending || !at) {
     return (
-      <View style={{ flex: 1, backgroundColor: t.bg, padding: 16 }}>
+      <View style={{ flex: 1, backgroundColor: t.bg, padding: GUTTER }}>
         <Skeleton height={48} />
         <View style={{ height: 12 }} />
         <Skeleton height={180} radius={20} />
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     // left above the banner is the title's line-box leading, matching the gap
     // below it.
     marginTop: -19,
-    paddingHorizontal: 16,
+    paddingHorizontal: GUTTER,
     paddingBottom: 14,
   },
   arrow: {
@@ -259,9 +259,9 @@ const styles = StyleSheet.create({
     top: 18,
   },
   arrowLeft: {
-    left: 16,
+    left: GUTTER,
   },
   arrowRight: {
-    right: 16,
+    right: GUTTER,
   },
 });

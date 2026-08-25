@@ -14,7 +14,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme } from '@/constants/theme';
+import { getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { Position } from '@/types/fpl';
 import { useTopPicks } from '@/api/players';
@@ -37,7 +37,6 @@ import { SegmentedControl } from '@/components/picks/SegmentedControl';
 import { PicksCard } from '@/components/picks/PicksCard';
 
 const ORDER: Position[] = ['GKP', 'DEF', 'MID', 'FWD'];
-const H_PADDING = 16;
 
 export default function TopPicksTab() {
   const { paletteKey, dark } = useThemeStore();
@@ -94,7 +93,7 @@ export default function TopPicksTab() {
   }
   if (picksPending || !topPicks) {
     return (
-      <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
+      <View style={{ flex: 1, backgroundColor: tk.bg, padding: GUTTER }}>
         <Skeleton height={48} />
         <View style={{ height: 12 }} />
         <Skeleton height={48} />
@@ -211,7 +210,7 @@ function StatusPill({
 
 const styles = StyleSheet.create({
   bannerWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: GUTTER,
     paddingBottom: 14,
   },
   livePill: {
@@ -233,11 +232,11 @@ const styles = StyleSheet.create({
     letterSpacing: 0.7,
   },
   controlWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: GUTTER,
     paddingBottom: 16,
   },
   panelContent: {
-    paddingHorizontal: H_PADDING,
+    paddingHorizontal: GUTTER,
     paddingBottom: 24,
   },
 });

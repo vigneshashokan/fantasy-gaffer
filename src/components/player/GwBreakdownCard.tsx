@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import type { ApexTokens } from '@/constants/apexTokens';
 import type { ClubCode } from '@/types/fpl';
 import type { GwBreakdown, GwFixtureBreakdown } from '@/api/playerSummary';
+import { GUTTER } from '@/constants/theme';
 
 interface GwBreakdownCardProps {
   breakdown: GwBreakdown;
@@ -75,7 +76,7 @@ function FixtureBlock({
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: 16, paddingTop: 16, gap: 12 },
+  wrap: { paddingHorizontal: GUTTER, paddingTop: 16, gap: 12 },
   card: { borderRadius: 16, borderWidth: 1, padding: 14 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 },
   gwLabel: { fontFamily: 'Archivo_700Bold', fontSize: 12, letterSpacing: 0.4, textTransform: 'uppercase', flexShrink: 1 },

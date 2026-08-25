@@ -10,6 +10,7 @@ import {
 } from '@/api/notificationPrefs';
 import { usePushPermission } from '@/lib/notifications/usePushPermission';
 import { registerForPushNotifications } from '@/lib/notifications/register';
+import { GUTTER } from '@/constants/theme';
 
 const ITEMS = [
   { key: 'deadlines', label: 'Deadlines', sub: 'Gameweek deadline reminders' },
@@ -186,7 +187,7 @@ function Caret({ color }: { color: string }) {
 
 const styles = StyleSheet.create({
   wrap: {
-    marginHorizontal: 16,
+    marginHorizontal: GUTTER,
     marginBottom: 16,
   },
   card: {

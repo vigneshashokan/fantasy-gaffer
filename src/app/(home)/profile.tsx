@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme } from '@/constants/theme';
+import { getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import { useProfile } from '@/api/profile';
 import { usePullRefresh } from '@/lib/query/usePullRefresh';
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
-    marginHorizontal: 20,
+    marginHorizontal: GUTTER + 4,
     marginBottom: 8,
   },
 });

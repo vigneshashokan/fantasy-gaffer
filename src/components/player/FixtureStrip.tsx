@@ -4,6 +4,7 @@ import type { ApexTokens } from '@/constants/apexTokens';
 import type { ClubCode } from '@/types/fpl';
 import type { NextFixture } from '@/api/playerSummary';
 import { fdrColor } from '@/constants/fdr';
+import { GUTTER } from '@/constants/theme';
 
 interface FixtureStripProps {
   fixtures: NextFixture[];
@@ -33,9 +34,9 @@ export function FixtureStrip({ fixtures, codeByTeamId, dark, tk }: FixtureStripP
 }
 
 const styles = StyleSheet.create({
-  wrap: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingTop: 12 },
+  wrap: { flexDirection: 'row', gap: 8, paddingHorizontal: GUTTER, paddingTop: 12 },
   chip: { flex: 1, borderRadius: 12, paddingVertical: 10, alignItems: 'center', gap: 2 },
   opp: { fontFamily: 'Archivo_800ExtraBold', fontSize: 13, letterSpacing: 0.3 },
   ha: { fontFamily: 'Archivo_600SemiBold', fontSize: 10, opacity: 0.85 },
-  empty: { fontFamily: 'Archivo_500Medium', fontSize: 13, fontStyle: 'italic', paddingHorizontal: 16, paddingTop: 12 },
+  empty: { fontFamily: 'Archivo_500Medium', fontSize: 13, fontStyle: 'italic', paddingHorizontal: GUTTER, paddingTop: 12 },
 });

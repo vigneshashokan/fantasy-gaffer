@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme } from '@/constants/theme';
+import { getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import { useTopPicks } from '@/api/players';
 import { useSquad } from '@/api/squad';
@@ -46,7 +46,7 @@ export default function TransferTargetsScreen() {
   }
   if (squadPending || picksPending || !squad || !topPicks) {
     return (
-      <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
+      <View style={{ flex: 1, backgroundColor: tk.bg, padding: GUTTER }}>
         <Skeleton height={96} radius={20} />
         <View style={{ height: 12 }} />
         <Skeleton height={260} radius={20} />
@@ -90,7 +90,7 @@ export default function TransferTargetsScreen() {
       />
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={[{ padding: 16, gap: 16 }, selectedIn && { paddingBottom: 120 }]}
+        contentContainerStyle={[{ padding: GUTTER, gap: 16 }, selectedIn && { paddingBottom: 120 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -140,11 +140,11 @@ export default function TransferTargetsScreen() {
 }
 
 const styles = StyleSheet.create({
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16, gap: 16 },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: GUTTER, gap: 16 },
   notFound: { fontFamily: 'Archivo_700Bold', fontSize: 18 },
   closeBtn: { borderRadius: 999, paddingHorizontal: 22, paddingVertical: 13 },
   closeText: { color: '#fff', fontFamily: 'Archivo_800ExtraBold', fontSize: 15 },
-  barWrap: { position: 'absolute', left: 16, right: 16, bottom: 24, zIndex: 20 },
+  barWrap: { position: 'absolute', left: GUTTER, right: GUTTER, bottom: 24, zIndex: 20 },
   hint: {
     textAlign: 'center',
     fontFamily: 'Archivo_500Medium',

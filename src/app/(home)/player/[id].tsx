@@ -15,6 +15,7 @@ import { AvailabilityBanner } from '@/components/player/AvailabilityBanner';
 import { KeyStatsRow } from '@/components/player/KeyStatsRow';
 import { FormSparkline } from '@/components/player/FormSparkline';
 import { FixtureStrip } from '@/components/player/FixtureStrip';
+import { GUTTER } from '@/constants/theme';
 
 export default function PlayerDetailModal() {
   const router = useRouter();
@@ -37,7 +38,7 @@ export default function PlayerDetailModal() {
   }
   if (isPending || !players) {
     return (
-      <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
+      <View style={{ flex: 1, backgroundColor: tk.bg, padding: GUTTER }}>
         <Skeleton height={120} radius={20} />
         <View style={{ height: 12 }} />
         <Skeleton height={180} radius={20} />
@@ -89,7 +90,7 @@ export default function PlayerDetailModal() {
             tk={tk}
           />
         ) : summary.isError ? null : (
-          <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+          <View style={{ paddingHorizontal: GUTTER, paddingTop: 16 }}>
             <Skeleton height={120} radius={16} />
           </View>
         )
@@ -114,11 +115,11 @@ export default function PlayerDetailModal() {
       ) : (
         <>
           <Text style={[styles.sectionTitle, { color: tk.text }]}>Last 5 gameweeks</Text>
-          <View style={{ paddingHorizontal: 16 }}>
+          <View style={{ paddingHorizontal: GUTTER }}>
             <Skeleton height={80} radius={14} />
           </View>
           <Text style={[styles.sectionTitle, { color: tk.text }]}>Next 5 fixtures</Text>
-          <View style={{ paddingHorizontal: 16 }}>
+          <View style={{ paddingHorizontal: GUTTER }}>
             <Skeleton height={48} radius={14} />
           </View>
         </>
@@ -139,14 +140,14 @@ function SummaryError({ tk, onRetry }: { tk: ReturnType<typeof apexTokens>; onRe
 }
 
 const styles = StyleSheet.create({
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16, gap: 16 },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: GUTTER, gap: 16 },
   notFound: { fontFamily: 'Archivo_700Bold', fontSize: 18 },
   closeBtn: { borderRadius: 999, paddingHorizontal: 22, paddingVertical: 13 },
   closeText: { color: '#fff', fontFamily: 'Archivo_800ExtraBold', fontSize: 15 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: GUTTER, paddingTop: 16, paddingBottom: 12 },
   headerTitle: { fontFamily: 'Archivo_800ExtraBold', fontSize: 16 },
-  sectionTitle: { fontFamily: 'Archivo_800ExtraBold', fontSize: 15, paddingHorizontal: 16, paddingTop: 22, paddingBottom: 2 },
-  errRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12 },
+  sectionTitle: { fontFamily: 'Archivo_800ExtraBold', fontSize: 15, paddingHorizontal: GUTTER, paddingTop: 22, paddingBottom: 2 },
+  errRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: GUTTER, paddingTop: 12 },
   errText: { fontFamily: 'Archivo_500Medium', fontSize: 13, flexShrink: 1 },
   retry: { fontFamily: 'Archivo_800ExtraBold', fontSize: 13 },
 });

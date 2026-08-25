@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { ApexTokens } from '@/constants/apexTokens';
 import { availabilityState } from '@/utils/availability';
+import { GUTTER } from '@/constants/theme';
 
 interface AvailabilityBannerProps {
   status: string;
@@ -26,7 +27,7 @@ export function AvailabilityBanner({ status, news, chanceNext, tk }: Availabilit
 }
 
 const styles = StyleSheet.create({
-  banner: { marginHorizontal: 16, marginTop: 12, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, gap: 3 },
+  banner: { marginHorizontal: GUTTER, marginTop: 12, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, gap: 3 },
   headline: { fontFamily: 'Archivo_800ExtraBold', fontSize: 13, letterSpacing: 0.3 },
   news: { fontFamily: 'Archivo_500Medium', fontSize: 13 },
 });

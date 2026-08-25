@@ -3,6 +3,7 @@ import { View, Text, Pressable, Platform, StyleSheet, ViewStyle } from 'react-na
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from './Icon';
+import { GUTTER } from '@/constants/theme';
 
 interface ScreenHeaderProps {
   title: string;
@@ -73,7 +74,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
+    paddingHorizontal: GUTTER,
     paddingTop: 6,
     paddingBottom: 18,
   },
@@ -92,7 +93,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   body: {
-    paddingHorizontal: 20,
+    paddingHorizontal: GUTTER,
     paddingBottom: 22,
   },
 });
