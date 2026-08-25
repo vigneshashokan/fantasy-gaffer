@@ -177,8 +177,20 @@ async function seedP50(
 
 Deno.test('upcomingGws picks current/next and caps at 38', () => {
   const events = [{ id: 7, is_current: true, is_next: false }, { id: 8, is_current: false, is_next: true }];
-  assertEquals(upcomingGws(events), [7, 8, 9]);
+  assertEquals(upcomingGws(events), [7, 8, 9, 10]);
   assertEquals(upcomingGws([{ id: 37, is_current: false, is_next: true }]), [37, 38]);
+});
+
+// The window must COVER the client's, whose anchor is the next deadline while
+// this job's is `is_current` — they differ by one for most of every week, and a
+// three-wide window here left the client's last gameweek permanently unwritten.
+Deno.test('upcomingGws covers the decision layer\'s next-deadline window', () => {
+  const events = [{ id: 7, is_current: true, is_next: false }, { id: 8, is_current: false, is_next: true }];
+  const served = upcomingGws(events);
+  const nextDeadlineGw = 8;
+  for (const gw of [nextDeadlineGw, nextDeadlineGw + 1, nextDeadlineGw + 2]) {
+    assertEquals(served.includes(gw), true, `gw ${gw} not served`);
+  }
 });
 
 Deno.test('seasonLabel uses the Aug boundary', () => {
@@ -448,7 +460,7 @@ Deno.test('handler sweeps rows the run did not refresh', async () => {
 
   assertEquals(rec.deletes.length, 1);
   assertEquals(rec.deletes[0].table, 'projections');
-  assertEquals(rec.deletes[0].gws, [10, 11, 12]);
+  assertEquals(rec.deletes[0].gws, [10, 11, 12, 13]);
   assertEquals(rec.deletes[0].before, now.toISOString());
 });
 

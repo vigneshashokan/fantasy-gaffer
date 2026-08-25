@@ -39,11 +39,21 @@ interface EventLite {
 type PlayerRow = PlayerInput & { code: number | null };
 type SeasonRow = SeasonAggregate & { season: string };
 
+// FOUR gameweeks, anchored on the current one — deliberately one wider than the
+// client's three-gameweek horizon. The two ends anchor differently: this job
+// starts at `is_current`, while the decision layer anchors on the NEXT DEADLINE
+// (#168), and `is_current` stays on a finished gameweek until that deadline
+// passes. So for most of every week the client asks for [t+1, t+2, t+3] while a
+// three-wide window here only ever wrote [t, t+1, t+2] — the last gameweek of
+// the client's window was permanently absent, `score3` summed two gameweeks
+// instead of three, and every transfer gain came out a third short against a
+// threshold calibrated on the full width. Silent: an absent projection is a
+// legitimate state everywhere downstream, so it degrades instead of erroring.
 export function upcomingGws(events: EventLite[], max = 38): number[] {
   const cur = events.find((e) => e.is_current) ?? events.find((e) => e.is_next);
   const start = cur ? cur.id : 1;
   const gws: number[] = [];
-  for (let g = start; g <= Math.min(max, start + 2); g++) gws.push(g);
+  for (let g = start; g <= Math.min(max, start + 3); g++) gws.push(g);
   return gws;
 }
 
