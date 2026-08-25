@@ -4,7 +4,7 @@ import { useThemeStore } from '@/store/themeStore';
 import { useProfile } from '@/api/profile';
 import { useManager } from '@/api/manager';
 import { initialsOf } from '@/lib/name';
-import { getTheme } from '@/constants/theme';
+import { FLOATING_NAV_SPACE, getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import { Icon } from '@/components/ui/Icon';
 
@@ -132,7 +132,8 @@ export function AccountMenu({
 const styles = StyleSheet.create({
   card: {
     position: 'absolute',
-    bottom: 92,
+    // Sits clear of the floating nav's top edge.
+    bottom: FLOATING_NAV_SPACE + 8,
     right: 16,
     width: 244,
     borderRadius: 16,

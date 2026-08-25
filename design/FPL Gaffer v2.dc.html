@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;height:100%;background:#070409}
+#root{height:100%}
+.no-sb{scrollbar-width:none;-ms-overflow-style:none}
+.no-sb::-webkit-scrollbar{display:none;width:0;height:0}
+input::placeholder{color:rgba(140,120,150,0.6);font-weight:500}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(0.94)}to{opacity:1;transform:scale(1)}}
+@keyframes livePulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+</style>
+</helmet>
+
+<div style="position:fixed;inset:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 90% at 50% 0%, #1a0e26 0%, #0c0710 60%, #070409 100%)">
+<div style="width:402px;height:874px;flex-shrink:0;transform:scale({{ scale }});transform-origin:center">
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ statusDark }}" hint-size="402px,874px">
+
+<!-- ═══════════════ LANDING ═══════════════ -->
+<sc-if value="{{ isLanding }}" hint-placeholder-val="{{ true }}">
+<div style="height:100%;background:linear-gradient(160deg,#2C0231 0%,#43064E 55%,#37003C 100%);position:relative;overflow:hidden;display:flex;flex-direction:column;padding:74px 26px 34px;box-sizing:border-box;animation:fadeIn .3s ease both">
+  <div style="position:absolute;top:-80px;right:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,135,0.28),transparent 70%)"></div>
+  <div style="position:absolute;bottom:120px;left:-90px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(233,0,82,0.26),transparent 70%)"></div>
+  <img src="assets/logo-wordmark-light.png" alt="FPL Gaffer" style="position:relative;height:34px;object-fit:contain;align-self:center">
+  <div style="position:relative;flex:1;display:flex;align-items:center;justify-content:center;min-height:0">
+    <sc-if value="{{ isSlide0 }}" hint-placeholder-val="{{ true }}">
+      <div style="animation:popIn .45s ease both;background:rgba(255,255,255,0.97);border-radius:20px;padding:18px 20px;width:240px;box-shadow:0 30px 60px rgba(0,0,0,0.45)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <span style="font-family:Montserrat,sans-serif;font-weight:800;font-size:15px;color:#1A1029">Top Picks</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:9.5px;color:#00843F;background:rgba(0,180,90,0.12);padding:3px 8px;border-radius:999px">GW24 LIVE</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:9px"><img src="assets/jerseys/manchester_city.png" style="width:28px;height:28px;object-fit:contain"><span style="flex:1;font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;color:#1A1029">Haaland</span><span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:#7B09E5">9.4</span></div>
+          <div style="display:flex;align-items:center;gap:9px"><img src="assets/jerseys/liverpool.png" style="width:28px;height:28px;object-fit:contain"><span style="flex:1;font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;color:#1A1029">Salah</span><span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:#7B09E5">8.9</span></div>
+          <div style="display:flex;align-items:center;gap:9px"><img src="assets/jerseys/arsenal.png" style="width:28px;height:28px;object-fit:contain"><span style="flex:1;font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;color:#1A1029">Saka</span><span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:#7B09E5">7.5</span></div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isSlide1 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:popIn .45s ease both;position:relative;width:260px;height:230px;border-radius:20px;overflow:hidden;background:repeating-linear-gradient(180deg,#23A55C 0 30px,#1E9852 30px 60px);box-shadow:inset 0 0 50px rgba(0,40,15,0.3), 0 30px 60px rgba(0,0,0,0.45);display:flex;flex-direction:column;justify-content:space-around;padding:18px 8px">
+        <svg viewBox="0 0 100 90" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%"><rect x="4" y="4" width="92" height="82" fill="none" stroke="#fff" strokeWidth="0.7" strokeOpacity="0.4"></rect><path d="M36 4 A 14 12 0 0 0 64 4" fill="none" stroke="#fff" strokeWidth="0.7" strokeOpacity="0.4"></path><rect x="26" y="64" width="48" height="22" fill="none" stroke="#fff" strokeWidth="0.7" strokeOpacity="0.4"></rect></svg>
+        <div style="position:relative;display:flex;justify-content:space-around">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><img src="assets/jerseys/manchester_city.png" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,20,8,0.4))"><span style="background:#131B2E;color:#fff;font-family:Montserrat,sans-serif;font-weight:600;font-size:10px;padding:3px 9px;border-radius:999px">Haaland</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><img src="assets/jerseys/aston_villa.png" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,20,8,0.4))"><span style="background:#131B2E;color:#fff;font-family:Montserrat,sans-serif;font-weight:600;font-size:10px;padding:3px 9px;border-radius:999px">Watkins</span></div>
+        </div>
+        <div style="position:relative;display:flex;justify-content:space-around">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><img src="assets/jerseys/arsenal.png" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,20,8,0.4))"><span style="background:#131B2E;color:#fff;font-family:Montserrat,sans-serif;font-weight:600;font-size:10px;padding:3px 9px;border-radius:999px">Saka</span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:3px"><img src="assets/jerseys/chelsea.png" style="width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,20,8,0.4))"><span style="background:#131B2E;color:#fff;font-family:Montserrat,sans-serif;font-weight:600;font-size:10px;padding:3px 9px;border-radius:999px">Palmer</span></div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isSlide2 }}" hint-placeholder-val="{{ false }}">
+      <div style="animation:popIn .45s ease both;display:flex;flex-direction:column;gap:12px;width:250px">
+        <div style="display:flex;gap:12px">
+          <div style="flex:1;background:rgba(255,255,255,0.97);border-radius:16px;padding:14px;box-shadow:0 20px 44px rgba(0,0,0,0.4)">
+            <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:14px;color:#1A1029;text-align:center">Wildcard</div>
+            <div style="display:flex;justify-content:center;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:5px;font-family:Inter,sans-serif;font-weight:700;font-size:10px;color:#00843F;background:rgba(0,180,90,0.12);padding:3px 9px;border-radius:999px"><span style="width:5px;height:5px;border-radius:999px;background:#00B454"></span>Available</span></div>
+          </div>
+          <div style="flex:1;background:#37003C;border-radius:16px;padding:14px;box-shadow:0 20px 44px rgba(0,0,0,0.4)">
+            <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:14px;color:#fff;text-align:center">Triple Capt</div>
+            <div style="display:flex;justify-content:center;margin-top:7px"><span style="display:inline-flex;align-items:center;gap:5px;font-family:Inter,sans-serif;font-weight:700;font-size:10px;color:#fff;background:rgba(255,255,255,0.18);padding:3px 9px;border-radius:999px"><span style="width:5px;height:5px;border-radius:999px;background:#00FF87"></span>Selected</span></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.16);border-radius:12px;padding:11px 14px;backdrop-filter:blur(10px)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FF9EB8" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5V12l3 2"></path></svg>
+          <span style="font-family:Montserrat,sans-serif;font-weight:700;font-size:12px;color:#FF9EB8">Deadline: Sat 11:00 AM</span>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+  <div style="position:relative">
+    <div style="font-family:Inter,sans-serif;font-weight:800;font-size:12.5px;letter-spacing:0.22em;text-transform:uppercase;color:#00FF87;margin-bottom:13px">{{ slideTag }}</div>
+    <h1 style="margin:0;font-family:Montserrat,sans-serif;font-weight:800;font-size:36px;line-height:1.06;letter-spacing:-0.025em;color:#fff">
+      <span style="display:block">{{ slideT1 }}</span>
+      <span style="display:block">{{ slideT2 }}</span>
+    </h1>
+    <p style="margin:13px 0 0;font-family:Inter,sans-serif;font-weight:500;font-size:15px;line-height:1.5;color:rgba(255,255,255,0.75);max-width:320px;text-wrap:pretty">{{ slideBody }}</p>
+  </div>
+  <div style="position:relative;display:flex;align-items:center;justify-content:space-between;margin-top:26px">
+    <button onClick="{{ goSignin }}" style="background:none;border:none;cursor:pointer;padding:10px 4px;font-family:Inter,sans-serif;font-weight:700;font-size:14.5px;color:rgba(255,255,255,0.68)">Skip intro</button>
+    <div style="display:flex;gap:7px">
+      <sc-for list="{{ slideDots }}" as="d" hint-placeholder-count="3">
+        <button onClick="{{ d.onGo }}" style="width:{{ d.w }};height:8px;border-radius:999px;border:none;cursor:pointer;background:{{ d.bg }};transition:width .3s ease, background .3s;padding:0"></button>
+      </sc-for>
+    </div>
+    <button onClick="{{ nextSlide }}" style="background:{{ slideBtnBg }};color:{{ slideBtnFg }};border:none;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:800;font-size:14.5px;border-radius:999px;padding:13px 24px;display:inline-flex;align-items:center;gap:7px;box-shadow:0 8px 22px rgba(0,0,0,0.3);transition:transform .15s ease" style-active="transform:scale(0.95)">
+      {{ slideBtnLabel }}
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M4 12h15M13 5l7 7-7 7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+    </button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══════════════ SIGN IN ═══════════════ -->
+<sc-if value="{{ isSignin }}" hint-placeholder-val="{{ false }}">
+<div class="no-sb" style="height:100%;background:{{ t.bg }};overflow-y:auto;box-sizing:border-box;padding:88px 24px 30px;animation:fadeIn .3s ease both">
+  <img src="{{ logoMark }}" alt="" style="height:52px;object-fit:contain;display:block;margin:0 auto">
+  <h1 style="margin:22px 0 0;font-family:Montserrat,sans-serif;font-weight:800;font-size:27px;letter-spacing:-0.02em;color:{{ t.text }};text-align:center">Welcome back, Gaffer</h1>
+  <p style="margin:7px 0 0;font-family:Inter,sans-serif;font-weight:500;font-size:14px;color:{{ t.muted }};text-align:center">Sign in to pick up your squad</p>
+  <div style="display:flex;flex-direction:column;gap:12px;margin-top:30px;animation:fadeUp .4s .05s ease both">
+    <div style="display:flex;align-items:center;gap:11px;background:{{ t.surface }};border:1.5px solid {{ t.border }};border-radius:15px;padding:0 16px;height:56px;transition:border-color .2s" style-focus="border-color:#7B09E5">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="3" stroke="{{ t.faint }}" strokeWidth="2"></rect><path d="M4 7l8 6 8-6" stroke="{{ t.faint }}" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+      <input type="email" placeholder="Email address" value="{{ email }}" onChange="{{ onEmail }}" style="flex:1;border:none;outline:none;background:transparent;font-family:Inter,sans-serif;font-weight:600;font-size:15px;color:{{ t.text }}">
+    </div>
+    <div style="display:flex;align-items:center;gap:11px;background:{{ t.surface }};border:1.5px solid {{ t.border }};border-radius:15px;padding:0 16px;height:56px;transition:border-color .2s" style-focus="border-color:#7B09E5">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5" stroke="{{ t.faint }}" strokeWidth="2"></rect><path d="M8 10.5V8a4 4 0 018 0v2.5" stroke="{{ t.faint }}" strokeWidth="2"></path></svg>
+      <input type="password" placeholder="Password" value="{{ password }}" onChange="{{ onPassword }}" style="flex:1;border:none;outline:none;background:transparent;font-family:Inter,sans-serif;font-weight:600;font-size:15px;color:{{ t.text }}">
+    </div>
+    <button onClick="{{ goHome }}" style="height:56px;border-radius:15px;border:none;cursor:pointer;background:linear-gradient(135deg,#37003C 0%,#6A0060 100%);color:#fff;font-family:Montserrat,sans-serif;font-weight:800;font-size:16px;box-shadow:0 10px 26px rgba(55,0,60,0.35);transition:transform .15s ease" style-active="transform:scale(0.97)">Sign in</button>
+    <button onClick="{{ goHome }}" style="height:50px;border-radius:15px;cursor:pointer;background:transparent;border:1.5px solid {{ t.border }};color:{{ t.text }};font-family:Montserrat,sans-serif;font-weight:700;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:9px;transition:transform .15s ease" style-active="transform:scale(0.97)">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#7B09E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 8V6.5A2.5 2.5 0 016.5 4H8M16 4h1.5A2.5 2.5 0 0120 6.5V8M20 16v1.5a2.5 2.5 0 01-2.5 2.5H16M8 20H6.5A2.5 2.5 0 014 17.5V16"></path><path d="M9 9.5v1M15 9.5v1M12 9v3l-1 1"></path><path d="M9 14.5s1 1.2 3 1.2 3-1.2 3-1.2"></path></svg>
+      Sign in with Face ID
+    </button>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;margin:24px 0">
+    <div style="flex:1;height:1px;background:{{ t.line }}"></div>
+    <span style="font-family:Inter,sans-serif;font-weight:600;font-size:12px;color:{{ t.faint }}">or continue with</span>
+    <div style="flex:1;height:1px;background:{{ t.line }}"></div>
+  </div>
+  <div style="display:flex;gap:12px">
+    <button onClick="{{ goHome }}" style="flex:1;height:52px;border-radius:15px;cursor:pointer;background:{{ t.surface }};border:1.5px solid {{ t.border }};display:flex;align-items:center;justify-content:center;gap:9px;font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:{{ t.text }};transition:transform .15s ease" style-active="transform:scale(0.97)">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8a12 12 0 110-24c3.1 0 5.8 1.1 8 3l5.7-5.7A20 20 0 1044 24c0-1.2-.1-2.4-.4-3.5z"></path><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8A12 12 0 0124 12c3.1 0 5.8 1.1 8 3l5.7-5.7A20 20 0 006.3 14.7z"></path><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2A12 12 0 0124 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"></path><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3a12 12 0 01-4.1 5.6l6.2 5.2C39.8 35.5 44 30.5 44 24c0-1.2-.1-2.4-.4-3.5z"></path></svg>
+      Google
+    </button>
+    <button onClick="{{ goHome }}" style="flex:1;height:52px;border-radius:15px;cursor:pointer;background:{{ t.surface }};border:1.5px solid {{ t.border }};display:flex;align-items:center;justify-content:center;gap:9px;font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:{{ t.text }};transition:transform .15s ease" style-active="transform:scale(0.97)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="{{ t.text }}"><path d="M16.4 12.6c0-2.3 1.9-3.4 2-3.5-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.1-2.8.8-3.5.8-.7 0-1.9-.8-3-.8-1.6 0-3 .9-3.8 2.3-1.6 2.8-.4 7 1.2 9.3.8 1.1 1.7 2.4 2.9 2.3 1.2-.05 1.6-.75 3-.75s1.8.75 3 .73c1.2-.02 2-1.1 2.8-2.2.9-1.3 1.2-2.5 1.3-2.6-.03-.01-2.5-1-2.5-3.9zM14.2 5.6c.65-.8 1.1-1.9.97-3-.94.04-2.1.63-2.77 1.42-.6.7-1.13 1.83-.99 2.9 1.05.08 2.13-.53 2.79-1.32z"></path></svg>
+      Apple
+    </button>
+  </div>
+</div>
+</sc-if>
+
+<!-- ═══════════════ HOME ═══════════════ -->
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ false }}">
+<div style="height:100%;position:relative;background:{{ t.bg }};overflow:hidden;animation:fadeIn .3s ease both">
+  <div style="position:absolute;inset:0;background:{{ t.bgGlow }};pointer-events:none"></div>
+
+  <!-- ── TOP PICKS TAB ── -->
+  <sc-if value="{{ isTabTop }}" hint-placeholder-val="{{ false }}">
+  <div class="no-sb" style="position:absolute;inset:0;overflow-y:auto;padding:70px 0 120px;animation:fadeUp .3s ease both">
+    <div style="padding:0 18px 14px">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:5px">
+        <h1 style="margin:0;font-family:Montserrat,sans-serif;font-weight:800;font-size:30px;letter-spacing:-0.02em;color:{{ t.text }}">Top Picks</h1>
+        <span style="display:inline-flex;align-items:center;gap:5px;font-family:Inter,sans-serif;font-weight:700;font-size:11.5px;letter-spacing:0.06em;color:{{ t.green }};background:{{ t.greenSoft }};padding:4px 9px;border-radius:999px">
+          <span style="width:5px;height:5px;border-radius:999px;background:{{ t.greenDot }};animation:livePulse 2s ease infinite"></span>GW24 LIVE
+        </span>
+      </div>
+      <p style="margin:0;font-family:Inter,sans-serif;font-weight:400;font-size:13px;line-height:19px;color:{{ t.muted }}">Top Picks refresh once the current gameweek is done.</p>
+    </div>
+    <div style="padding:0 16px 16px">
+      <div style="position:relative;display:flex;padding:4px;background:{{ t.segTrack }};border-radius:13px">
+        <div style="position:absolute;top:4px;bottom:4px;width:calc((100% - 8px)*0.25);left:{{ segLeft }};border-radius:9px;background:{{ t.segFill }};box-shadow:0 4px 12px rgba(55,0,60,0.25);transition:left .28s cubic-bezier(.3,1.3,.6,1)"></div>
+        <sc-for list="{{ segItems }}" as="s" hint-placeholder-count="4">
+          <button onClick="{{ s.onSel }}" style="position:relative;flex:1;padding:9px 0;border-radius:9px;border:none;cursor:pointer;background:transparent;font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;color:{{ s.color }};transition:color .2s">{{ s.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="padding:0 16px" onTouchStart="{{ swipeStart }}" onTouchEnd="{{ swipeEnd }}" onMouseDown="{{ swipeStart }}" onMouseUp="{{ swipeEnd }}">
+      <div key="{{ topPos }}" style="background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:22px;box-shadow:{{ t.shadow }};overflow:hidden;animation:fadeUp .3s ease both;touch-action:pan-y;user-select:none">
+        <div style="display:flex;align-items:center;gap:10px;padding:17px 20px 15px">
+          <span style="font-family:Montserrat,sans-serif;font-weight:800;font-size:21px;letter-spacing:-0.02em;color:{{ t.text }}">{{ topPosTitle }}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 0.68fr 0.52fr 0.56fr;background:{{ t.headStrip }};border-top:1px solid {{ t.line }};border-bottom:1px solid {{ t.line }}">
+          <span style="font-family:Inter,sans-serif;font-weight:700;font-size:11px;color:{{ t.faint }};padding:10px 0 10px 22px">Player</span>
+          <span style="font-family:Inter,sans-serif;font-weight:700;font-size:11px;color:{{ t.faint }};text-align:center;padding:10px 0;border-left:1px solid {{ t.line }}">Price</span>
+          <span style="font-family:Inter,sans-serif;font-weight:700;font-size:11px;color:{{ t.faint }};text-align:center;padding:10px 0">Form</span>
+          <span style="font-family:Inter,sans-serif;font-weight:800;font-size:11px;color:{{ t.purple }};text-align:center;padding:10px 0">xPts</span>
+        </div>
+        <sc-for list="{{ picksRows }}" as="r" hint-placeholder-count="7">
+          <div onClick="{{ r.onOpen }}" style="display:grid;grid-template-columns:2fr 0.68fr 0.52fr 0.56fr;align-items:stretch;background:{{ r.bg }};border-bottom:{{ r.bBottom }};opacity:{{ r.op }};cursor:pointer;transition:background .18s" style-hover="background:{{ t.rowHover }}">
+            <div style="position:relative;display:flex;align-items:center;gap:9px;padding:12px 8px 12px 16px;min-width:0">
+              <span style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:5px;height:64%;border-radius:0 3px 3px 0;background:{{ t.purpleBar }};opacity:{{ r.barOp }}"></span>
+              <img src="{{ r.jersey }}" alt="" style="width:38px;height:38px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,0.22))">
+              <div style="min-width:0">
+                <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:15px;letter-spacing:-0.015em;color:{{ t.text }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div>
+                <div style="display:flex;align-items:center;gap:5px;margin-top:2px">
+                  <span style="font-family:Inter,sans-serif;font-weight:500;font-size:11px;color:{{ t.faint }};white-space:nowrap">{{ r.fx }}</span>
+                  <sc-if value="{{ r.owned }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-family:Inter,sans-serif;font-weight:700;font-size:8.5px;letter-spacing:0.04em;text-transform:uppercase;color:{{ t.faint }};background:{{ t.headStrip }};border:1px solid {{ t.line }};padding:2px 6px;border-radius:999px;flex-shrink:0">In team</span>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;border-left:1px solid {{ t.line }}"><span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:14.5px;color:{{ t.text }};letter-spacing:-0.02em">{{ r.price }}</span></div>
+            <div style="display:flex;align-items:center;justify-content:center"><span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:14.5px;color:{{ t.muted }}">{{ r.form }}</span></div>
+            <div style="display:flex;align-items:center;justify-content:center"><span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14.5px;color:{{ r.xpColor }}">{{ r.xp }}</span></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ── MY TEAM TAB ── -->
+  <sc-if value="{{ isTabTeam }}" hint-placeholder-val="{{ true }}">
+  <div class="no-sb" style="position:absolute;inset:0;overflow-y:auto;padding:70px 0 120px;animation:fadeUp .3s ease both">
+    <div style="padding:0 18px 12px;display:flex;align-items:flex-end;justify-content:space-between">
+      <div>
+        <h1 style="margin:0;font-family:Montserrat,sans-serif;font-weight:800;font-size:30px;letter-spacing:-0.02em;color:{{ t.text }};line-height:1.1">Apex Pitch FC</h1>
+      </div>
+    </div>
+    <sc-if value="{{ gwIsNext }}" hint-placeholder-val="{{ false }}">
+      <div style="margin:0 16px 14px;display:flex;align-items:center;justify-content:center;gap:9px;background:{{ t.deadlineBg }};border-radius:12px;padding:12px 16px;animation:fadeUp .3s ease both">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{ t.deadlineFg }}" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5V12l3 2"></path></svg>
+        <span style="font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;color:{{ t.deadlineFg }}">Deadline for Gameweek 25: Sat 11:00 AM PST</span>
+      </div>
+    </sc-if>
+    <div style="display:flex;justify-content:center;padding:0 16px 14px">
+      <div style="display:flex;align-items:center;gap:6px;background:{{ t.capsuleBg }};border:1px solid {{ t.border }};border-radius:999px;padding:5px;box-shadow:{{ t.capsuleShadow }}">
+        <button onClick="{{ gwPrev }}" style="width:36px;height:36px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:{{ gwPrevOp }};transition:background .15s" style-hover="background:{{ t.hoverSoft }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="{{ t.muted }}" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+        </button>
+        <span style="display:inline-flex;align-items:center;justify-content:center;gap:7px;min-width:150px;font-family:Montserrat,sans-serif;font-weight:700;font-size:14px;color:{{ gwChipFg }};background:{{ gwChipBg }};border-radius:999px;padding:8px 18px;transition:background .25s, color .25s">
+          <sc-if value="{{ gwShowDot }}" hint-placeholder-val="{{ true }}"><span style="width:7px;height:7px;border-radius:999px;background:{{ gwDotBg }};animation:livePulse 2s ease infinite"></span></sc-if>
+          Gameweek {{ gw }}
+        </span>
+        <button onClick="{{ gwNext }}" style="width:36px;height:36px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:{{ gwNextOp }};transition:background .15s" style-hover="background:{{ t.hoverSoft }}">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M9 5l7 7-7 7" stroke="{{ t.muted }}" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+        </button>
+      </div>
+    </div>
+    <!-- hero -->
+    <sc-if value="{{ heroUpcoming }}" hint-placeholder-val="{{ false }}">
+      <div style="margin:0 16px;border-radius:22px;background:{{ t.heroBg }};position:relative;overflow:hidden;box-shadow:{{ t.heroShadow }}">
+        <div style="position:absolute;top:-60px;right:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(255,197,61,0.18),transparent 68%)"></div>
+        <div style="position:relative;display:flex;align-items:flex-start;justify-content:space-between;padding:20px 22px 22px">
+          <div>
+            <div style="font-family:Inter,sans-serif;font-weight:700;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.55)">Total Points</div>
+            <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:48px;line-height:1;letter-spacing:-0.03em;color:#fff;margin-top:5px">1,452</div>
+          </div>
+          <span style="font-family:Inter,sans-serif;font-weight:700;font-size:11px;letter-spacing:0.04em;white-space:nowrap;color:#FFE08A;background:rgba(255,197,61,0.18);padding:6px 12px;border-radius:999px">Yet to play</span>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ heroPlayed }}" hint-placeholder-val="{{ true }}">
+      <div style="margin:0 16px;border-radius:22px;background:{{ t.heroBg }};position:relative;overflow:hidden;box-shadow:{{ t.heroShadow }}">
+        <div style="position:absolute;top:-60px;right:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,135,0.2),transparent 68%)"></div>
+        <div style="position:relative;display:flex;align-items:stretch;padding:18px 20px 14px">
+          <div style="flex:1.2;display:flex;flex-direction:column;justify-content:center">
+            <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:56px;line-height:0.95;letter-spacing:-0.03em;color:#fff">{{ heroPts }}</div>
+            <div style="font-family:Inter,sans-serif;font-weight:700;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-top:7px">GW Points</div>
+            <span style="display:inline-flex;align-self:flex-start;align-items:center;gap:4px;font-family:Inter,sans-serif;font-weight:700;font-size:12px;color:#9BF6C4;background:rgba(0,228,114,0.16);padding:5px 10px;border-radius:999px;margin-top:10px">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"></path></svg>+12 vs avg
+            </span>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,0.14);margin:6px 0"></div>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:11px;padding-left:20px">
+            <div>
+              <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;color:#fff">1,452</div>
+              <div style="font-family:Inter,sans-serif;font-weight:700;font-size:9.5px;letter-spacing:0.09em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-top:2px">Total Points</div>
+            </div>
+            <div>
+              <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;color:#fff">52</div>
+              <div style="font-family:Inter,sans-serif;font-weight:700;font-size:9.5px;letter-spacing:0.09em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-top:2px">Average</div>
+            </div>
+            <div>
+              <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;color:#fff">118</div>
+              <div style="font-family:Inter,sans-serif;font-weight:700;font-size:9.5px;letter-spacing:0.09em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-top:2px">Highest</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+    <!-- play a chip (next unplayed gameweek only) -->
+    <sc-if value="{{ gwIsNext }}" hint-placeholder-val="{{ false }}">
+      <div style="font-family:Inter,sans-serif;font-weight:800;font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:{{ t.faint }};margin:18px 18px 10px">Play a Chip</div>
+      <div class="no-sb" style="display:flex;gap:10px;overflow-x:auto;padding:0 16px 2px">
+        <sc-for list="{{ chipRows }}" as="c" hint-placeholder-count="4">
+          <button onClick="{{ c.onToggle }}" style="flex-shrink:0;min-width:118px;border-radius:14px;padding:14px 18px;text-align:center;cursor:{{ c.cursor }};background:{{ c.bg }};border:1.5px solid {{ c.bd }};box-shadow:{{ c.shadow }};transition:background .2s, box-shadow .2s, transform .15s" style-active="transform:scale(0.97)">
+            <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:15px;letter-spacing:-0.01em;color:{{ c.fg }};text-decoration:{{ c.deco }}">{{ c.name }}</div>
+            <div style="margin-top:6px"><span style="display:inline-flex;align-items:center;gap:5px;font-family:Inter,sans-serif;font-weight:700;font-size:10.5px;border-radius:999px;padding:3px 9px;color:{{ c.stFg }};background:{{ c.stBg }}">{{ c.status }}</span></div>
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ hasChipTip }}" hint-placeholder-val="{{ false }}">
+        <div style="margin:10px 16px 0;background:{{ t.chipTipBg }};border-radius:14px;padding:14px 16px;box-shadow:0 10px 24px rgba(55,0,60,0.3);animation:fadeUp .2s ease both">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 00-3.5 10.9c.5.4.8 1 .9 1.6l.2 1h4.8l.2-1c.1-.6.4-1.2.9-1.6A6 6 0 0012 3z" fill="#FFC53D"></path><path d="M9.5 19.5h5M10 21.5h4" stroke="#FFC53D" strokeWidth="2" strokeLinecap="round"></path></svg>
+            <span style="font-family:Montserrat,sans-serif;font-weight:800;font-size:13.5px;color:#fff;letter-spacing:-0.01em">{{ chipTipTitle }}</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <sc-for list="{{ chipTipLines }}" as="ln" hint-placeholder-count="2">
+              <div style="display:flex;align-items:flex-start;gap:8px">
+                <span style="width:5px;height:5px;border-radius:999px;background:#00E478;margin-top:6px;flex-shrink:0"></span>
+                <span style="font-family:Inter,sans-serif;font-weight:500;font-size:12.5px;line-height:18px;color:rgba(255,255,255,0.88)">{{ ln.text }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+    </sc-if>
+    <!-- match centre -->
+    <sc-if value="{{ showMatches }}" hint-placeholder-val="{{ true }}">
+      <div style="font-family:Inter,sans-serif;font-weight:800;font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:{{ t.faint }};margin:16px 18px 9px">Match Centre</div>
+      <div class="no-sb" style="display:flex;gap:9px;overflow-x:auto;padding:0 16px 4px;margin-bottom:2px">
+        <sc-for list="{{ matchRows }}" as="m" hint-placeholder-count="4">
+          <div style="flex-shrink:0;display:flex;align-items:center;gap:9px;background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:14px;padding:10px 13px">
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;color:{{ t.text }}">{{ m.score }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:600;font-size:9.5px;color:{{ m.stFg }};background:{{ m.stBg }};padding:2px 7px;border-radius:999px">{{ m.status }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <!-- pitch (borderless) -->
+    <div style="margin:14px 16px 0;position:relative;border-radius:22px;overflow:hidden;background:{{ t.pitchGrass }};box-shadow:{{ t.pitchShadow }};padding:22px 4px 24px">
+      <svg viewBox="0 0 100 150" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+        <rect x="3" y="3" width="94" height="144" fill="none" stroke="#fff" strokeWidth="0.5" strokeOpacity="0.42"></rect>
+        <path d="M37.5 3 A 12.5 18 0 0 0 62.5 3" fill="none" stroke="#fff" strokeWidth="0.5" strokeOpacity="0.42"></path>
+        <rect x="22" y="110" width="56" height="37" fill="none" stroke="#fff" strokeWidth="0.5" strokeOpacity="0.42"></rect>
+        <rect x="37.5" y="134" width="25" height="13" fill="none" stroke="#fff" strokeWidth="0.5" strokeOpacity="0.42"></rect>
+        <circle cx="50" cy="124" r="0.9" fill="#fff" fillOpacity="0.42"></circle>
+        <path d="M40 110 A 13 15 0 0 1 60 110" fill="none" stroke="#fff" strokeWidth="0.5" strokeOpacity="0.42"></path>
+      </svg>
+      <div style="position:absolute;inset:0;background:radial-gradient(110% 60% at 50% 0%,rgba(255,255,255,0.09),transparent 55%);pointer-events:none"></div>
+      <div style="position:relative;display:flex;flex-direction:column;gap:15px">
+        <sc-for list="{{ pitchRows }}" as="row" hint-placeholder-count="4">
+          <div style="display:flex;justify-content:space-around;align-items:flex-start">
+            <sc-for list="{{ row.players }}" as="p" hint-placeholder-count="3">
+              <div onClick="{{ p.onOpen }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;width:74px;cursor:pointer;transition:transform .18s ease" style-hover="transform:translateY(-3px)" style-active="transform:scale(0.95)">
+                <div style="position:relative;width:52px;height:52px;display:flex;align-items:center;justify-content:center">
+                  <img src="{{ p.jersey }}" alt="" style="width:60px;height:60px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,20,8,0.4))">
+                  <sc-if value="{{ p.capt }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#FFD60A;color:#1a1a1a;display:flex;align-items:center;justify-content:center;font-family:Montserrat,sans-serif;font-weight:800;font-size:10.5px;box-shadow:0 2px 5px rgba(0,0,0,0.4);border:1.5px solid rgba(0,0,0,0.12);z-index:3">C</div>
+                  </sc-if>
+                  <sc-if value="{{ p.hasCards }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute;top:-6px;left:-8px;display:flex;z-index:3">
+                      <sc-for list="{{ p.cards }}" as="cd" hint-placeholder-count="1">
+                        <div style="width:12px;height:16px;border-radius:2.5px;background:{{ cd.color }};transform:rotate(-12deg);margin-left:{{ cd.ml }};box-shadow:0 2px 4px rgba(0,0,0,0.5);border:0.5px solid rgba(0,0,0,0.15)"></div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ p.ball }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute;right:-4px;bottom:10px;width:20px;height:20px;border-radius:50%;background:#0B1224;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.55);border:1.5px solid rgba(255,255,255,0.22);z-index:3">
+                      <svg width="13" height="13" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="#fff"></circle><path d="M12 6.6l3.4 2.5-1.3 4h-4.2l-1.3-4z" fill="#0B1224"></path></svg>
+                    </div>
+                  </sc-if>
+                </div>
+                <div style="display:inline-flex;align-items:center;gap:5px;max-width:92px;background:{{ t.pillBg }};border:1px solid {{ t.pillBorder }};border-radius:999px;padding:{{ p.pillPad }};box-shadow:0 3px 8px rgba(0,10,4,0.3)">
+                  <sc-if value="{{ p.showDisc }}" hint-placeholder-val="{{ true }}">
+                    <span style="width:18px;height:18px;border-radius:50%;flex-shrink:0;background:{{ t.pillDisc }};display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;color:{{ t.pillDiscText }}">{{ p.pts }}</span>
+                  </sc-if>
+                  <span style="font-family:Montserrat,sans-serif;font-weight:600;font-size:11.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <!-- dugout -->
+    <div style="margin:14px 16px 0;background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:20px;padding:14px 8px 16px;box-shadow:{{ t.shadow }}">
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{ t.faint }}" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10h18M5 10V7a2 2 0 012-2h10a2 2 0 012 2v3M4 10l-1 9M20 10l1 9M3 19h18"></path></svg>
+        <span style="font-family:Inter,sans-serif;font-weight:800;font-size:11.5px;letter-spacing:0.12em;text-transform:uppercase;color:{{ t.faint }}">Dugout</span>
+      </div>
+      <div style="display:flex;justify-content:space-around;align-items:flex-start">
+        <sc-for list="{{ benchRows }}" as="p" hint-placeholder-count="4">
+          <div onClick="{{ p.onOpen }}" style="display:flex;flex-direction:column;align-items:center;gap:5px;width:80px;cursor:pointer;transition:transform .18s ease" style-hover="transform:translateY(-3px)" style-active="transform:scale(0.95)">
+            <img src="{{ p.jersey }}" alt="" style="width:50px;height:50px;object-fit:contain;filter:drop-shadow(0 3px 5px rgba(0,0,0,0.3))">
+            <div style="display:inline-flex;align-items:center;gap:5px;max-width:88px;background:{{ t.pillBg }};border:1px solid {{ t.pillBorder }};border-radius:999px;padding:{{ p.pillPad }}">
+              <sc-if value="{{ p.showDisc }}" hint-placeholder-val="{{ true }}">
+                <span style="width:17px;height:17px;border-radius:50%;flex-shrink:0;background:{{ t.pillDisc }};display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:{{ t.pillDiscText }}">{{ p.pts }}</span>
+              </sc-if>
+              <span style="font-family:Montserrat,sans-serif;font-weight:600;font-size:11px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <!-- captain pick -->
+    <div style="margin:14px 16px 0;background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:20px;padding:16px;box-shadow:{{ t.shadow }};opacity:{{ lockedOp }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <span style="font-family:Montserrat,sans-serif;font-weight:800;font-size:16.5px;letter-spacing:-0.01em;color:{{ t.text }}">Captain Pick</span>
+        <sc-if value="{{ gwLocked }}" hint-placeholder-val="{{ true }}">
+          <span style="display:inline-flex;align-items:center;gap:4px;font-family:Inter,sans-serif;font-weight:700;font-size:10.5px;color:{{ t.faint }};background:{{ t.headStrip }};border:1px solid {{ t.border }};padding:4px 9px;border-radius:999px">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="{{ t.faint }}" strokeWidth="2.2"></rect><path d="M8 11V8a4 4 0 018 0v3" stroke="{{ t.faint }}" strokeWidth="2.2"></path></svg>Locked
+          </span>
+        </sc-if>
+      </div>
+      <sc-for list="{{ captainRows }}" as="c" hint-placeholder-count="3">
+        <div onClick="{{ c.onPick }}" style="display:flex;align-items:center;gap:11px;border-radius:13px;background:{{ c.bg }};border:1.5px solid {{ c.bd }};margin-top:{{ c.mt }};padding:11px 10px;cursor:{{ c.cursor }};transition:background .2s, border-color .2s">
+          <div style="position:relative;flex-shrink:0">
+            <img src="{{ c.jersey }}" alt="" style="width:38px;height:38px;object-fit:contain">
+            <sc-if value="{{ c.isCap }}" hint-placeholder-val="{{ false }}">
+              <span style="position:absolute;top:-5px;right:-5px;width:17px;height:17px;border-radius:50%;background:#FFD60A;color:#1a1a1a;display:flex;align-items:center;justify-content:center;font-family:Montserrat,sans-serif;font-weight:800;font-size:9.5px;border:1.5px solid rgba(0,0,0,0.12)">C</span>
+            </sc-if>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:7px">
+              <span style="font-family:Montserrat,sans-serif;font-weight:700;font-size:15px;letter-spacing:-0.01em;color:{{ t.text }}">{{ c.name }}</span>
+              <sc-if value="{{ c.top }}" hint-placeholder-val="{{ false }}">
+                <span style="font-family:Inter,sans-serif;font-weight:800;font-size:8.5px;letter-spacing:0.06em;color:#fff;background:{{ t.pink }};padding:2px 6px;border-radius:999px;flex-shrink:0">TOP PICK</span>
+              </sc-if>
+            </div>
+            <div style="font-family:Inter,sans-serif;font-weight:500;font-size:11.5px;line-height:15px;color:{{ t.faint }};margin-top:3px;text-wrap:pretty">{{ c.note }}</div>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;color:{{ c.xpColor }};flex-shrink:0">{{ c.xp }} <span style="font-size:10px;font-weight:600;color:{{ t.faint }}">xPts</span></span>
+        </div>
+      </sc-for>
+    </div>
+    <!-- suggestions -->
+    <div style="margin:14px 16px 0;background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:20px;padding:16px 16px 14px;box-shadow:{{ t.shadow }};opacity:{{ lockedOp }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 00-3.5 10.9c.5.4.8 1 .9 1.6l.2 1h4.8l.2-1c.1-.6.4-1.2.9-1.6A6 6 0 0012 3z" fill="{{ t.gold }}"></path><path d="M9.5 19.5h5M10 21.5h4" stroke="{{ t.gold }}" strokeWidth="2" strokeLinecap="round"></path></svg>
+          <span style="font-family:Montserrat,sans-serif;font-weight:800;font-size:16.5px;letter-spacing:-0.01em;color:{{ t.text }}">Team Suggestions</span>
+        </div>
+        <sc-if value="{{ gwLocked }}" hint-placeholder-val="{{ true }}">
+          <span style="font-family:Inter,sans-serif;font-weight:600;font-size:11px;color:{{ t.faint }}">{{ lockNote }}</span>
+        </sc-if>
+      </div>
+      <sc-for list="{{ suggRows }}" as="s" hint-placeholder-count="2">
+        <div style="display:flex;align-items:center;gap:11px;border-radius:13px;background:{{ s.bg }};border:1.5px solid {{ s.bd }};margin-top:{{ s.mt }};padding:11px 10px;transition:background .2s, border-color .2s">
+          <span style="width:34px;height:34px;border-radius:10px;flex-shrink:0;background:{{ t.headStrip }};display:flex;align-items:center;justify-content:center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M7 4L3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8" stroke="{{ t.purple }}" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+          </span>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+              <span style="font-family:Montserrat,sans-serif;font-weight:700;font-size:13.5px;letter-spacing:-0.01em;color:{{ t.text }}">{{ s.text }}</span>
+              <span style="font-family:Inter,sans-serif;font-weight:700;font-size:10.5px;color:{{ t.green }};background:{{ t.greenSoft }};padding:2px 7px;border-radius:999px;flex-shrink:0">{{ s.gain }}</span>
+            </div>
+            <div style="font-family:Inter,sans-serif;font-weight:500;font-size:11.5px;line-height:16px;color:{{ t.faint }};margin-top:3px;text-wrap:pretty">{{ s.detail }}</div>
+          </div>
+          <sc-if value="{{ gwIsNext }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ s.onToggle }}" style="width:26px;height:26px;border-radius:999px;flex-shrink:0;cursor:pointer;padding:0;background:{{ s.ckBg }};border:2px solid {{ s.ckBd }};display:flex;align-items:center;justify-content:center;transition:background .15s, border-color .15s">
+              <sc-if value="{{ s.applied }}" hint-placeholder-val="{{ false }}">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+              </sc-if>
+            </button>
+          </sc-if>
+          <sc-if value="{{ gwLocked }}" hint-placeholder-val="{{ true }}">
+            <span style="display:inline-flex;align-items:center;gap:5px;font-family:Inter,sans-serif;font-weight:700;font-size:11.5px;color:{{ s.stColor }};flex-shrink:0">{{ s.stLabel }}</span>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ showApplyTeam }}" hint-placeholder-val="{{ false }}"><div style="height:110px"></div></sc-if>
+  </div>
+  <!-- apply-all (team) -->
+  <sc-if value="{{ showApplyTeam }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:16px;right:16px;bottom:112px;z-index:20;background:{{ t.surface }};border:1.5px solid {{ t.greenDot }};border-radius:16px;padding:14px 16px;box-shadow:{{ t.popShadow }};animation:fadeUp .25s ease both">
+      <sc-if value="{{ teamConfirmed }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;justify-content:center;gap:9px;font-family:Montserrat,sans-serif;font-weight:800;font-size:15px;color:{{ t.green }}">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="{{ t.green }}" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"></path></svg>Changes confirmed
+        </div>
+      </sc-if>
+      <sc-if value="{{ teamNotConfirmed }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:12px">
+          <span style="width:32px;height:32px;border-radius:9px;background:{{ t.greenSoft }};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M7 4L3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8" stroke="{{ t.green }}" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+          </span>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:14.5px;color:{{ t.text }}">{{ teamPendingLabel }}</div>
+            <div style="font-family:Inter,sans-serif;font-weight:500;font-size:11.5px;color:{{ t.faint }};margin-top:1px">Review and confirm to update your team</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button onClick="{{ onUndoTeam }}" style="flex:1;height:42px;border-radius:12px;border:1.5px solid {{ t.goldBd }};background:{{ t.goldSoft }};color:{{ t.gold }};font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:transform .15s" style-active="transform:scale(0.97)">Undo all</button>
+          <button onClick="{{ onConfirmTeam }}" style="flex:1;height:42px;border-radius:12px;border:none;background:{{ t.greenDot }};color:#fff;font-family:Montserrat,sans-serif;font-weight:800;font-size:13.5px;cursor:pointer;transition:transform .15s" style-active="transform:scale(0.97)">Confirm</button>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  </sc-if>
+
+  <!-- ── TRANSFER TAB ── -->
+  <sc-if value="{{ isTabTransfer }}" hint-placeholder-val="{{ false }}">
+  <div class="no-sb" style="position:absolute;inset:0;overflow-y:auto;padding:70px 0 120px;animation:fadeUp .3s ease both">
+    <div style="padding:0 18px 12px">
+      <h1 style="margin:0;font-family:Montserrat,sans-serif;font-weight:800;font-size:30px;letter-spacing:-0.02em;color:{{ t.text }}">Transfer</h1>
+    </div>
+    <div style="margin:0 16px 14px;display:flex;align-items:center;justify-content:center;gap:9px;background:{{ t.deadlineBg }};border-radius:12px;padding:12px 16px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="{{ t.deadlineFg }}" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5V12l3 2"></path></svg>
+      <span style="font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;color:{{ t.deadlineFg }}">Deadline for Gameweek 25: Sat 11:00 AM PST</span>
+    </div>
+    <div style="margin:0 16px;border-radius:22px;background:{{ t.heroBg }};position:relative;overflow:hidden;box-shadow:{{ t.heroShadow }}">
+      <div style="position:absolute;top:-60px;right:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,135,0.16),transparent 68%)"></div>
+      <div style="position:relative;padding:18px 20px 16px">
+        <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:21px;color:#fff;text-align:center">Gameweek 25</div>
+        <div style="height:1px;background:rgba(255,255,255,0.13);margin:12px 0 14px"></div>
+        <div style="display:flex;align-items:center">
+          <div style="flex:1;text-align:center">
+            <div style="font-family:Inter,sans-serif;font-weight:700;font-size:9.5px;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.55)">Free Transfers</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:21px;color:#fff;margin-top:4px">1</div>
+          </div>
+          <div style="width:1px;height:34px;background:rgba(255,255,255,0.13)"></div>
+          <div style="flex:1;text-align:center">
+            <div style="font-family:Inter,sans-serif;font-weight:700;font-size:9.5px;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.55)">In the Bank</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:21px;color:#fff;margin-top:4px">£2.4m</div>
+          </div>
+          <div style="width:1px;height:34px;background:rgba(255,255,255,0.13)"></div>
+          <div style="flex:1;text-align:center">
+            <div style="font-family:Inter,sans-serif;font-weight:700;font-size:9.5px;letter-spacing:0.07em;text-transform:uppercase;color:rgba(255,255,255,0.55)">Squad Value</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:21px;color:#fff;margin-top:4px">£102.5m</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 15-man pitch -->
+    <div style="margin:16px 16px 0;position:relative;border-radius:22px;overflow:hidden;background:{{ t.pitchGrass }};box-shadow:{{ t.pitchShadow }};padding:22px 2px 24px">
+      <svg viewBox="0 0 100 150" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+        <rect x="3" y="3" width="94" height="144" fill="none" stroke="#fff" strokeWidth="0.5" strokeOpacity="0.42"></rect>
+        <path d="M37.5 3 A 12.5 18 0 0 0 62.5 3" fill="none" stroke="#fff" strokeWidth="0.5" strokeOpacity="0.42"></path>
+        <rect x="22" y="110" width="56" height="37" fill="none" stroke="#fff" strokeWidth="0.5" strokeOpacity="0.42"></rect>
+        <rect x="37.5" y="134" width="25" height="13" fill="none" stroke="#fff" strokeWidth="0.5" strokeOpacity="0.42"></rect>
+        <circle cx="50" cy="124" r="0.9" fill="#fff" fillOpacity="0.42"></circle>
+        <path d="M40 110 A 13 15 0 0 1 60 110" fill="none" stroke="#fff" strokeWidth="0.5" strokeOpacity="0.42"></path>
+      </svg>
+      <div style="position:relative;display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ transferRows }}" as="row" hint-placeholder-count="4">
+          <div style="display:flex;justify-content:space-around;align-items:flex-start">
+            <sc-for list="{{ row.players }}" as="p" hint-placeholder-count="3">
+              <button onClick="{{ p.onTap }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;width:70px;background:none;border:none;padding:0;cursor:pointer;transition:transform .18s ease" style-hover="transform:translateY(-3px)" style-active="transform:scale(0.94)">
+                <span style="background:#fff;border-radius:999px;padding:2px 9px;box-shadow:0 2px 6px rgba(0,0,0,0.28);font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;color:#1A2236;letter-spacing:-0.02em">{{ p.price }}</span>
+                <img src="{{ p.jersey }}" alt="" style="width:50px;height:50px;object-fit:contain;filter:drop-shadow(0 4px 6px rgba(0,20,8,0.4))">
+                <span style="display:inline-block;max-width:78px;background:{{ t.pillBg }};border:1px solid {{ t.pillBorder }};border-radius:999px;padding:3px 10px;font-family:Montserrat,sans-serif;font-weight:600;font-size:10.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="text-align:center;font-family:Inter,sans-serif;font-style:italic;font-weight:500;font-size:13px;color:{{ t.faint }};padding:13px 0 2px">Tap any player to see transfer targets</div>
+    <!-- transfer suggestions -->
+    <div style="margin:12px 16px 0;background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:20px;padding:16px 16px 14px;box-shadow:{{ t.shadow }}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 00-3.5 10.9c.5.4.8 1 .9 1.6l.2 1h4.8l.2-1c.1-.6.4-1.2.9-1.6A6 6 0 0012 3z" fill="{{ t.gold }}"></path><path d="M9.5 19.5h5M10 21.5h4" stroke="{{ t.gold }}" strokeWidth="2" strokeLinecap="round"></path></svg>
+        <span style="font-family:Montserrat,sans-serif;font-weight:800;font-size:16.5px;letter-spacing:-0.01em;color:{{ t.text }}">Transfer Suggestions</span>
+      </div>
+      <sc-for list="{{ tSuggRows }}" as="s" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;gap:11px;border-radius:13px;background:{{ s.bg }};border:1.5px solid {{ s.bd }};margin-top:{{ s.mt }};padding:11px 10px;transition:background .2s, border-color .2s">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+              <img src="{{ s.outJersey }}" alt="" style="width:24px;height:24px;object-fit:contain"><span style="font-family:Montserrat,sans-serif;font-weight:700;font-size:13.5px;color:{{ t.pink }}">{{ s.out }}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><path d="M5 12h14M13 6l6 6-6 6" stroke="{{ t.faint }}" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+              <img src="{{ s.inJersey }}" alt="" style="width:24px;height:24px;object-fit:contain"><span style="font-family:Montserrat,sans-serif;font-weight:700;font-size:13.5px;color:{{ t.green }}">{{ s.in }}</span>
+            </div>
+            <div style="display:flex;align-items:flex-start;gap:7px;margin-top:5px">
+              <span style="font-family:Inter,sans-serif;font-weight:700;font-size:10.5px;color:{{ t.green }};background:{{ t.greenSoft }};border-radius:999px;flex-shrink:0;padding:2px 7px">{{ s.gain }}</span>
+              <span style="font-family:Inter,sans-serif;font-weight:500;font-size:11.5px;line-height:16px;color:{{ t.faint }};text-wrap:pretty">{{ s.detail }}</span>
+            </div>
+          </div>
+          <button onClick="{{ s.onToggle }}" style="width:26px;height:26px;border-radius:999px;flex-shrink:0;cursor:pointer;padding:0;background:{{ s.ckBg }};border:2px solid {{ s.ckBd }};display:flex;align-items:center;justify-content:center;transition:background .15s, border-color .15s">
+            <sc-if value="{{ s.applied }}" hint-placeholder-val="{{ false }}">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+            </sc-if>
+          </button>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ showApplyT }}" hint-placeholder-val="{{ false }}"><div style="height:110px"></div></sc-if>
+  </div>
+  <!-- apply-all (transfer) -->
+  <sc-if value="{{ showApplyT }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:16px;right:16px;bottom:112px;z-index:20;background:{{ t.surface }};border:1.5px solid {{ t.greenDot }};border-radius:16px;padding:14px 16px;box-shadow:{{ t.popShadow }};animation:fadeUp .25s ease both">
+      <sc-if value="{{ tConfirmed }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;align-items:center;justify-content:center;gap:9px;font-family:Montserrat,sans-serif;font-weight:800;font-size:15px;color:{{ t.green }}">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="{{ t.green }}" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"></path></svg>Transfers confirmed
+        </div>
+      </sc-if>
+      <sc-if value="{{ tNotConfirmed }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:12px">
+          <span style="width:32px;height:32px;border-radius:9px;background:{{ t.greenSoft }};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M7 4L3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8" stroke="{{ t.green }}" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+          </span>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:14.5px;color:{{ t.text }}">{{ tPendingLabel }}</div>
+            <div style="font-family:Inter,sans-serif;font-weight:500;font-size:11.5px;color:{{ t.faint }};margin-top:1px">Review and confirm your transfers</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button onClick="{{ onUndoT }}" style="flex:1;height:42px;border-radius:12px;border:1.5px solid {{ t.goldBd }};background:{{ t.goldSoft }};color:{{ t.gold }};font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;cursor:pointer;transition:transform .15s" style-active="transform:scale(0.97)">Undo all</button>
+          <button onClick="{{ onConfirmT }}" style="flex:1;height:42px;border-radius:12px;border:none;background:{{ t.greenDot }};color:#fff;font-family:Montserrat,sans-serif;font-weight:800;font-size:13.5px;cursor:pointer;transition:transform .15s" style-active="transform:scale(0.97)">Confirm</button>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+  </sc-if>
+
+  <!-- ── FLOATING GLASS NAV ── -->
+  <div style="position:absolute;left:16px;right:16px;bottom:28px;z-index:25;display:flex;border-radius:999px;background:{{ t.navBg }};border:1px solid {{ t.navBorder }};backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);box-shadow:{{ t.navShadow }};padding:8px 10px">
+    <div style="position:absolute;top:7px;bottom:7px;width:calc((100% - 20px)*0.25);left:{{ navLeft }};border-radius:999px;background:{{ t.navPill }};transition:left .32s cubic-bezier(.3,1.35,.6,1)"></div>
+    <button onClick="{{ onTabTop }}" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;background:none;border:none;cursor:pointer">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3c1 3 4 4.2 4 8a4 4 0 11-8 0c0-1.4.5-2.3 1-3 .2 1 .8 1.6 1.5 1.8C10 8 10.5 5 12 3z" stroke="{{ navTopC }}" strokeWidth="2" strokeLinejoin="round"></path></svg>
+      <span style="font-family:Inter,sans-serif;font-weight:{{ navTopW }};font-size:10px;color:{{ navTopC }}">Top Picks</span>
+    </button>
+    <button onClick="{{ onTabTeam }}" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;background:none;border:none;cursor:pointer">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8.5" r="3" stroke="{{ navTeamC }}" strokeWidth="2"></circle><path d="M3.5 19.5a5.5 5.5 0 0111 0" stroke="{{ navTeamC }}" strokeWidth="2" strokeLinecap="round"></path><path d="M16 6.2a3 3 0 010 5.6M17.5 14.2a5.5 5.5 0 013 4.9" stroke="{{ navTeamC }}" strokeWidth="2" strokeLinecap="round"></path></svg>
+      <span style="font-family:Inter,sans-serif;font-weight:{{ navTeamW }};font-size:10px;color:{{ navTeamC }}">My Team</span>
+    </button>
+    <button onClick="{{ onTabTransfer }}" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;background:none;border:none;cursor:pointer">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M7 4L3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8" stroke="{{ navTransferC }}" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+      <span style="font-family:Inter,sans-serif;font-weight:{{ navTransferW }};font-size:10px;color:{{ navTransferC }}">Transfer</span>
+    </button>
+    <button onClick="{{ onMenu }}" style="position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;background:none;border:none;cursor:pointer">
+      <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#37003C,#6A0060);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Montserrat,sans-serif;font-weight:800;font-size:8.5px;box-sizing:border-box;border:{{ navAccountRing }}">AG</div>
+      <span style="font-family:Inter,sans-serif;font-weight:{{ navAccountW }};font-size:10px;color:{{ navAccountC }}">Account</span>
+    </button>
+  </div>
+
+  <!-- ── ACCOUNT MENU ── -->
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onCloseMenu }}" style="position:absolute;inset:0;z-index:30"></div>
+    <div style="position:absolute;bottom:104px;right:14px;z-index:31;width:246px;background:{{ t.surface }};border-radius:18px;border:1px solid {{ t.border }};box-shadow:{{ t.popShadow }};overflow:hidden;animation:fadeUp .18s ease both">
+      <div style="display:flex;align-items:center;gap:12px;padding:15px 16px;border-bottom:1px solid {{ t.line }}">
+        <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#37003C,#6A0060);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Montserrat,sans-serif;font-weight:800;font-size:14px;flex-shrink:0">AG</div>
+        <div style="min-width:0">
+          <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:14.5px;color:{{ t.text }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">A. Gaffer</div>
+          <div style="font-family:Inter,sans-serif;font-weight:500;font-size:12px;color:{{ t.muted }}">Apex Pitch FC</div>
+        </div>
+      </div>
+      <button onClick="{{ onToggleDark }}" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:12px 16px;transition:background .15s" style-hover="background:{{ t.hoverSoft }}">
+        <span style="display:flex;align-items:center;gap:12px;font-family:Inter,sans-serif;font-weight:600;font-size:14px;color:{{ t.text }}">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ t.muted }}" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8 8 0 019.5 4a7 7 0 1010.5 10.5z"></path></svg>
+          Dark mode
+        </span>
+        <span style="width:42px;height:24px;border-radius:999px;background:{{ darkTrackBg }};position:relative;transition:background .2s;flex-shrink:0">
+          <span style="position:absolute;top:2px;left:{{ darkKnobLeft }};width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span>
+        </span>
+      </button>
+      <div style="height:1px;background:{{ t.line }}"></div>
+      <button onClick="{{ onOpenProfile }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:12px 16px;font-family:Inter,sans-serif;font-weight:600;font-size:14px;color:{{ t.text }};transition:background .15s" style-hover="background:{{ t.hoverSoft }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ t.muted }}" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="3.6"></circle><path d="M5.5 19.5a6.5 6.5 0 0113 0"></path></svg>
+        Profile
+      </button>
+      <button onClick="{{ onOpenSettings }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:12px 16px;font-family:Inter,sans-serif;font-weight:600;font-size:14px;color:{{ t.text }};transition:background .15s" style-hover="background:{{ t.hoverSoft }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{ t.muted }}" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1.08-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1.08 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
+        Settings
+      </button>
+      <div style="height:1px;background:{{ t.line }}"></div>
+      <button onClick="{{ onSignOut }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:none;cursor:pointer;padding:12px 16px;font-family:Inter,sans-serif;font-weight:600;font-size:14px;color:#FF3B5C;transition:background .15s" style-hover="background:{{ t.hoverSoft }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FF3B5C" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M15 4.5h3.5a1.5 1.5 0 011.5 1.5v12a1.5 1.5 0 01-1.5 1.5H15M10 8l-4 4 4 4M6 12h10"></path></svg>
+        Sign out
+      </button>
+    </div>
+  </sc-if>
+
+  <!-- ── PLAYER STATS BOTTOM SHEET ── -->
+  <sc-if value="{{ psOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ psClose }}" style="position:absolute;inset:0;z-index:50;background:rgba(6,3,10,0.58);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:fadeIn .22s ease both"></div>
+  <div style="position:absolute;left:0;right:0;bottom:0;z-index:51;max-height:82%;display:flex;flex-direction:column;background:{{ t.bg }};border-radius:26px 26px 0 0;box-shadow:0 -18px 44px rgba(0,0,0,0.42);animation:sheetUp .34s cubic-bezier(.32,.72,0,1) both">
+    <div style="flex-shrink:0;display:flex;justify-content:center;padding:9px 0 3px"><span style="width:38px;height:4px;border-radius:999px;background:{{ t.border }}"></span></div>
+    <div class="no-sb" style="flex:1;overflow-y:auto;padding:6px 16px 30px">
+      <div style="display:flex;align-items:center;gap:14px;background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:20px;padding:14px 16px;box-shadow:{{ t.shadow }}">
+        <img src="{{ psJersey }}" alt="" style="width:58px;height:58px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 3px 5px rgba(0,0,0,0.28))">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font-family:Montserrat,sans-serif;font-weight:800;font-size:21px;letter-spacing:-0.02em;color:{{ t.text }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ psName }}</span>
+            <sc-if value="{{ psIsCapt }}" hint-placeholder-val="{{ false }}">
+              <span style="width:19px;height:19px;flex-shrink:0;border-radius:50%;background:#FFD60A;color:#1a1a1a;display:flex;align-items:center;justify-content:center;font-family:Montserrat,sans-serif;font-weight:800;font-size:11px">C</span>
+            </sc-if>
+          </div>
+          <div style="font-family:Inter,sans-serif;font-weight:500;font-size:12.5px;color:{{ t.muted }};margin-top:2px">{{ psMeta }}</div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:{{ t.text }}">{{ psPrice }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:12.5px;color:{{ t.faint }}">{{ psOwned }} owned</span>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:12px;background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:20px;padding:4px 16px 6px;box-shadow:{{ t.shadow }}">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0 12px">
+          <span style="font-family:Inter,sans-serif;font-weight:700;font-size:11.5px;letter-spacing:0.07em;text-transform:uppercase;color:{{ t.faint }}">{{ psGwLabel }}</span>
+          <span style="font-family:Montserrat,sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.02em;color:{{ psTotalColor }}">{{ psTotal }}</span>
+        </div>
+        <sc-for list="{{ psLines }}" as="l" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-top:1px solid {{ t.line }}">
+            <span style="font-family:Inter,sans-serif;font-weight:500;font-size:14px;color:{{ t.text }}">{{ l.label }}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14.5px;color:{{ l.color }}">{{ l.val }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-family:Inter,sans-serif;font-weight:800;font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:{{ t.faint }};margin:18px 2px 10px">Last 5 gameweeks</div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px;background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:20px;padding:14px 16px 12px;box-shadow:{{ t.shadow }}">
+        <sc-for list="{{ psForm }}" as="f" hint-placeholder-count="5">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+            <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11.5px;color:{{ t.muted }}">{{ f.pts }}</span>
+            <span style="width:100%;max-width:26px;height:{{ f.h }};border-radius:5px;background:{{ f.color }}"></span>
+            <span style="font-family:Inter,sans-serif;font-weight:600;font-size:10px;color:{{ t.faint }}">{{ f.gw }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-family:Inter,sans-serif;font-weight:800;font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:{{ t.faint }};margin:18px 2px 10px">Next 5 fixtures</div>
+      <div style="display:flex;gap:6px">
+        <sc-for list="{{ psFixtures }}" as="fx" hint-placeholder-count="5">
+          <div style="flex:1;min-width:0;background:{{ fx.difBg }};border:1px solid {{ fx.difBd }};border-radius:14px;padding:11px 4px 12px;text-align:center;box-shadow:{{ t.shadow }}">
+            <div style="font-family:Inter,sans-serif;font-weight:600;font-size:9.5px;letter-spacing:0.04em;color:{{ t.faint }}">{{ fx.gw }}</div>
+            <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:12.5px;color:{{ t.text }};margin-top:4px;white-space:nowrap">{{ fx.opp }}</div>
+            <div style="font-family:Inter,sans-serif;font-weight:600;font-size:9px;letter-spacing:0.05em;text-transform:uppercase;color:{{ t.faint }};margin-top:2px">{{ fx.venue }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ── PLAYER DETAIL OVERLAY ── -->
+  <sc-if value="{{ hasDetail }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:40;background:{{ t.bg }};display:flex;flex-direction:column;animation:slideIn .28s ease both">
+    <div style="flex-shrink:0;padding:58px 14px 16px;background:{{ t.heroBg }}">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onClick="{{ onCloseDetail }}" style="width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,0.16);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .15s" style-active="transform:scale(0.92)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+        </button>
+        <div>
+          <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:18px;letter-spacing:-0.01em;color:#fff">Transfer {{ detailPosLabel }}</div>
+          <div style="font-family:Inter,sans-serif;font-weight:500;font-size:12px;color:rgba(255,255,255,0.62)">Top targets for GW25</div>
+        </div>
+      </div>
+    </div>
+    <div class="no-sb" style="flex:1;overflow-y:auto;padding-top:16px">
+      <div style="display:flex;align-items:center;gap:13px;margin:0 16px 16px;background:#131B2E;border-radius:16px;padding:12px 14px;box-shadow:0 6px 18px rgba(0,0,0,0.28)">
+        <img src="{{ detailJersey }}" alt="" style="width:44px;height:44px;object-fit:contain">
+        <div style="flex:1">
+          <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:16px;color:#fff">{{ detailName }}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:11.5px;color:rgba(255,255,255,0.6)">{{ detailMeta }}</div>
+        </div>
+        <span style="font-family:Inter,sans-serif;font-weight:800;font-size:10.5px;background:#FF3B5C;padding:5px 10px;border-radius:999px;color:#fff;letter-spacing:0.04em">OUT</span>
+      </div>
+      <div style="margin:0 16px;background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:22px;box-shadow:{{ t.shadow }};overflow:hidden">
+        <div style="display:flex;align-items:center;gap:10px;padding:17px 20px 15px">
+          <span style="font-family:Montserrat,sans-serif;font-weight:800;font-size:21px;letter-spacing:-0.02em;color:{{ t.text }}">{{ detailPosLabel }}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:2fr 0.68fr 0.52fr 0.56fr;background:{{ t.headStrip }};border-top:1px solid {{ t.line }};border-bottom:1px solid {{ t.line }}">
+          <span style="font-family:Inter,sans-serif;font-weight:700;font-size:11px;color:{{ t.faint }};padding:10px 0 10px 22px">Player</span>
+          <span style="font-family:Inter,sans-serif;font-weight:700;font-size:11px;color:{{ t.faint }};text-align:center;padding:10px 0;border-left:1px solid {{ t.line }}">Price</span>
+          <span style="font-family:Inter,sans-serif;font-weight:700;font-size:11px;color:{{ t.faint }};text-align:center;padding:10px 0">Form</span>
+          <span style="font-family:Inter,sans-serif;font-weight:800;font-size:11px;color:{{ t.purple }};text-align:center;padding:10px 0">xPts</span>
+        </div>
+        <sc-for list="{{ targetRows }}" as="r" hint-placeholder-count="7">
+          <div onClick="{{ r.onSel }}" style="display:grid;grid-template-columns:2fr 0.68fr 0.52fr 0.56fr;align-items:stretch;background:{{ r.bg }};border-bottom:{{ r.bBottom }};opacity:{{ r.op }};cursor:{{ r.cursor }};transition:background .18s">
+            <div style="position:relative;display:flex;align-items:center;gap:9px;padding:12px 8px 12px 16px;min-width:0">
+              <span style="position:absolute;left:0;top:50%;transform:translateY(-50%);width:5px;height:64%;border-radius:0 3px 3px 0;background:{{ r.barColor }};opacity:{{ r.barOp }}"></span>
+              <img src="{{ r.jersey }}" alt="" style="width:38px;height:38px;object-fit:contain;flex-shrink:0">
+              <div style="min-width:0">
+                <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:15px;letter-spacing:-0.015em;color:{{ t.text }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div>
+                <div style="display:flex;align-items:center;gap:5px;margin-top:2px">
+                  <span style="font-family:Inter,sans-serif;font-weight:500;font-size:11px;color:{{ t.faint }};white-space:nowrap">{{ r.fx }}</span>
+                  <sc-if value="{{ r.owned }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-family:Inter,sans-serif;font-weight:700;font-size:8.5px;letter-spacing:0.04em;text-transform:uppercase;color:{{ t.faint }};background:{{ t.headStrip }};border:1px solid {{ t.line }};padding:2px 6px;border-radius:999px;flex-shrink:0">In team</span>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;border-left:1px solid {{ t.line }}"><span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:14.5px;color:{{ t.text }}">{{ r.price }}</span></div>
+            <div style="display:flex;align-items:center;justify-content:center"><span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:14.5px;color:{{ t.muted }}">{{ r.form }}</span></div>
+            <div style="display:flex;align-items:center;justify-content:center"><span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14.5px;color:{{ r.xpColor }}">{{ r.xp }}</span></div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="height:130px"></div>
+    </div>
+    <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:0;right:0;bottom:0;padding:14px 16px 34px;background:{{ t.surface }};border-top:1px solid {{ t.border }};box-shadow:0 -8px 24px rgba(0,0,0,0.16);animation:fadeUp .2s ease both">
+        <sc-if value="{{ transferDone }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;justify-content:center;gap:9px;font-family:Montserrat,sans-serif;font-weight:800;font-size:16px;color:{{ t.green }}">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4.5 4.5L19 6.5" stroke="{{ t.green }}" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"></path></svg>Transfer confirmed
+          </div>
+        </sc-if>
+        <sc-if value="{{ transferNotDone }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="flex:1;font-family:Inter,sans-serif;font-size:13px;color:{{ t.muted }};font-weight:500">
+              <span style="color:#FF3B5C;font-weight:800">{{ detailName }}</span> → <span style="color:{{ t.green }};font-weight:800">{{ selName }}</span>
+            </div>
+            <button onClick="{{ onConfirmTransfer }}" style="font-family:Montserrat,sans-serif;font-weight:800;font-size:14.5px;color:#fff;background:linear-gradient(135deg,#37003C,#6A0060);border:none;border-radius:12px;padding:13px 22px;cursor:pointer;box-shadow:0 6px 16px rgba(55,0,60,0.28);transition:transform .15s" style-active="transform:scale(0.96)">Confirm transfer</button>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <!-- ── PROFILE OVERLAY ── -->
+  <sc-if value="{{ profileOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:40;background:{{ t.bg }};display:flex;flex-direction:column;animation:slideIn .28s ease both">
+    <div style="flex-shrink:0;padding:58px 14px 16px;background:{{ t.heroBg }};display:flex;align-items:center;gap:10px">
+      <button onClick="{{ onCloseProfile }}" style="width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,0.16);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s" style-active="transform:scale(0.92)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+      </button>
+      <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:18px;color:#fff">Profile</div>
+    </div>
+    <div class="no-sb" style="flex:1;overflow-y:auto;padding:24px 16px 40px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:22px">
+        <div style="width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#37003C,#6A0060);color:#fff;display:flex;align-items:center;justify-content:center;font-family:Montserrat,sans-serif;font-weight:800;font-size:26px;box-shadow:0 10px 26px rgba(55,0,60,0.3)">AG</div>
+        <div style="text-align:center">
+          <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:20px;color:{{ t.text }}">Alex Gaffer</div>
+          <div style="font-family:Inter,sans-serif;font-weight:500;font-size:13px;color:{{ t.muted }};margin-top:2px">Apex Pitch FC · since 2019</div>
+        </div>
+      </div>
+      <div style="background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:18px;box-shadow:{{ t.shadow }};overflow:hidden">
+        <sc-for list="{{ profileRows }}" as="f" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:{{ f.bBottom }}">
+            <span style="font-family:Inter,sans-serif;font-weight:500;font-size:13.5px;color:{{ t.muted }}">{{ f.label }}</span>
+            <span style="font-family:Inter,sans-serif;font-weight:600;font-size:14px;color:{{ t.text }}">{{ f.value }}</span>
+          </div>
+        </sc-for>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px">
+          <span style="font-family:Inter,sans-serif;font-weight:500;font-size:13.5px;color:{{ t.muted }}">Face ID sign-in</span>
+          <button onClick="{{ onToggleFaceId }}" style="width:46px;height:27px;border-radius:999px;background:{{ faceIdBg }};border:none;position:relative;cursor:pointer;padding:0;transition:background .2s">
+            <span style="position:absolute;top:2.5px;left:{{ faceIdKnob }};width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ── SETTINGS OVERLAY ── -->
+  <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:absolute;inset:0;z-index:40;background:{{ t.bg }};display:flex;flex-direction:column;animation:slideIn .28s ease both">
+    <div style="flex-shrink:0;padding:58px 14px 16px;background:{{ t.heroBg }};display:flex;align-items:center;gap:10px">
+      <button onClick="{{ onCloseSettings }}" style="width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,0.16);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s" style-active="transform:scale(0.92)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 5l-7 7 7 7" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+      </button>
+      <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:18px;color:#fff">Settings</div>
+    </div>
+    <div class="no-sb" style="flex:1;overflow-y:auto;padding:22px 16px 40px">
+      <div style="font-family:Inter,sans-serif;font-weight:800;font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:{{ t.faint }};margin:0 4px 8px">Appearance</div>
+      <div style="background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:18px;box-shadow:{{ t.shadow }};padding:14px;margin-bottom:18px">
+        <div style="position:relative;display:flex;padding:4px;background:{{ t.segTrack }};border-radius:13px">
+          <div style="position:absolute;top:4px;bottom:4px;width:calc((100% - 8px)*0.5);left:{{ themeSegLeft }};border-radius:9px;background:{{ t.segFill }};box-shadow:0 4px 12px rgba(55,0,60,0.25);transition:left .28s cubic-bezier(.3,1.3,.6,1)"></div>
+          <button onClick="{{ onSetLight }}" style="position:relative;flex:1;padding:10px 0;border-radius:9px;border:none;cursor:pointer;background:transparent;font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;color:{{ themeLightC }};transition:color .2s">Light</button>
+          <button onClick="{{ onSetDark }}" style="position:relative;flex:1;padding:10px 0;border-radius:9px;border:none;cursor:pointer;background:transparent;font-family:Montserrat,sans-serif;font-weight:700;font-size:13px;color:{{ themeDarkC }};transition:color .2s">Dark</button>
+        </div>
+      </div>
+      <div style="font-family:Inter,sans-serif;font-weight:800;font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:{{ t.faint }};margin:0 4px 8px">Notifications</div>
+      <div style="background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:18px;box-shadow:{{ t.shadow }};overflow:hidden;margin-bottom:18px">
+        <sc-for list="{{ notifRows }}" as="n" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:13px;padding:14px 16px;border-bottom:{{ n.bBottom }}">
+            <div style="flex:1;min-width:0">
+              <div style="font-family:Inter,sans-serif;font-weight:600;font-size:14.5px;color:{{ t.text }}">{{ n.label }}</div>
+              <div style="font-family:Inter,sans-serif;font-weight:500;font-size:11.5px;color:{{ t.faint }};margin-top:2px">{{ n.sub }}</div>
+            </div>
+            <button onClick="{{ n.onToggle }}" style="width:46px;height:27px;border-radius:999px;background:{{ n.trackBg }};border:none;position:relative;cursor:pointer;padding:0;transition:background .2s;flex-shrink:0">
+              <span style="position:absolute;top:2.5px;left:{{ n.knobLeft }};width:22px;height:22px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,0.3)"></span>
+            </button>
+          </div>
+        </sc-for>
+      </div>
+      <div style="font-family:Inter,sans-serif;font-weight:800;font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:{{ t.faint }};margin:0 4px 8px">About</div>
+      <div style="background:{{ t.surface }};border:1px solid {{ t.border }};border-radius:18px;box-shadow:{{ t.shadow }};overflow:hidden;margin-bottom:22px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px;border-bottom:1px solid {{ t.line }}">
+          <span style="font-family:Inter,sans-serif;font-weight:600;font-size:14.5px;color:{{ t.text }}">Version</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-weight:500;font-size:12.5px;color:{{ t.faint }}">2.0.0</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:15px 16px">
+          <span style="font-family:Inter,sans-serif;font-weight:600;font-size:14.5px;color:{{ t.text }}">Terms &amp; Privacy</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M7 17L17 7M9 7h8v8" stroke="{{ t.faint }}" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path></svg>
+        </div>
+      </div>
+      <button onClick="{{ onSignOut }}" style="width:100%;height:52px;border-radius:15px;border:1.5px solid rgba(255,59,92,0.4);background:rgba(255,59,92,0.08);color:#FF3B5C;font-family:Montserrat,sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:transform .15s" style-active="transform:scale(0.98)">Sign out</button>
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</sc-if>
+
+</x-import>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Theme&quot;},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;landing&quot;,&quot;signin&quot;,&quot;home&quot;],&quot;default&quot;:&quot;landing&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Navigate&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    let screen = 'landing', dark = null, tab = 'team';
+    try {
+      screen = localStorage.getItem('fpl2_screen') || props.screen || 'landing';
+      tab = localStorage.getItem('fpl2_tab') || 'team';
+      const d = localStorage.getItem('fpl2_dark');
+      if (d != null) dark = d === '1';
+    } catch (e) {}
+    this.state = {
+      screen, tab, dark,
+      slide: 0, email: '', password: '',
+      gw: 24, heroPts: 0,
+      menu: false, profileOpen: false, settingsOpen: false,
+      detail: null, sel: null, done: false,
+      applied: {}, tApplied: {}, capPick: 'Haaland', savedCap: 'Haaland',
+      teamConfirmed: false, tConfirmed: false,
+      chipSel: null, faceId: true, psName: null,
+      notif: { deadline: true, price: true, injury: false },
+      scale: 1,
+    };
+  }
+
+  componentDidMount() {
+    this._fit = () => this.setState({ scale: Math.min(1, (window.innerWidth - 28) / 402, (window.innerHeight - 28) / 874) });
+    this._fit();
+    window.addEventListener('resize', this._fit);
+    this.animateHero();
+  }
+  componentWillUnmount() {
+    window.removeEventListener('resize', this._fit);
+    if (this._raf) cancelAnimationFrame(this._raf);
+  }
+  componentDidUpdate(prevProps) {
+    if (this.props.screen && prevProps.screen !== this.props.screen) {
+      this.setScreen(this.props.screen);
+    }
+  }
+
+  setScreen(s) {
+    this.setState({ screen: s, menu: false, profileOpen: false, settingsOpen: false, detail: null });
+    try { localStorage.setItem('fpl2_screen', s); } catch (e) {}
+    if (s === 'home') this.animateHero();
+  }
+  setTab(tb) {
+    this.setState({ tab: tb, menu: false });
+    try { localStorage.setItem('fpl2_tab', tb); } catch (e) {}
+    if (tb === 'team') this.animateHero();
+  }
+  animateHero() {
+    if (this._raf) cancelAnimationFrame(this._raf);
+    const target = 64, dur = 1000, t0 = performance.now();
+    const tick = (now) => {
+      const t = Math.min(1, (now - t0) / dur);
+      this.setState({ heroPts: Math.round(target * (1 - Math.pow(1 - t, 3))) });
+      if (t < 1) this._raf = requestAnimationFrame(tick);
+    };
+    this._raf = requestAnimationFrame(tick);
+  }
+
+  isDark() { return this.state.dark != null ? this.state.dark : (this.props.dark != null ? this.props.dark : false); }
+
+  theme(dark) {
+    if (dark) return {
+      dark: true,
+      bg: '#0D0817',
+      bgGlow: 'radial-gradient(120% 45% at 50% -4%, rgba(96,20,150,0.32), transparent 60%)',
+      surface: '#1B1129', surfaceAlt: '#251837',
+      border: 'rgba(255,255,255,0.10)', line: 'rgba(255,255,255,0.08)',
+      text: '#F4F1FB', muted: 'rgba(222,212,240,0.62)', faint: 'rgba(200,190,220,0.45)',
+      shadow: '0 12px 30px rgba(0,0,0,0.4)', popShadow: '0 20px 48px rgba(0,0,0,0.65)',
+      heroBg: 'linear-gradient(135deg,#4A0850 0%,#7A1070 100%)', heroShadow: '0 16px 38px rgba(0,0,0,0.5)',
+      green: '#5CF0A9', greenDot: '#00E478', greenSoft: 'rgba(0,228,120,0.13)',
+      pink: '#FF2D78', purple: '#C9A6FF', purpleBar: '#A78BFA',
+      gold: '#FFC53D', goldSoft: 'rgba(255,197,61,0.12)', goldBd: 'rgba(255,197,61,0.5)',
+      deadlineBg: 'rgba(255,40,90,0.13)', deadlineFg: '#FF8AA3',
+      capsuleBg: 'rgba(255,255,255,0.06)', capsuleShadow: 'none', hoverSoft: 'rgba(255,255,255,0.07)',
+      segTrack: 'rgba(255,255,255,0.07)', segFill: '#7B09E5',
+      headStrip: 'rgba(255,255,255,0.045)', zebra: 'rgba(255,255,255,0.03)', rowHover: 'rgba(255,255,255,0.05)',
+      rowSel: 'rgba(0,228,120,0.10)',
+      navBg: 'rgba(27,17,41,0.85)', navBorder: 'rgba(255,255,255,0.11)', navShadow: '0 18px 40px rgba(0,0,0,0.55)',
+      navActive: '#5CF0A9', navIdle: 'rgba(200,190,220,0.5)', navPill: 'rgba(0,228,120,0.10)',
+      pitchGrass: 'repeating-linear-gradient(180deg,#159253 0 32px,#12874B 32px 64px)',
+      pitchShadow: 'inset 0 0 70px rgba(0,10,4,0.45), 0 16px 36px rgba(0,0,0,0.45)',
+      pillBg: 'rgba(10,14,26,0.82)', pillBorder: 'rgba(255,255,255,0.12)', pillDisc: '#00E478', pillDiscText: '#04160C',
+      chipTipBg: '#4A0850',
+    };
+    return {
+      dark: false,
+      bg: '#F5F2FA', bgGlow: 'none',
+      surface: '#FFFFFF', surfaceAlt: '#F4EFF9',
+      border: 'rgba(40,10,60,0.09)', line: 'rgba(40,10,60,0.08)',
+      text: '#1A1029', muted: '#6E6480', faint: '#A79FB3',
+      shadow: '0 10px 26px rgba(40,10,60,0.07)', popShadow: '0 20px 48px rgba(40,10,60,0.28)',
+      heroBg: 'linear-gradient(135deg,#37003C 0%,#6A0060 100%)', heroShadow: '0 14px 34px rgba(55,0,60,0.22)',
+      green: '#00843F', greenDot: '#00B454', greenSoft: 'rgba(0,180,90,0.10)',
+      pink: '#E90052', purple: '#7C3AED', purpleBar: '#7C3AED',
+      gold: '#B8860B', goldSoft: 'rgba(184,134,11,0.10)', goldBd: 'rgba(184,134,11,0.45)',
+      deadlineBg: '#FFE3E9', deadlineFg: '#C8102E',
+      capsuleBg: '#FFFFFF', capsuleShadow: '0 2px 10px rgba(40,10,60,0.06)', hoverSoft: 'rgba(55,0,60,0.05)',
+      segTrack: '#EAE4F2', segFill: '#37003C',
+      headStrip: '#F7F4FB', zebra: 'rgba(91,76,160,0.035)', rowHover: 'rgba(55,0,60,0.04)',
+      rowSel: 'rgba(0,168,90,0.07)',
+      navBg: 'rgba(255,255,255,0.88)', navBorder: 'rgba(40,10,60,0.08)', navShadow: '0 18px 40px rgba(40,10,60,0.2)',
+      navActive: '#37003C', navIdle: '#A79FB3', navPill: 'rgba(55,0,60,0.08)',
+      pitchGrass: 'repeating-linear-gradient(180deg,#23A55C 0 32px,#1E9852 32px 64px)',
+      pitchShadow: 'inset 0 0 60px rgba(0,40,15,0.25), 0 14px 30px rgba(40,10,60,0.14)',
+      pillBg: '#131B2E', pillBorder: 'rgba(255,255,255,0.06)', pillDisc: '#7B09E5', pillDiscText: '#FFFFFF',
+      chipTipBg: '#37003C',
+    };
+  }
+
+  jersey(club) {
+    const M = { ARS: 'arsenal', AVL: 'aston_villa', BOU: 'bournemouth', BRE: 'brentford', BHA: 'brighton', CHE: 'chelsea', CRY: 'crystal_palace', EVE: 'everton', FUL: 'fulham', LIV: 'liverpool', MCI: 'manchester_city', MUN: 'manchester_united', NEW: 'newcastle', NFO: 'nottingham_forest', TOT: 'tottenham', SUN: 'sunderland', LEE: 'leeds', HUL: 'hull_city', COV: 'coventry_city', IPS: 'ipswich_town' };
+    return M[club] ? 'assets/jerseys/' + M[club] + '.png' : 'assets/jerseys/arsenal.png';
+  }
+
+  data() {
+    if (this._data) return this._data;
+    const FIXTURES = { ARS: 'LIV (H)', LIV: 'ARS (A)', MCI: 'CHE (H)', CHE: 'MCI (A)', MUN: 'TOT (H)', TOT: 'MUN (A)', NEW: 'NFO (A)', NFO: 'NEW (H)', AVL: 'BHA (H)', BHA: 'AVL (A)', BOU: 'WOL (H)', CRY: 'EVE (H)', EVE: 'CRY (A)', FUL: 'BRE (H)', BRE: 'FUL (A)' };
+    const TOP_PICKS = {
+      GKP: [
+        { name: 'Raya', club: 'ARS', p: 5.6, f: 4.8 }, { name: 'Sánchez', club: 'CHE', p: 5.1, f: 4.5 },
+        { name: 'Sels', club: 'NFO', p: 5.0, f: 4.2 }, { name: 'Pope', club: 'NEW', p: 5.3, f: 4.4 },
+        { name: 'Pickford', club: 'EVE', p: 5.4, f: 4.1 }, { name: 'Petrović', club: 'BOU', p: 4.6, f: 4.6 },
+        { name: 'Verbruggen', club: 'BHA', p: 4.5, f: 3.8 },
+      ],
+      DEF: [
+        { name: 'Gabriel', club: 'ARS', p: 6.3, f: 6.1 }, { name: 'Saliba', club: 'ARS', p: 6.1, f: 5.4 },
+        { name: 'Van Dijk', club: 'LIV', p: 6.4, f: 5.0 }, { name: 'Porro', club: 'TOT', p: 5.5, f: 5.6 },
+        { name: 'Gvardiol', club: 'MCI', p: 6.0, f: 4.6 }, { name: 'Hall', club: 'NEW', p: 5.2, f: 4.9 },
+        { name: 'Muñoz', club: 'CRY', p: 5.0, f: 5.5 },
+      ],
+      MID: [
+        { name: 'Salah', club: 'LIV', p: 14.3, f: 8.6 }, { name: 'Saka', club: 'ARS', p: 10.4, f: 7.2 },
+        { name: 'Palmer', club: 'CHE', p: 10.6, f: 6.9 }, { name: 'Mbeumo', club: 'MUN', p: 8.3, f: 7.0 },
+        { name: 'B. Fernandes', club: 'MUN', p: 9.1, f: 6.4 }, { name: 'Son', club: 'TOT', p: 9.8, f: 6.2 },
+        { name: 'Semenyo', club: 'BOU', p: 7.2, f: 6.8 },
+      ],
+      FWD: [
+        { name: 'Haaland', club: 'MCI', p: 14.6, f: 9.1 }, { name: 'Wood', club: 'NFO', p: 7.5, f: 6.7 },
+        { name: 'Watkins', club: 'AVL', p: 9.0, f: 6.0 }, { name: 'João Pedro', club: 'CHE', p: 7.8, f: 6.5 },
+        { name: 'Jackson', club: 'CHE', p: 7.6, f: 5.4 }, { name: 'Solanke', club: 'TOT', p: 7.4, f: 5.2 },
+        { name: 'Cunha', club: 'MUN', p: 6.9, f: 5.9 },
+      ],
+    };
+    const SQUAD_NAMES = ['Raya', 'Gabriel', 'Trakowski', 'Senesi', 'Doku', 'B. Fernandes', 'Saka', 'Palmer', 'Haaland', 'Watkins', 'Solanke', 'Henderson', 'Truffert', 'O.Dango', 'Lacroix'];
+    const PITCH = [
+      [{ name: 'Haaland', pts: 12, club: 'MCI', capt: true }, { name: 'Watkins', pts: 5, club: 'AVL' }, { name: 'Solanke', pts: 2, club: 'TOT', ball: true }],
+      [{ name: 'Doku', pts: 8, club: 'MCI' }, { name: 'B. Fernandes', pts: 18, club: 'MUN' }, { name: 'Saka', pts: 6, club: 'ARS', ball: true }, { name: 'Palmer', pts: 3, club: 'CHE' }],
+      [{ name: 'Gabriel', pts: 6, club: 'ARS', cards: ['yellow'] }, { name: 'Trakowski', pts: 1, club: 'NEW', cards: ['red'] }, { name: 'Senesi', pts: 2, club: 'BOU', cards: ['yellow'] }],
+      [{ name: 'Raya', pts: 1, club: 'ARS' }],
+    ];
+    const BENCH = [
+      { name: 'Henderson', pts: 0, club: 'CRY' }, { name: 'Truffert', pts: 1, club: 'BOU' },
+      { name: 'O.Dango', pts: 0, club: 'CHE' }, { name: 'Lacroix', pts: 2, club: 'CRY' },
+    ];
+    const TRANSFER_PITCH = [
+      [{ name: 'Haaland', p: 14.2, pos: 'FWD', club: 'MCI' }, { name: 'Watkins', p: 8.9, pos: 'FWD', club: 'AVL' }, { name: 'Solanke', p: 7.1, pos: 'FWD', club: 'TOT' }],
+      [{ name: 'Doku', p: 13.1, pos: 'MID', club: 'MCI' }, { name: 'B. Fernandes', p: 10.8, pos: 'MID', club: 'MUN' }, { name: 'Saka', p: 9.0, pos: 'MID', club: 'ARS' }, { name: 'Palmer', p: 5.8, pos: 'MID', club: 'CHE' }, { name: 'O.Dango', p: 4.4, pos: 'MID', club: 'CHE' }],
+      [{ name: 'Gabriel', p: 5.2, pos: 'DEF', club: 'ARS' }, { name: 'Trakowski', p: 6.7, pos: 'DEF', club: 'NEW' }, { name: 'Senesi', p: 5.5, pos: 'DEF', club: 'BOU' }, { name: 'Truffert', p: 4.0, pos: 'DEF', club: 'BOU' }, { name: 'Lacroix', p: 3.8, pos: 'DEF', club: 'CRY' }],
+      [{ name: 'Raya', p: 4.2, pos: 'GKP', club: 'ARS' }, { name: 'Henderson', p: 3.9, pos: 'GKP', club: 'CRY' }],
+    ];
+    const CAPTAINS = [
+      { name: 'Haaland', club: 'MCI', xp: 8.4, note: 'Home vs bottom-half defence' },
+      { name: 'Salah', club: 'LIV', xp: 7.1, note: 'Penalties + strong away form' },
+      { name: 'Saka', club: 'ARS', xp: 5.9, note: 'Returns from knock' },
+    ];
+    const SUGGS = [
+      { id: 's2', text: 'Sub in Turner for Areola', detail: 'Areola is a doubt — knock in training', gain: '+2 xPts', wasApplied: false },
+      { id: 's3', text: 'Bench Walker for Taylor', detail: 'Walker rotation risk vs Liverpool', gain: '+1 xPts', wasApplied: true },
+    ];
+    const TSUGGS = [
+      { id: 't1', out: 'Walker', outClub: 'MCI', in: 'Muñoz', inClub: 'CRY', detail: 'Walker rotation risk · Muñoz nailed with attacking returns', gain: '+6 xPts' },
+      { id: 't2', out: 'Solanke', outClub: 'TOT', in: 'Mateta', inClub: 'CRY', detail: 'Kinder fixtures and on penalties for Palace', gain: '+4 xPts' },
+      { id: 't3', out: 'O.Dango', outClub: 'CHE', in: 'Rogers', inClub: 'AVL', detail: 'Frees £2.7m and adds a starting midfielder', gain: '+3 xPts' },
+    ];
+    const CHIPS = [
+      { name: 'Wildcard', status: 'Available', used: false, tip: { title: "Gaffer's Tip", lines: ['Hold for GW28 — five doubles land that week', 'Rebuild around Arsenal & City assets'] } },
+      { name: 'Free Hit', status: 'Used GW 12', used: true },
+      { name: 'Triple Capt', status: 'Available', used: false, tip: { title: "Gaffer's Tip", lines: ['GW30 with Haaland as captain', 'GW32 with Salah as captain'] } },
+      { name: 'Bench Boost', status: 'Available', used: false, tip: { title: 'Gaffer agrees!', lines: ['Your bench is stacked for GW29', 'All 15 have home fixtures'] } },
+    ];
+    const SLIDES = [
+      { tag: 'Top Picks', t1: 'Scout the most', t2: 'in-form players', body: 'The highest-scoring keepers, defenders, mids and forwards — ranked and ready to pick!' },
+      { tag: 'My Team', t1: 'Run your', t2: 'side, your way', body: 'Your full starting XI on the pitch with live gameweek points on every shirt.' },
+      { tag: 'Strategy', t1: 'Time your', t2: 'chips to win!', body: 'Track Wildcards, Free Hits and Bench Boost — and plan transfers before the deadline.' },
+    ];
+    this._data = { FIXTURES, TOP_PICKS, SQUAD_NAMES, PITCH, BENCH, TRANSFER_PITCH, CAPTAINS, SUGGS, TSUGGS, CHIPS, SLIDES };
+    return this._data;
+  }
+
+  renderVals() {
+    const st = this.state;
+    const dark = this.isDark();
+    const t = this.theme(dark);
+    const D = this.data();
+    const jersey = (c) => this.jersey(c);
+    const xPtsOf = (p) => p.f + 0.3 + (Math.round(p.p * 10) % 4) * 0.1;
+    const xpColor = (v) => {
+      const k = Math.max(0, Math.min(1, (v - 3) / 6));
+      return 'hsl(263, ' + (dark ? 78 : 72) + '%, ' + (dark ? 80 - k * 16 : 68 - k * 20) + '%)';
+    };
+
+    const setD = (v) => { this.setState({ dark: v }); try { localStorage.setItem('fpl2_dark', v ? '1' : '0'); } catch (e) {} };
+
+    // ── landing ──
+    const slide = D.SLIDES[st.slide];
+    const last = st.slide === D.SLIDES.length - 1;
+    const slideDots = D.SLIDES.map((_, i) => ({
+      w: i === st.slide ? '26px' : '8px',
+      bg: i === st.slide ? '#00FF87' : 'rgba(255,255,255,0.3)',
+      onGo: () => this.setState({ slide: i }),
+    }));
+
+    // ── gameweek ──
+    const gw = st.gw, LIVE = 24, MAX = 25;
+    const gwIsNext = gw > LIVE, gwIsLive = gw === LIVE, gwIsPast = gw < LIVE;
+    const gwLocked = !gwIsNext;
+
+    // ── match centre ──
+    const MATCHES = gwIsLive
+      ? [
+          { s: 'MCI 2–0 CHE', st: "62'", live: true },
+          { s: 'ARS 1–1 LIV', st: "78'", live: true },
+          { s: 'MUN 0–1 TOT', st: 'FT' },
+          { s: 'AVL 3–1 BHA', st: 'FT' },
+          { s: 'NEW 0–0 WHU', st: "51'", live: true },
+        ]
+      : [
+          { s: 'LIV 3–1 MUN', st: 'FT' },
+          { s: 'MCI 2–2 ARS', st: 'FT' },
+          { s: 'CHE 1–0 AVL', st: 'FT' },
+          { s: 'TOT 2–1 NEW', st: 'FT' },
+          { s: 'BHA 0–0 WHU', st: 'FT' },
+        ];
+    const matchRows = MATCHES.map((m) => ({
+      score: m.s, status: m.st,
+      stFg: m.live ? t.green : t.faint,
+      stBg: m.live ? t.greenSoft : t.headStrip,
+    }));
+
+    // ── top picks ──
+    const POS = ['GKP', 'DEF', 'MID', 'FWD'];
+    const POS_FULL = { GKP: 'Goalkeepers', DEF: 'Defenders', MID: 'Midfielders', FWD: 'Forwards' };
+    const topPos = st.topPos || 'GKP';
+    const topIdx = POS.indexOf(topPos);
+    const segItems = POS.map((k) => ({
+      label: k,
+      color: k === topPos ? '#fff' : t.muted,
+      onSel: () => this.setState({ topPos: k }),
+    }));
+    const mkRows = (list, opts) => list.map((p, i) => {
+      const owned = D.SQUAD_NAMES.indexOf(p.name) >= 0;
+      const xp = xPtsOf(p);
+      const selectable = opts && opts.selectable;
+      const selected = selectable && st.sel === p.name;
+      return {
+        name: p.name, jersey: jersey(p.club), fx: D.FIXTURES[p.club] || '—',
+        price: '£' + p.p.toFixed(1) + 'm', form: p.f.toFixed(1),
+        xp: String(Math.round(xp)), xpColor: xpColor(xp),
+        owned,
+        bg: selected ? t.rowSel : (i % 2 === 1 ? t.zebra : 'transparent'),
+        bBottom: i === list.length - 1 ? 'none' : '1px solid ' + t.line,
+        op: owned && !selected ? 0.45 : 1,
+        barOp: owned && !selected ? 0.8 : 1,
+        barColor: selected ? t.greenDot : t.purpleBar,
+        cursor: selectable ? (owned ? 'not-allowed' : 'pointer') : 'default',
+        onSel: selectable && !owned ? () => this.setState({ sel: st.sel === p.name ? null : p.name }) : undefined,
+        onOpen: () => { if (this._swiped) return; this.setState({ psName: p.name }); },
+      };
+    });
+    const picksRows = mkRows(D.TOP_PICKS[topPos]);
+    const swipeStart = (e) => {
+      const p = e.touches ? e.touches[0] : e;
+      this._swipe = { x: p.clientX, y: p.clientY };
+      this._swiped = false;
+    };
+    const swipeEnd = (e) => {
+      if (!this._swipe) return;
+      const p = e.changedTouches ? e.changedTouches[0] : e;
+      const dx = p.clientX - this._swipe.x, dy = p.clientY - this._swipe.y;
+      this._swipe = null;
+      this._swiped = Math.abs(dx) >= 10 || Math.abs(dy) >= 10;
+      if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      const ni = topIdx + (dx < 0 ? 1 : -1);
+      if (ni >= 0 && ni < POS.length) this.setState({ topPos: POS[ni] });
+    };
+
+    // ── my team pitch ──
+    const pitchRows = D.PITCH.map((row) => ({
+      players: row.map((p) => ({
+        name: p.name, jersey: jersey(p.club), capt: !!p.capt, ball: !!p.ball && !gwIsNext,
+        hasCards: !!p.cards && !gwIsNext,
+        cards: (p.cards || []).map((c, i) => ({ color: c === 'yellow' ? '#FFCD00' : '#FF3B3B', ml: i ? '-6px' : '0px' })),
+        showDisc: !gwIsNext, pts: String(p.pts),
+        pillPad: gwIsNext ? '4px 12px' : '3px 8px 3px 3px',
+        onOpen: () => this.setState({ psName: p.name }),
+      })),
+    }));
+    const benchRows = D.BENCH.map((p) => ({
+      name: p.name, jersey: jersey(p.club), showDisc: !gwIsNext, pts: String(p.pts),
+      pillPad: gwIsNext ? '4px 12px' : '3px 8px 3px 3px',
+      onOpen: () => this.setState({ psName: p.name }),
+    }));
+
+    // ── player stats sheet ──
+    const CLUB_NAME = { ARS: 'Arsenal', MCI: 'Man City', MUN: 'Man Utd', CHE: 'Chelsea', TOT: 'Tottenham', LIV: 'Liverpool', NEW: 'Newcastle', BOU: 'Bournemouth', CRY: 'Crystal Palace', AVL: 'Aston Villa', NFO: "Nott'm Forest", EVE: 'Everton', BHA: 'Brighton', FUL: 'Fulham', COV: 'Coventry' };
+    const PMETA = {
+      Haaland: ['FWD', 14.6, 58.2], Watkins: ['FWD', 9.0, 12.4], Solanke: ['FWD', 7.4, 6.1],
+      Doku: ['MID', 6.6, 9.8], 'B. Fernandes': ['MID', 9.1, 21.3], Saka: ['MID', 10.4, 34.7], Palmer: ['MID', 10.6, 28.9], 'O.Dango': ['MID', 5.1, 1.9],
+      Gabriel: ['DEF', 6.3, 24.5], Trakowski: ['DEF', 5.4, 4.2], Senesi: ['DEF', 4.6, 11.7], Truffert: ['DEF', 4.4, 2.8], Lacroix: ['DEF', 5.0, 7.3],
+      Raya: ['GKP', 5.6, 19.4], Henderson: ['GKP', 5.0, 3.6],
+    };
+    const squadAll = [];
+    D.PITCH.forEach((r) => r.forEach((p) => squadAll.push(p)));
+    D.BENCH.forEach((p) => squadAll.push(p));
+    const hash = (s) => { let h = 7; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 101; return h; };
+    const TP_META = {};
+    Object.keys(D.TOP_PICKS).forEach((k) => D.TOP_PICKS[k].forEach((p) => { TP_META[p.name] = { pos: k, price: p.p, f: p.f, club: p.club }; }));
+    const tp = st.psName ? TP_META[st.psName] : null;
+    let psP = squadAll.filter((p) => p.name === st.psName)[0];
+    if (!psP && tp) psP = { name: st.psName, club: tp.club, pts: Math.max(0, Math.round(tp.f)) };
+    const ptsColor = (v) => (v > 0 ? t.green : v < 0 ? t.pink : t.faint);
+    const buildLines = (p, pos) => {
+      const out = [];
+      const push = (label, v) => out.push({ label, val: (v > 0 ? '+' : '') + v, color: ptsColor(v) });
+      const capt = !!p.capt;
+      const base = capt ? p.pts / 2 : p.pts;
+      if (base <= 0) { push('Did not play', 0); }
+      else {
+        let rem = base;
+        const app = base >= 2 ? 2 : 1;
+        push(app === 2 ? "Played 60'+" : "Played under 60'", app);
+        rem -= app;
+        const cards = p.cards || [];
+        rem += cards.reduce((s, c) => s + (c === 'yellow' ? 1 : 3), 0);
+        const gv = pos === 'FWD' ? 4 : pos === 'MID' ? 5 : 6;
+        const goals = Math.min(3, Math.floor(rem / gv));
+        if (goals > 0) { push(goals > 1 ? goals + ' goals' : 'Goal', goals * gv); rem -= goals * gv; }
+        const asst = Math.min(3, Math.floor(rem / 3));
+        if (asst > 0) { push(asst > 1 ? asst + ' assists' : 'Assist', asst * 3); rem -= asst * 3; }
+        if ((pos === 'DEF' || pos === 'GKP') && rem >= 4) { push('Clean sheet', 4); rem -= 4; }
+        if (rem > 0) { const b = Math.min(3, rem); push('Bonus', b); rem -= b; }
+        cards.forEach((c) => push(c === 'yellow' ? 'Yellow card' : 'Red card', c === 'yellow' ? -1 : -3));
+      }
+      if (capt) push('Captain (×2)', p.pts - base);
+      return out;
+    };
+    let psVals = { psOpen: false, psLines: [], psForm: [], psFixtures: [] };
+    if (psP) {
+      const meta = PMETA[psP.name] || (tp ? [tp.pos, tp.price, 2 + (hash(psP.name) % 55) / 2] : ['MID', 5.0, 5.0]);
+      const h = hash(psP.name);
+      const last = gwIsNext ? gw - 1 : gw;
+      const prev = [0, 1, 2, 3].map((i) => ({ gw: 'GW' + (last - 4 + i), raw: (h + i * 23) % 13 }));
+      const cells = prev.concat([{ gw: 'GW' + last, raw: gwIsNext ? (h + 91) % 13 : psP.pts }]);
+      const mx = Math.max.apply(null, cells.map((c) => c.raw).concat([6]));
+      const oppPool = ['ARS', 'BOU', 'CRY', 'EVE', 'NEW', 'TOT', 'BHA', 'NFO'].filter((c) => c !== psP.club);
+      psVals = {
+        psOpen: true,
+        psName: psP.name, psJersey: jersey(psP.club), psIsCapt: !!psP.capt,
+        psMeta: (CLUB_NAME[psP.club] || psP.club) + ' · ' + meta[0],
+        psPrice: '£' + meta[1].toFixed(1) + 'm',
+        psOwned: meta[2].toFixed(1) + '%',
+        psGwLabel: 'GW' + gw + ' · ' + (D.FIXTURES[psP.club] || '—'),
+        psTotal: gwIsNext ? 'Yet to play' : psP.pts + (Math.abs(psP.pts) === 1 ? ' pt' : ' pts'),
+        psTotalColor: gwIsNext ? t.gold : t.text,
+        psLines: gwIsNext
+          ? [{ label: 'Projected points', val: String(3 + (h % 7)), color: t.text }, { label: 'Chance of playing', val: (h % 3 === 0 ? '75%' : '100%'), color: t.text }]
+          : buildLines(psP, meta[0]),
+        psForm: cells.map((c) => ({
+          gw: c.gw, pts: String(c.raw),
+          h: Math.round(8 + (c.raw / mx) * 52) + 'px',
+          color: c.raw >= 8 ? t.greenDot : c.raw >= 4 ? t.purpleBar : t.line,
+        })),
+        psFixtures: [0, 1, 2, 3, 4].map((i) => {
+          const real = /([A-Z]{3})\s*\(([HA])\)/.exec(D.FIXTURES[psP.club] || '');
+          const useReal = i === 0 && gwIsNext && real;
+          const opp = useReal ? real[1] : oppPool[(h + i * 3) % oppPool.length];
+          const dif = (h + i * 5) % 3;
+          return {
+            gw: 'GW' + (gw + i + (gwIsNext ? 0 : 1)),
+            opp: opp, venue: useReal ? (real[2] === 'H' ? 'Home' : 'Away') : (i % 2 === 0 ? 'Home' : 'Away'),
+            difBg: dif === 0 ? t.greenSoft : dif === 1 ? t.goldSoft : t.deadlineBg,
+            difBd: dif === 0 ? t.greenDot : dif === 1 ? t.goldBd : t.deadlineFg,
+          };
+        }),
+      };
+    }
+    const psClose = () => this.setState({ psName: null });
+
+    // ── captains ──
+    const captainRows = D.CAPTAINS.map((c, i) => {
+      const isCap = gwIsNext ? st.capPick === c.name : c.name === 'Haaland';
+      return {
+        name: c.name, note: c.note, jersey: jersey(c.club), top: i === 0,
+        xp: c.xp.toFixed(1), xpColor: i === 0 ? t.green : t.text,
+        isCap,
+        bg: isCap ? t.greenSoft : (i === 0 ? t.headStrip : 'transparent'),
+        bd: isCap ? t.greenDot : (i === 0 ? t.border : 'transparent'),
+        mt: i === 0 ? '0px' : '8px',
+        cursor: gwIsNext ? 'pointer' : 'default',
+        onPick: gwIsNext ? () => this.setState({ capPick: c.name }) : undefined,
+      };
+    });
+    const capChanged = gwIsNext && st.capPick !== st.savedCap;
+
+    // ── suggestions ──
+    const suggRows = D.SUGGS.map((s, i) => {
+      const applied = gwIsNext ? !!st.applied[s.id] : s.wasApplied;
+      return {
+        text: s.text, detail: s.detail, gain: s.gain, applied,
+        bg: applied && gwIsNext ? t.greenSoft : 'transparent',
+        bd: applied && gwIsNext ? t.greenDot : 'transparent',
+        mt: i === 0 ? '0px' : '8px',
+        ckBg: applied ? t.greenDot : 'transparent',
+        ckBd: applied ? t.greenDot : t.border,
+        stLabel: applied ? '✓ Applied' : 'Not applied',
+        stColor: applied ? t.green : t.faint,
+        onToggle: () => this.setState((prev) => ({ applied: Object.assign({}, prev.applied, { [s.id]: !prev.applied[s.id] }) })),
+      };
+    });
+    const teamCount = Object.values(st.applied).filter(Boolean).length + (capChanged ? 1 : 0);
+    const showApplyTeam = gwIsNext && (teamCount > 0 || st.teamConfirmed);
+
+    // ── transfer ──
+    const chipRows = D.CHIPS.map((c) => {
+      const sel = st.chipSel === c.name && !c.used;
+      return {
+        name: c.name, status: c.status, used: c.used,
+        cursor: c.used ? 'default' : 'pointer',
+        bg: sel ? t.chipTipBg : t.surface,
+        bd: sel ? 'transparent' : t.border,
+        shadow: sel ? '0 8px 18px rgba(55,0,60,0.3)' : 'none',
+        fg: sel ? '#fff' : (c.used ? t.faint : t.text),
+        deco: c.used ? 'line-through' : 'none',
+        stFg: c.used ? t.faint : (sel ? '#fff' : t.green),
+        stBg: c.used ? t.headStrip : (sel ? 'rgba(255,255,255,0.18)' : t.greenSoft),
+        onToggle: c.used ? undefined : () => this.setState({ chipSel: st.chipSel === c.name ? null : c.name }),
+      };
+    });
+    const selChip = D.CHIPS.find((c) => c.name === st.chipSel && !c.used);
+    const chipTip = selChip && selChip.tip;
+
+    const transferRows = D.TRANSFER_PITCH.map((row) => ({
+      players: row.map((p) => ({
+        name: p.name, jersey: jersey(p.club), price: '£' + p.p.toFixed(1) + 'm',
+        onTap: () => this.setState({ detail: p, sel: null, done: false }),
+      })),
+    }));
+
+    const tSuggRows = D.TSUGGS.map((s, i) => {
+      const applied = !!st.tApplied[s.id];
+      return {
+        out: s.out, in: s.in, detail: s.detail, gain: s.gain, applied,
+        outJersey: jersey(s.outClub), inJersey: jersey(s.inClub),
+        bg: applied ? t.greenSoft : 'transparent',
+        bd: applied ? t.greenDot : 'transparent',
+        mt: i === 0 ? '0px' : '8px',
+        ckBg: applied ? t.greenDot : 'transparent',
+        ckBd: applied ? t.greenDot : t.border,
+        onToggle: () => this.setState((prev) => ({ tApplied: Object.assign({}, prev.tApplied, { [s.id]: !prev.tApplied[s.id] }) })),
+      };
+    });
+    const tCount = Object.values(st.tApplied).filter(Boolean).length;
+    const showApplyT = tCount > 0 || st.tConfirmed;
+
+    // ── detail ──
+    const detail = st.detail;
+    const targetRows = detail ? mkRows(D.TOP_PICKS[detail.pos], { selectable: true }) : [];
+
+    // ── nav ──
+    const tabIdx = { top: 0, team: 1, transfer: 2 }[st.tab] || 0;
+    const navIdx = st.menu ? 3 : tabIdx;
+    const navLefts = ['10px', 'calc(10px + (100% - 20px)*0.25)', 'calc(10px + (100% - 20px)*0.5)', 'calc(10px + (100% - 20px)*0.75)'];
+    const navC = (i) => (navIdx === i ? t.navActive : t.navIdle);
+    const navW = (i) => (navIdx === i ? '800' : '600');
+
+    const notifDefs = [
+      { key: 'deadline', label: 'Deadline reminders', sub: '24h and 1h before each deadline' },
+      { key: 'price', label: 'Price changes', sub: 'When your players rise or fall' },
+      { key: 'injury', label: 'Injury news', sub: 'Flags on players in your squad' },
+    ];
+
+    return {
+      t, scale: st.scale,
+      statusDark: st.screen === 'landing' ? true : dark,
+      // screens
+      isLanding: st.screen === 'landing', isSignin: st.screen === 'signin', isHome: st.screen === 'home',
+      goSignin: () => this.setScreen('signin'),
+      goHome: () => this.setScreen('home'),
+      onSignOut: () => this.setScreen('landing'),
+      logoMark: dark ? 'assets/logo-mark-light.png' : 'assets/logo-mark.png',
+      // landing
+      isSlide0: st.slide === 0, isSlide1: st.slide === 1, isSlide2: st.slide === 2,
+      slideTag: slide.tag, slideT1: slide.t1, slideT2: slide.t2, slideBody: slide.body,
+      slideDots,
+      slideBtnLabel: last ? 'Sign in' : 'Next',
+      slideBtnBg: last ? 'linear-gradient(90deg,#00FF87,#04F5FF)' : '#fff',
+      slideBtnFg: last ? '#06351E' : '#37003C',
+      nextSlide: () => { if (last) this.setScreen('signin'); else this.setState({ slide: st.slide + 1 }); },
+      // signin
+      email: st.email, password: st.password,
+      onEmail: (e) => this.setState({ email: e.target.value }),
+      onPassword: (e) => this.setState({ password: e.target.value }),
+      // tabs
+      isTabTop: st.tab === 'top', isTabTeam: st.tab === 'team', isTabTransfer: st.tab === 'transfer',
+      onTabTop: () => this.setTab('top'), onTabTeam: () => this.setTab('team'), onTabTransfer: () => this.setTab('transfer'),
+      // top picks
+      topPos, topPosTitle: POS_FULL[topPos],
+      segLeft: 'calc(4px + (100% - 8px)*' + topIdx * 0.25 + ')',
+      segItems, picksRows, swipeStart, swipeEnd,
+      // gw
+      gw: String(gw),
+      gwPrev: () => { if (gw > 1) this.setState({ gw: gw - 1 }); },
+      gwNext: () => { if (gw < MAX) this.setState({ gw: gw + 1 }); },
+      gwPrevOp: gw <= 1 ? 0.3 : 1, gwNextOp: gw >= MAX ? 0.3 : 1,
+      gwIsNext, gwLocked,
+      gwShowDot: !gwIsPast,
+      gwChipFg: gwIsLive ? t.green : gwIsNext ? t.gold : t.faint,
+      gwChipBg: gwIsLive ? t.greenSoft : gwIsNext ? t.goldSoft : t.headStrip,
+      gwDotBg: gwIsLive ? t.greenDot : t.gold,
+      lockNote: gwIsLive ? 'Gameweek is live — locked' : 'Past gameweek — locked',
+      lockedOp: gwIsNext ? 1 : 0.78,
+      // hero
+      heroUpcoming: gwIsNext, heroPlayed: !gwIsNext,
+      showMatches: !gwIsNext, matchRows,
+      heroPts: String(st.heroPts),
+      // pitch
+      pitchRows, benchRows, captainRows, suggRows,
+      // apply team
+      showApplyTeam,
+      teamConfirmed: st.teamConfirmed, teamNotConfirmed: !st.teamConfirmed,
+      teamPendingLabel: teamCount + ' change' + (teamCount === 1 ? '' : 's') + ' pending',
+      onUndoTeam: () => this.setState({ applied: {}, capPick: st.savedCap }),
+      onConfirmTeam: () => {
+        this.setState({ teamConfirmed: true });
+        setTimeout(() => this.setState({ teamConfirmed: false, applied: {}, savedCap: this.state.capPick }), 1100);
+      },
+      // transfer
+      chipRows,
+      psClose,
+      psOpen: psVals.psOpen, psName: psVals.psName, psJersey: psVals.psJersey, psIsCapt: psVals.psIsCapt,
+      psMeta: psVals.psMeta, psPrice: psVals.psPrice, psOwned: psVals.psOwned,
+      psGwLabel: psVals.psGwLabel, psTotal: psVals.psTotal, psTotalColor: psVals.psTotalColor,
+      psLines: psVals.psLines, psForm: psVals.psForm, psFixtures: psVals.psFixtures,
+      hasChipTip: !!chipTip,
+      chipTipTitle: chipTip ? chipTip.title : '',
+      chipTipLines: chipTip ? chipTip.lines.map((x) => ({ text: x })) : [],
+      transferRows, tSuggRows,
+      showApplyT,
+      tConfirmed: st.tConfirmed, tNotConfirmed: !st.tConfirmed,
+      tPendingLabel: tCount + ' transfer' + (tCount === 1 ? '' : 's') + ' pending',
+      onUndoT: () => this.setState({ tApplied: {} }),
+      onConfirmT: () => {
+        this.setState({ tConfirmed: true });
+        setTimeout(() => this.setState({ tConfirmed: false, tApplied: {} }), 1100);
+      },
+      // detail
+      hasDetail: !!detail,
+      detailName: detail ? detail.name : '',
+      detailJersey: detail ? jersey(detail.club) : '',
+      detailMeta: detail ? '£' + detail.p.toFixed(1) + 'm · ' + detail.pos : '',
+      detailPosLabel: detail ? POS_FULL[detail.pos] : '',
+      targetRows,
+      onCloseDetail: () => this.setState({ detail: null, sel: null, done: false }),
+      hasSel: !!st.sel, selName: st.sel || '',
+      transferDone: st.done, transferNotDone: !st.done,
+      onConfirmTransfer: () => {
+        this.setState({ done: true });
+        setTimeout(() => this.setState({ detail: null, sel: null, done: false }), 1000);
+      },
+      // nav
+      navLeft: navLefts[navIdx],
+      navTopC: navC(0), navTeamC: navC(1), navTransferC: navC(2), navAccountC: navC(3),
+      navTopW: navW(0), navTeamW: navW(1), navTransferW: navW(2), navAccountW: navW(3),
+      navAccountRing: st.menu ? '2px solid ' + t.navActive : '2px solid transparent',
+      // menu
+      menuOpen: st.menu,
+      onMenu: () => this.setState({ menu: !st.menu }),
+      onCloseMenu: () => this.setState({ menu: false }),
+      onToggleDark: () => setD(!dark),
+      darkTrackBg: dark ? '#7B09E5' : 'rgba(40,10,60,0.15)',
+      darkKnobLeft: dark ? '20px' : '2px',
+      onOpenProfile: () => this.setState({ menu: false, profileOpen: true }),
+      onOpenSettings: () => this.setState({ menu: false, settingsOpen: true }),
+      // profile
+      profileOpen: st.profileOpen,
+      onCloseProfile: () => this.setState({ profileOpen: false }),
+      profileRows: [
+        { label: 'First name', value: 'Alex' }, { label: 'Last name', value: 'Gaffer' },
+        { label: 'Date of birth', value: '14 March 1991' }, { label: 'Gender', value: 'Prefer not to say' },
+        { label: 'Email', value: 'alex.gaffer@email.com' },
+      ].map((f, i, a) => ({ ...f, bBottom: '1px solid ' + t.line })),
+      onToggleFaceId: () => this.setState({ faceId: !st.faceId }),
+      faceIdBg: st.faceId ? t.greenDot : (dark ? 'rgba(255,255,255,0.14)' : 'rgba(40,10,60,0.15)'),
+      faceIdKnob: st.faceId ? '21.5px' : '2.5px',
+      // settings
+      settingsOpen: st.settingsOpen,
+      onCloseSettings: () => this.setState({ settingsOpen: false }),
+      themeSegLeft: dark ? 'calc(4px + (100% - 8px)*0.5)' : '4px',
+      themeLightC: dark ? t.muted : '#fff',
+      themeDarkC: dark ? '#fff' : t.muted,
+      onSetLight: () => setD(false), onSetDark: () => setD(true),
+      notifRows: notifDefs.map((n, i) => ({
+        label: n.label, sub: n.sub,
+        bBottom: i === notifDefs.length - 1 ? 'none' : '1px solid ' + t.line,
+        trackBg: st.notif[n.key] ? t.greenDot : (dark ? 'rgba(255,255,255,0.14)' : 'rgba(40,10,60,0.15)'),
+        knobLeft: st.notif[n.key] ? '21.5px' : '2.5px',
+        onToggle: () => this.setState((prev) => ({ notif: Object.assign({}, prev.notif, { [n.key]: !prev.notif[n.key] }) })),
+      })),
+    };
+  }
+}
+</script>
+</body>
+</html>

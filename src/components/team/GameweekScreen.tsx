@@ -3,7 +3,7 @@ import { track } from '@/lib/analytics';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme, GUTTER } from '@/constants/theme';
+import { FLOATING_NAV_SPACE, getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { PitchPlayer, Suggestion } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
@@ -135,7 +135,7 @@ export function GameweekScreen({
         style={{ flex: 1 }}
         contentContainerStyle={[
           styles.scroll,
-          isUpcoming && totalChanges > 0 && { paddingBottom: 140 },
+          isUpcoming && totalChanges > 0 && { paddingBottom: FLOATING_NAV_SPACE + 132 },
         ]}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
@@ -276,7 +276,9 @@ const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: GUTTER,
     paddingTop: 16,
-    paddingBottom: 32,
+    // The nav bar floats over this screen, so the content has to end short of
+    // it rather than relying on a docked bar to reserve the space.
+    paddingBottom: FLOATING_NAV_SPACE + 32,
   },
   section: {
     marginTop: 16,
@@ -316,7 +318,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: GUTTER,
     right: GUTTER,
-    bottom: 24,
+    bottom: FLOATING_NAV_SPACE + 16,
     zIndex: 20,
   },
 });

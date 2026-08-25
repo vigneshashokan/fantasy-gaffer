@@ -7,7 +7,7 @@
 // inset; and the offline strip's top inset was doubled by this layout's own.
 
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useNetInfo } from '@react-native-community/netinfo';
 import TabsLayout from '@/app/(home)/(tabs)/_layout';
@@ -131,17 +131,27 @@ describe('tabs layout — active tab derives from the router', () => {
 });
 
 describe('tabs layout — safe areas', () => {
-  it('clears the home-indicator inset instead of a hardcoded 22', () => {
-    expect(flat(renderLayout().getByTestId('tab-bar').props.style).paddingBottom).toBe(34);
+  // The bar floats now, so the home indicator is cleared by its `bottom`
+  // offset rather than by padding inside a docked bar. The mock's 28pt is
+  // measured on a 34pt-inset device; a device with no inset must not leave it
+  // stranded 28pt up in empty space.
+  it('sits at the mock\'s 28pt above a home indicator', () => {
+    expect(flat(renderLayout().getByTestId('tab-bar').props.style).bottom).toBe(28);
   });
 
-  it('keeps a minimum bottom padding on devices with no inset', () => {
+  it('drops to a plain 16 on devices with no inset', () => {
     const r = render(
       <SafeAreaProvider initialMetrics={{ ...METRICS, insets: { ...METRICS.insets, bottom: 0 } }}>
         <TabsLayout />
       </SafeAreaProvider>,
     );
-    expect(flat(r.getByTestId('tab-bar').props.style).paddingBottom).toBe(12);
+    expect(flat(r.getByTestId('tab-bar').props.style).bottom).toBe(16);
+  });
+
+  // It has to be out of the tab navigator's flow, or the screens shrink to fit
+  // it and every FLOATING_NAV_SPACE padding below becomes dead space.
+  it('floats over the screens rather than docking under them', () => {
+    expect(flat(renderLayout().getByTestId('tab-bar').props.style).position).toBe('absolute');
   });
 
   it('drops its own top inset while the offline strip is showing', () => {
@@ -163,6 +173,19 @@ describe('tabs layout — a11y', () => {
     mockSegments = ['(home)', '(tabs)', 'transfer'];
     const { getByTestId } = renderLayout();
     expect(getByTestId('tab-transfer').props.accessibilityState?.selected).toBe(true);
+    expect(getByTestId('tab-team').props.accessibilityState?.selected).toBe(false);
+  });
+
+  // Account opens a menu instead of navigating, so it is a button — but the
+  // mock still hands it the highlight while that menu is open, which means no
+  // tab may claim `selected` at the same time.
+  it('hands the highlight to Account while its menu is open, deselecting the tab', () => {
+    const { getByTestId } = renderLayout();
+    expect(getByTestId('tab-team').props.accessibilityState?.selected).toBe(true);
+
+    fireEvent.press(getByTestId('tab-account'));
+
+    expect(getByTestId('tab-account').props.accessibilityRole).toBe('button');
     expect(getByTestId('tab-team').props.accessibilityState?.selected).toBe(false);
   });
 });
