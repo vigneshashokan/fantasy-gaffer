@@ -38,6 +38,7 @@ jest.mock('@/store/authStore', () => ({
 
 import React from 'react';
 import type { NotificationPrefs } from '@/api/notificationPrefs';
+import { StyleSheet } from 'react-native';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Icon } from '@/components/ui/Icon';
 import { PosTag } from '@/components/ui/PosTag';
@@ -740,6 +741,15 @@ describe('ScreenHeader', () => {
       <ScreenHeader title="Profile" gradFrom="#37003C" gradTo="#5B0F63" onBack={() => {}} />
     );
     expect(getByText('Profile')).toBeTruthy();
+  });
+
+  // Every caller is a modal; on iOS the sheet starts below the status bar, so
+  // the window inset (mocked at 47 above) is dead space, not safe area.
+  it('does not pad for the status bar on iOS', () => {
+    const { getByTestId } = render(
+      <ScreenHeader title="Profile" gradFrom="#37003C" gradTo="#5B0F63" onBack={() => {}} />
+    );
+    expect(StyleSheet.flatten(getByTestId('screen-header').props.style).paddingTop).toBe(12);
   });
 });
 

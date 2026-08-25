@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,13 @@ import {
   StyleSheet,
   useWindowDimensions,
   RefreshControl,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
 } from 'react-native';
+import Animated, {
+  runOnJS,
+  useAnimatedRef,
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from 'react-native-reanimated';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
@@ -39,8 +43,11 @@ export default function TopPicksTab() {
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
   const { width } = useWindowDimensions();
-  const scrollerRef = useRef<ScrollView>(null);
+  const scrollerRef = useAnimatedRef<Animated.ScrollView>();
   const [active, setActive] = useState(0);
+  // Fractional page position, driven on the UI thread — the segmented
+  // control's highlight rides it so tap and swipe both slide.
+  const progress = useSharedValue(0);
   const reduced = useReducedMotion();
 
   const { data: currentGw }                         = useCurrentGameweek();
@@ -73,10 +80,11 @@ export default function TopPicksTab() {
   // Track active segment while the finger is moving, not just at the end —
   // makes the highlight feel responsive instead of waiting ~300ms for the
   // snap animation to finish.
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const idx = Math.round(e.nativeEvent.contentOffset.x / width);
-    if (idx !== active && idx >= 0 && idx < ORDER.length) setActive(idx);
-  };
+  const onScroll = useAnimatedScrollHandler((e) => {
+    progress.value = e.contentOffset.x / width;
+    const idx = Math.round(progress.value);
+    if (idx !== active && idx >= 0 && idx < ORDER.length) runOnJS(setActive)(idx);
+  });
 
   // This screen had no error branch at all — a failed player fetch pulsed the
   // skeleton forever (#167).
@@ -127,10 +135,11 @@ export default function TopPicksTab() {
           value={active}
           onChange={goTo}
           tk={tk}
+          progress={progress}
         />
       </View>
 
-      <ScrollView
+      <Animated.ScrollView
         ref={scrollerRef}
         horizontal
         pagingEnabled
@@ -161,7 +170,7 @@ export default function TopPicksTab() {
               />
           </ScrollView>
         ))}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
