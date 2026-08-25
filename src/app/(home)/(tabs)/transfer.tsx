@@ -185,9 +185,13 @@ export default function TransferTab() {
 
 const styles = StyleSheet.create({
   bannerWrap: {
-    // No paddingTop — TabHeader already ends with 14. The paddingBottom is
+    // Cancels TabHeader's own bottom spacing (paddingBottom 14 + the title
+    // row's marginBottom 5) so the banner hangs off the title block: what is
+    // left above it is the 36/48 title's line-box leading, which reads as
+    // roughly the same 14 as the padding below. The paddingBottom is
     // load-bearing: the ScrollView clips at its own top edge, so without a
     // band here the scrolling content slices itself against the pinned banner.
+    marginTop: -19,
     paddingHorizontal: 16,
     paddingBottom: 14,
   },
