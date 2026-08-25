@@ -163,6 +163,7 @@ export default function TransferTab() {
             <TransferSuggestionsCard
               suggestions={tr.transferSuggestions}
               tk={tk}
+              projectionsReady={at.projectionsReady}
               applied={pendingTransfers}
               onToggle={toggleTransfer}
               onToggleAll={toggleAllTransfers}

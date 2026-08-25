@@ -13,6 +13,12 @@ interface TransferSuggestionsCardProps {
   applied?: Record<string, boolean>;
   onToggle?: (id: string) => void;
   onToggleAll?: (next: boolean) => void;
+  /**
+   * False when the model served no projection for the window, so the engine
+   * ranked on FPL's ep_next instead. An empty list means two different things
+   * either side of that flag and the card must not conflate them.
+   */
+  projectionsReady?: boolean;
 }
 
 export function TransferSuggestionsCard({
@@ -21,6 +27,7 @@ export function TransferSuggestionsCard({
   applied = {},
   onToggle,
   onToggleAll,
+  projectionsReady = true,
 }: TransferSuggestionsCardProps) {
   const allChecked =
     suggestions.length > 0 && suggestions.every((s) => !!applied[s.id]);
@@ -48,7 +55,7 @@ export function TransferSuggestionsCard({
           </Svg>
           <Text style={[styles.title, { color: tk.text }]}>Transfer Suggestions</Text>
         </View>
-        {onToggleAll && (
+        {onToggleAll && suggestions.length > 0 && (
           <ApplyAllToggle
             checked={allChecked}
             onToggle={() => onToggleAll(!allChecked)}
@@ -56,6 +63,14 @@ export function TransferSuggestionsCard({
           />
         )}
       </View>
+
+      {suggestions.length === 0 && (
+        <Text style={[styles.empty, { color: tk.faint }]}>
+          {projectionsReady
+            ? 'No transfer beats what you already have over the next 3 gameweeks.'
+            : "Projections aren't in for these gameweeks yet, so there's nothing to rank."}
+        </Text>
+      )}
 
       {suggestions.map((s, i) => {
         const done = !!applied[s.id];
@@ -144,6 +159,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Archivo_800ExtraBold',
     fontSize: 17,
     letterSpacing: -0.17,
+  },
+  empty: {
+    fontFamily: 'Archivo_500Medium',
+    fontSize: 12.5,
+    lineHeight: 18,
+    marginTop: 8,
   },
   row: {
     flexDirection: 'row',

@@ -235,6 +235,7 @@ export function GameweekScreen({
           <SuggestionsCard
             suggestions={at.suggestions}
             tk={tk}
+            projectionsReady={at.projectionsReady}
             editable={isUpcoming}
             applied={pendingSuggestions}
             onToggle={(id) => {

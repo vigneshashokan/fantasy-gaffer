@@ -15,6 +15,12 @@ interface SuggestionsCardProps {
   onToggle?: (id: string) => void;
   onToggleAll?: (next: boolean) => void;
   lockedNote?: string;
+  /**
+   * False when the model served no projection for this gameweek, so the engine
+   * ranked on FPL's ep_next instead. An empty list means two different things
+   * either side of that flag and the card must not conflate them.
+   */
+  projectionsReady?: boolean;
 }
 
 export function SuggestionsCard({
@@ -25,6 +31,7 @@ export function SuggestionsCard({
   onToggle,
   onToggleAll,
   lockedNote = 'Gameweek is live — suggestions are locked.',
+  projectionsReady = true,
 }: SuggestionsCardProps) {
   const bulbColor = editable ? tk.yellow : tk.faint;
   const allChecked =
@@ -55,11 +62,13 @@ export function SuggestionsCard({
           <Text style={[styles.title, { color: tk.text }]}>Team Suggestions</Text>
         </View>
         {editable ? (
-          <ApplyAllToggle
-            checked={allChecked}
-            onToggle={() => onToggleAll?.(!allChecked)}
-            tk={tk}
-          />
+          suggestions.length > 0 ? (
+            <ApplyAllToggle
+              checked={allChecked}
+              onToggle={() => onToggleAll?.(!allChecked)}
+              tk={tk}
+            />
+          ) : null
         ) : (
           <View
             style={[
@@ -74,6 +83,14 @@ export function SuggestionsCard({
 
       {!editable && (
         <Text style={[styles.note, { color: tk.faint }]}>{lockedNote}</Text>
+      )}
+
+      {suggestions.length === 0 && (
+        <Text style={[styles.note, { color: tk.faint }]}>
+          {projectionsReady
+            ? 'Your current XI is already the best of your 15 — nothing to swap.'
+            : "No projection was served for this gameweek, so there's nothing to rank."}
+        </Text>
       )}
 
       {suggestions.map((s, i) => {
