@@ -189,9 +189,9 @@ function NavSlot({
 
 const styles = StyleSheet.create({
   bar: {
-    // ponytail: translucent fill only, no backdrop blur. At the mock's 0.85/0.88
-    // alpha the blur is barely visible, and expo-glass-effect (already a dep) is
-    // iOS-26-only + needs a dev build. Swap it in here if the fill ever thins.
+    // ponytail: flat fill, no backdrop blur — `navBg` is opaque, so there is
+    // nothing behind the bar to blur. If the fill is ever thinned back toward
+    // the mock's glass, expo-glass-effect is already a dep (iOS 26 + dev build).
     position: 'absolute',
     left: 16,
     right: 16,
