@@ -44,6 +44,12 @@ export default function TeamTab() {
   const scrollYByGw = useRef<Record<number, number>>({});
   const [arrowsVisible, setArrowsVisible] = useState(true);
   const arrowOpacity = useRef(new Animated.Value(1)).current;
+  // ...and they ride the first ARROW_HIDE_Y of that scroll rather than sitting
+  // still, so they stay level with the "Gameweek N" pill they flank instead of
+  // drifting below it on the way out. Clamped, because past that they're gone.
+  const arrowShift = useRef(new Animated.Value(0)).current;
+  const shiftFor = (y: number) =>
+    arrowShift.setValue(-Math.min(Math.max(y, 0), ARROW_HIDE_Y));
   useEffect(() => {
     Animated.timing(arrowOpacity, {
       toValue: arrowsVisible ? 1 : 0,
@@ -127,12 +133,16 @@ export default function TeamTab() {
     if (landed != null) {
       setActiveGw(landed);
       setArrowsVisible((scrollYByGw.current[landed] ?? 0) <= ARROW_HIDE_Y);
+      shiftFor(scrollYByGw.current[landed] ?? 0);
     }
   };
 
   const handlePageScroll = (gw: number, y: number) => {
     scrollYByGw.current[gw] = y;
-    if (gw === currentGw) setArrowsVisible(y <= ARROW_HIDE_Y);
+    if (gw === currentGw) {
+      setArrowsVisible(y <= ARROW_HIDE_Y);
+      shiftFor(y);
+    }
   };
 
   const toggleSuggestion = (id: string) =>
@@ -218,7 +228,11 @@ export default function TeamTab() {
             content (incl. the "Gameweek N" pill) swipes beneath them. They fade
             out once the active gameweek is scrolled past the header. */}
         <Animated.View
-          style={[styles.arrow, styles.arrowLeft, { opacity: arrowOpacity }]}
+          style={[
+            styles.arrow,
+            styles.arrowLeft,
+            { opacity: arrowOpacity, transform: [{ translateY: arrowShift }] },
+          ]}
           pointerEvents={arrowsVisible ? 'auto' : 'none'}
         >
           <GwArrow
@@ -229,7 +243,11 @@ export default function TeamTab() {
           />
         </Animated.View>
         <Animated.View
-          style={[styles.arrow, styles.arrowRight, { opacity: arrowOpacity }]}
+          style={[
+            styles.arrow,
+            styles.arrowRight,
+            { opacity: arrowOpacity, transform: [{ translateY: arrowShift }] },
+          ]}
           pointerEvents={arrowsVisible ? 'auto' : 'none'}
         >
           <GwArrow
