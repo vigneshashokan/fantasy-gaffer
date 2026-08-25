@@ -19,7 +19,6 @@ import { SuggestionsCard } from '@/components/team/SuggestionsCard';
 import { CarriedOverNote } from '@/components/team/CarriedOverNote';
 import { GwPill } from '@/components/team/GwNav';
 import { ApplyAllCard } from '@/components/team/ApplyAllCard';
-import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
 import { ChipsRow } from '@/components/transfer/ChipsRow';
 
 type GwState = 'live' | 'upcoming' | 'past';
@@ -147,12 +146,10 @@ export function GameweekScreen({
       >
         <GwPill gw={gw} state={gwState} tk={tk} />
 
+        {/* The deadline banner is pinned by the shell (team.tsx), above the
+            carousel — it is the same next deadline on every page. */}
         {isUpcoming && (
           <View style={{ marginBottom: 16 }}>
-            {/* nextGw, not this page's gw: the deadline is always the next one
-                you can act on. Passing `gw` labelled GW5's page with GW2's
-                deadline while browsing ahead in the carousel. */}
-            <DeadlineBanner nextGw={at.transfer.nextGw} deadline={at.transfer.deadline} tk={tk} />
             <CarriedOverNote from={at.carriedOverFrom} tk={tk} />
           </View>
         )}

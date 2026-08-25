@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { TabHeader } from '@/components/ui/TabHeader';
 import { SeasonCompleteBanner } from '@/components/ui/SeasonCompleteBanner';
+import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
 import { GameweekScreen } from '@/components/team/GameweekScreen';
 import { GwArrow } from '@/components/team/GwNav';
 
@@ -156,11 +157,21 @@ export default function TeamTab() {
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <TabHeader title={at.teamName} tk={tk} />
-      {seasonOver && (
-        <View style={styles.bannerWrap}>
+      {/* Outside the carousel: a deadline countdown is least useful the moment
+          it scrolls away, and it is the same next deadline on every page —
+          nextGw, never the page's own gw, or browsing ahead to GW5 would label
+          it with GW2's deadline. */}
+      <View style={styles.bannerWrap}>
+        {seasonOver ? (
           <SeasonCompleteBanner seasonLabel={seasonLabel} tk={tk} />
-        </View>
-      )}
+        ) : (
+          <DeadlineBanner
+            nextGw={at.transfer.nextGw}
+            deadline={at.transfer.deadline}
+            tk={tk}
+          />
+        )}
+      </View>
       {/* Carousel area — measured (not the whole screen) so each page's height
           excludes the team-name header and the fixed arrows sit below it. */}
       <View
@@ -235,9 +246,13 @@ export default function TeamTab() {
 
 const styles = StyleSheet.create({
   bannerWrap: {
+    // Same treatment as the Transfer tab's: cancels TabHeader's own bottom
+    // spacing (paddingBottom 14 + the title row's marginBottom 5) so what is
+    // left above the banner is the title's line-box leading, matching the gap
+    // below it.
+    marginTop: -19,
     paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 12,
+    paddingBottom: 14,
   },
   arrow: {
     position: 'absolute',
