@@ -113,6 +113,15 @@ export default function TransferTab() {
   return (
     <View style={{ flex: 1, backgroundColor: tk.bg }}>
       <TabHeader title="Transfer" tk={tk} />
+      {/* Outside the scroller: a deadline countdown is least useful the moment
+          it scrolls off, and this tab is long. */}
+      <View style={styles.bannerWrap}>
+        {seasonOver ? (
+          <SeasonCompleteBanner seasonLabel={seasonLabel} tk={tk} />
+        ) : (
+          <DeadlineBanner nextGw={tr.nextGw} deadline={tr.deadline} tk={tk} />
+        )}
+      </View>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={[
@@ -125,11 +134,6 @@ export default function TransferTab() {
         }
       >
         <View style={styles.topGroup}>
-          {seasonOver ? (
-            <SeasonCompleteBanner seasonLabel={seasonLabel} tk={tk} />
-          ) : (
-            <DeadlineBanner nextGw={tr.nextGw} deadline={tr.deadline} tk={tk} />
-          )}
           {!seasonOver && <CarriedOverNote from={at.carriedOverFrom} tk={tk} />}
           <TransferInfoCard
             nextGw={tr.nextGw}
@@ -180,6 +184,10 @@ export default function TransferTab() {
 }
 
 const styles = StyleSheet.create({
+  bannerWrap: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+  },
   topGroup: {
     paddingHorizontal: 16,
     paddingTop: 14,
