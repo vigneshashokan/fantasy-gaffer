@@ -27,6 +27,7 @@ import {
 } from '@/api/fixtures';
 import { useSquad } from '@/api/squad';
 import { useReducedMotion } from '@/lib/a11y';
+import { usePullRefresh } from '@/lib/query/usePullRefresh';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { TabHeader } from '@/components/ui/TabHeader';
@@ -59,9 +60,9 @@ export default function TopPicksTab() {
     data: topPicks,
     isPending: picksPending,
     isError: picksError,
-    isRefetching,
     refetch,
   } = useTopPicks();
+  const pull = usePullRefresh(refetch);
   const { data: fixtures }                          = useFixturesByGw(gw ?? 0);
   const { data: squad }                             = useSquad();
 
@@ -157,7 +158,7 @@ export default function TopPicksTab() {
             showsVerticalScrollIndicator={false}
             nestedScrollEnabled
             refreshControl={
-              <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+              <RefreshControl {...pull} />
             }
           >
             <PicksCard

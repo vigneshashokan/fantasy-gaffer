@@ -8,6 +8,7 @@ import { apexTokens } from '@/constants/apexTokens';
 import type { TransferPitchPlayer } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
 import { useSeasonState, useNextDeadline, currentSeasonLabel } from '@/api/fixtures';
+import { usePullRefresh } from '@/lib/query/usePullRefresh';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
 import { NoSquadCta } from '@/components/team/NoSquadCta';
 import { CarriedOverNote } from '@/components/team/CarriedOverNote';
@@ -34,8 +35,9 @@ export default function TransferTab() {
   // the NEXT deadline. Undefined once the season is over, which falls back to
   // the live gameweek exactly as before.
   const nextDeadline = useNextDeadline();
-  const { data: at, isPending, noTeam, noSquad, isError, isRefetching, refetch } =
+  const { data: at, isPending, noTeam, noSquad, isError, refetch } =
     useApexTeam(nextDeadline.data?.gw);
+  const pull = usePullRefresh(refetch);
   const { data: seasonState } = useSeasonState();
   const [pendingTransfers, setPendingTransfers] = useState<Record<string, boolean>>({});
   const pendingCount = Object.values(pendingTransfers).filter(Boolean).length;
@@ -130,7 +132,7 @@ export default function TransferTab() {
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+          <RefreshControl {...pull} />
         }
       >
         <View style={styles.topGroup}>

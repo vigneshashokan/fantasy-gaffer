@@ -7,6 +7,7 @@ import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { PitchPlayer, Suggestion } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
+import { usePullRefresh } from '@/lib/query/usePullRefresh';
 import { NoSquadCta } from '@/components/team/NoSquadCta';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -60,7 +61,8 @@ export function GameweekScreen({
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
-  const { data: at, isPending, isError, noSquad, isRefetching, refetch } = useApexTeam(gw);
+  const { data: at, isPending, isError, noSquad, refetch } = useApexTeam(gw);
+  const pull = usePullRefresh(refetch);
 
   // Report a fresh "at the top" position on mount so the shell's per-gameweek
   // scroll record is reset whenever this page (re)mounts after recycling.
@@ -140,7 +142,7 @@ export function GameweekScreen({
         scrollEventThrottle={16}
         onScroll={(e) => onVerticalScroll?.(e.nativeEvent.contentOffset.y)}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+          <RefreshControl {...pull} />
         }
       >
         <GwPill gw={gw} state={gwState} tk={tk} />
