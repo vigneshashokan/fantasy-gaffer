@@ -185,12 +185,14 @@ export default function TransferTab() {
 
 const styles = StyleSheet.create({
   bannerWrap: {
+    // No paddingTop — TabHeader already ends with 14. The paddingBottom is
+    // load-bearing: the ScrollView clips at its own top edge, so without a
+    // band here the scrolling content slices itself against the pinned banner.
     paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingBottom: 14,
   },
   topGroup: {
     paddingHorizontal: 16,
-    paddingTop: 14,
     gap: 14,
   },
   pitchWrap: {
