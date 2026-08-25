@@ -7,7 +7,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { ApexTokens } from '@/constants/apexTokens';
-import { getTheme } from '@/constants/theme';
+import { getTheme, GUTTER } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
 import { PillBtn } from '@/components/ui/PillBtn';
 
@@ -44,7 +44,7 @@ export function LinkTeamCta({ tk, variant }: LinkTeamCtaProps) {
 
 const styles = StyleSheet.create({
   card: {
-    marginHorizontal: 16, marginTop: 24,
+    marginHorizontal: GUTTER, marginTop: 24,
     padding: 20, borderRadius: 20, borderWidth: 1,
     gap: 10,
   },

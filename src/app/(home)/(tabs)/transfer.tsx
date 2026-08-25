@@ -3,11 +3,12 @@ import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native
 import { useRouter } from 'expo-router';
 import { track } from '@/lib/analytics';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme } from '@/constants/theme';
+import { getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { TransferPitchPlayer } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
 import { useSeasonState, useNextDeadline, currentSeasonLabel } from '@/api/fixtures';
+import { usePullRefresh } from '@/lib/query/usePullRefresh';
 import { LinkTeamCta } from '@/components/team/LinkTeamCta';
 import { NoSquadCta } from '@/components/team/NoSquadCta';
 import { CarriedOverNote } from '@/components/team/CarriedOverNote';
@@ -34,8 +35,9 @@ export default function TransferTab() {
   // the NEXT deadline. Undefined once the season is over, which falls back to
   // the live gameweek exactly as before.
   const nextDeadline = useNextDeadline();
-  const { data: at, isPending, noTeam, noSquad, isError, isRefetching, refetch } =
+  const { data: at, isPending, noTeam, noSquad, isError, refetch } =
     useApexTeam(nextDeadline.data?.gw);
+  const pull = usePullRefresh(refetch);
   const { data: seasonState } = useSeasonState();
   const [pendingTransfers, setPendingTransfers] = useState<Record<string, boolean>>({});
   const pendingCount = Object.values(pendingTransfers).filter(Boolean).length;
@@ -68,7 +70,7 @@ export default function TransferTab() {
   }
   if (isPending || !at) {
     return (
-      <View style={{ flex: 1, backgroundColor: tk.bg, padding: 16 }}>
+      <View style={{ flex: 1, backgroundColor: tk.bg, padding: GUTTER }}>
         <Skeleton height={72} radius={20} />
         <View style={{ height: 12 }} />
         <Skeleton height={260} radius={20} />
@@ -113,6 +115,15 @@ export default function TransferTab() {
   return (
     <View style={{ flex: 1, backgroundColor: tk.bg }}>
       <TabHeader title="Transfer" tk={tk} />
+      {/* Outside the scroller: a deadline countdown is least useful the moment
+          it scrolls off, and this tab is long. */}
+      <View style={styles.bannerWrap}>
+        {seasonOver ? (
+          <SeasonCompleteBanner seasonLabel={seasonLabel} tk={tk} />
+        ) : (
+          <DeadlineBanner nextGw={tr.nextGw} deadline={tr.deadline} tk={tk} />
+        )}
+      </View>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={[
@@ -121,15 +132,10 @@ export default function TransferTab() {
         ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+          <RefreshControl {...pull} />
         }
       >
         <View style={styles.topGroup}>
-          {seasonOver ? (
-            <SeasonCompleteBanner seasonLabel={seasonLabel} tk={tk} />
-          ) : (
-            <DeadlineBanner nextGw={tr.nextGw} deadline={tr.deadline} tk={tk} />
-          )}
           {!seasonOver && <CarriedOverNote from={at.carriedOverFrom} tk={tk} />}
           <TransferInfoCard
             nextGw={tr.nextGw}
@@ -180,13 +186,23 @@ export default function TransferTab() {
 }
 
 const styles = StyleSheet.create({
+  bannerWrap: {
+    // Cancels TabHeader's own bottom spacing (paddingBottom 14 + the title
+    // row's marginBottom 5) so the banner hangs off the title block: what is
+    // left above it is the 36/48 title's line-box leading, which reads as
+    // roughly the same 14 as the padding below. The paddingBottom is
+    // load-bearing: the ScrollView clips at its own top edge, so without a
+    // band here the scrolling content slices itself against the pinned banner.
+    marginTop: -19,
+    paddingHorizontal: GUTTER,
+    paddingBottom: 14,
+  },
   topGroup: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
+    paddingHorizontal: GUTTER,
     gap: 14,
   },
   pitchWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: GUTTER,
     paddingTop: 14,
   },
   hint: {
@@ -197,13 +213,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   suggestionsWrap: {
-    paddingHorizontal: 16,
+    paddingHorizontal: GUTTER,
     paddingTop: 6,
   },
   applyWrap: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: GUTTER,
+    right: GUTTER,
     bottom: 24,
     zIndex: 20,
   },

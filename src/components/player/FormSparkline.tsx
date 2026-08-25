@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { ApexTokens } from '@/constants/apexTokens';
 import type { FormGameweek } from '@/api/playerSummary';
+import { GUTTER } from '@/constants/theme';
 
 const MAX_H = 48;
 
@@ -40,12 +41,12 @@ export function FormSparkline({ gameweeks, tk }: FormSparklineProps) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', paddingHorizontal: 16, paddingTop: 12, height: MAX_H + 44 },
+  wrap: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', paddingHorizontal: GUTTER, paddingTop: 12, height: MAX_H + 44 },
   col: { alignItems: 'center', gap: 4 },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 3 },
   barCol: { alignItems: 'center', gap: 4 },
   val: { fontFamily: 'JetBrainsMono_700Bold', fontSize: 11 },
   bar: { width: 16, borderRadius: 5 },
   round: { fontFamily: 'Archivo_500Medium', fontSize: 11 },
-  empty: { fontFamily: 'Archivo_500Medium', fontSize: 13, fontStyle: 'italic', paddingHorizontal: 16, paddingTop: 12 },
+  empty: { fontFamily: 'Archivo_500Medium', fontSize: 13, fontStyle: 'italic', paddingHorizontal: GUTTER, paddingTop: 12 },
 });

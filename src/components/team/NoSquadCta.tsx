@@ -27,6 +27,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, Linking } from 'react-native';
 import { ApexTokens } from '@/constants/apexTokens';
+import { GUTTER } from '@/constants/theme';
 
 const FPL_MY_TEAM = 'https://fantasy.premierleague.com/my-team';
 
@@ -68,7 +69,7 @@ export function NoSquadCta({ tk, gw }: NoSquadCtaProps) {
 
 const styles = StyleSheet.create({
   card: {
-    marginHorizontal: 16, marginTop: 24,
+    marginHorizontal: GUTTER, marginTop: 24,
     padding: 20, borderRadius: 20, borderWidth: 1,
     gap: 10,
   },

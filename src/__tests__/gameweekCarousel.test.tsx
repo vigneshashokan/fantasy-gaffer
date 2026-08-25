@@ -24,7 +24,7 @@ jest.mock('@/components/team/LinkTeamCta', () => {
 // fields it actually reads. `Partial<>` still catches a rename/type change on
 // any field that IS specified (see #155).
 let mockTeam: {
-  data: Partial<ApexTeamData> | null | undefined; isPending: boolean; isError: boolean; error: unknown; noTeam: boolean; noSquad: boolean;
+  data: ShellTeam | null | undefined; isPending: boolean; isError: boolean; error: unknown; noTeam: boolean; noSquad: boolean;
 };
 jest.mock('@/api/squad', () => ({
   __esModule: true,
@@ -41,8 +41,17 @@ jest.mock('@/api/fixtures', () => ({
 import TeamTab from '@/app/(home)/(tabs)/team';
 import type { ApexTeamData } from '@/api/squad';
 
+// `Partial<>` is shallow, so `transfer` — of which the shell reads only the
+// two banner fields — gets its own.
+type ShellTeam = Partial<Omit<ApexTeamData, 'transfer'>> & {
+  transfer?: Partial<ApexTeamData['transfer']>;
+};
+
 const liveTeam = (liveGw: number) => ({
-  data: { liveGw, liveGwFinished: false, captainApplied: '', teamName: 'Apex Pitch FC' } satisfies Partial<ApexTeamData>,
+  data: {
+    liveGw, liveGwFinished: false, captainApplied: '', teamName: 'Apex Pitch FC',
+    transfer: { nextGw: liveGw + 1, deadline: 'Fri 28 Aug at 10:30' },
+  } satisfies ShellTeam,
   isPending: false, isError: false, error: null, noTeam: false, noSquad: false,
 });
 
@@ -122,5 +131,20 @@ describe('TeamTab carousel shell', () => {
     mockSeason = { data: { kind: 'live', gw: 30 } };
     const { queryByText } = renderWithProviders(<TeamTab />);
     expect(queryByText('2025/26 Season completed')).toBeNull();
+  });
+
+  // In the shell, not inside a carousel page: it must not scroll away, and it
+  // is the same next deadline whichever gameweek is being browsed.
+  it('pins the deadline banner above the carousel', () => {
+    mockTeam = liveTeam(30);
+    mockSeason = { data: { kind: 'live', gw: 30 } };
+    const { getByText, getByTestId } = renderWithProviders(<TeamTab />);
+    const banner = getByText('Deadline for Gameweek 31: Fri 28 Aug at 10:30');
+    const carousel = getByTestId('gw-carousel');
+    let node = banner.parent;
+    while (node) {
+      expect(node).not.toBe(carousel);
+      node = node.parent;
+    }
   });
 });

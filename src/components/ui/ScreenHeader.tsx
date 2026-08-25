@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, ViewStyle } from 'react-native';
+import { View, Text, Pressable, Platform, StyleSheet, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from './Icon';
+import { GUTTER } from '@/constants/theme';
 
 interface ScreenHeaderProps {
   title: string;
@@ -23,9 +24,20 @@ export function ScreenHeader({
 }: ScreenHeaderProps) {
   // Was a hardcoded 52 — too much on a Touch-ID iPhone, too little on some
   // Android devices. TransferTargetsHeader already read the inset.
+  //
+  // Every caller is a `presentation:'modal'` screen. On iOS that sheet already
+  // starts below the status bar, but the root SafeAreaProvider still hands
+  // down the *window* inset — adding it left a dead band of gradient above the
+  // title. Android modals are full-screen and do still need it.
   const insets = useSafeAreaInsets();
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
+    <View
+      testID="screen-header"
+      style={[
+        styles.container,
+        { paddingTop: (Platform.OS === 'ios' ? 0 : insets.top) + 12 },
+      ]}
+    >
       <LinearGradient
         colors={[gradFrom, gradTo]}
         start={{ x: 0.1, y: 0 }}
@@ -62,7 +74,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
+    paddingHorizontal: GUTTER,
     paddingTop: 6,
     paddingBottom: 18,
   },
@@ -81,7 +93,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   body: {
-    paddingHorizontal: 20,
+    paddingHorizontal: GUTTER,
     paddingBottom: 22,
   },
 });

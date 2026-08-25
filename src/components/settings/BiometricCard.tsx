@@ -5,6 +5,7 @@ import { Icon } from '@/components/ui/Icon';
 import { ApexTokens } from '@/constants/apexTokens';
 import { isSupported as biometricIsSupported } from '@/lib/auth/biometric/capability';
 import { useBiometricStore } from '@/store/biometricStore';
+import { GUTTER } from '@/constants/theme';
 
 interface BiometricCardProps {
   tk: ApexTokens;
@@ -61,7 +62,7 @@ export function BiometricCard({ tk }: BiometricCardProps) {
 
 const styles = StyleSheet.create({
   wrap: {
-    marginHorizontal: 16,
+    marginHorizontal: GUTTER,
     marginBottom: 16,
   },
   card: {

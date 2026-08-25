@@ -5,6 +5,7 @@ import { useThemeStore } from '@/store/themeStore';
 import { apexTokens } from '@/constants/apexTokens';
 import { useReducedMotion, useA11yAnnounce, MAX_FONT_SCALE } from '@/lib/a11y';
 import { useOnboardingStore, type TabKey } from '@/store/onboardingStore';
+import { GUTTER } from '@/constants/theme';
 
 const TIPS: Record<TabKey, string> = {
   'top-picks': "Swipe between positions, or tap a player to see why we're suggesting them",
@@ -58,7 +59,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: 12,
-    marginHorizontal: 16,
+    marginHorizontal: GUTTER,
     marginTop: 8,
     paddingVertical: 10,
     paddingHorizontal: 14,

@@ -4,6 +4,7 @@ import Svg, { Path } from 'react-native-svg';
 import { ApexTokens } from '@/constants/apexTokens';
 import { useAuthStore } from '@/store/authStore';
 import { requestDeletion } from '@/lib/auth/account-deletion';
+import { GUTTER } from '@/constants/theme';
 
 interface DeleteAccountProps {
   tk: ApexTokens;
@@ -137,7 +138,7 @@ function BinIcon({ color }: { color: string }) {
 
 const styles = StyleSheet.create({
   wrap: {
-    marginHorizontal: 16,
+    marginHorizontal: GUTTER,
     marginBottom: 28,
   },
   openBtn: {

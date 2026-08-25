@@ -35,7 +35,11 @@ jest.mock('@/components/profile/DeleteAccount', () => ({ __esModule: true, Delet
 
 const apexRefetch = jest.fn();
 let mockApex: {
-  data: Partial<ApexTeamData> | null | undefined;
+  data: (Partial<Omit<ApexTeamData, 'transfer'>> & {
+    // Shallow Partial<> would demand the whole transfer object; the shell's
+    // pinned deadline banner reads two fields off it.
+    transfer?: Partial<ApexTeamData['transfer']>;
+  }) | null | undefined;
   isPending: boolean; isError: boolean; error: unknown; noTeam: boolean;
   isRefetching: boolean; refetch: () => void;
 };
@@ -116,7 +120,10 @@ describe('#167 — a failed load renders a retryable error card, not an endless 
 
   it('keeps rendering cached data when a refetch fails (offline read-cache, #39)', () => {
     mockApex = {
-      data: { liveGw: 30, liveGwFinished: false, captainApplied: '', teamName: 'Apex Pitch FC' },
+      data: {
+        liveGw: 30, liveGwFinished: false, captainApplied: '', teamName: 'Apex Pitch FC',
+        transfer: { nextGw: 31, deadline: 'Fri 28 Aug at 10:30' },
+      },
       isPending: false, isError: true, error: new Error('down'), noTeam: false,
       isRefetching: false, refetch: apexRefetch,
     };

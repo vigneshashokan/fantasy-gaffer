@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { ApexTokens } from '@/constants/apexTokens';
+import { GUTTER } from '@/constants/theme';
 
 interface KeyStatsRowProps {
   form: number;
@@ -32,7 +33,7 @@ export function KeyStatsRow({ form, total, ep, ict, bps, tk }: KeyStatsRowProps)
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, paddingTop: 16, gap: 10 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: GUTTER, paddingTop: 16, gap: 10 },
   tile: { flexGrow: 1, flexBasis: '30%', borderRadius: 14, borderWidth: 1, paddingVertical: 12, alignItems: 'center' },
   label: { fontFamily: 'Archivo_700Bold', fontSize: 11, letterSpacing: 0.55, textTransform: 'uppercase', marginBottom: 4 },
   value: { fontFamily: 'Archivo_800ExtraBold', fontSize: 18 },

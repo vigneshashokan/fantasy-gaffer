@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme } from '@/constants/theme';
+import { getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
-    marginHorizontal: 20,
+    marginHorizontal: GUTTER + 4,
     marginBottom: 8,
   },
   version: {
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
   },
   devButton: {
-    marginHorizontal: 16,
+    marginHorizontal: GUTTER,
     marginVertical: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Archivo_500Medium',
     fontSize: 12,
     lineHeight: 17,
-    marginHorizontal: 16,
+    marginHorizontal: GUTTER,
     marginTop: 4,
     marginBottom: 6,
   },

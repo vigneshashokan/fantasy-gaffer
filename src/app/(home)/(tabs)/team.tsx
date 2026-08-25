@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, FlatList, StyleSheet, Animated, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme } from '@/constants/theme';
+import { getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { PitchPlayer, Suggestion } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { TabHeader } from '@/components/ui/TabHeader';
 import { SeasonCompleteBanner } from '@/components/ui/SeasonCompleteBanner';
+import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
 import { GameweekScreen } from '@/components/team/GameweekScreen';
 import { GwArrow } from '@/components/team/GwNav';
 
@@ -43,6 +44,12 @@ export default function TeamTab() {
   const scrollYByGw = useRef<Record<number, number>>({});
   const [arrowsVisible, setArrowsVisible] = useState(true);
   const arrowOpacity = useRef(new Animated.Value(1)).current;
+  // ...and they ride the first ARROW_HIDE_Y of that scroll rather than sitting
+  // still, so they stay level with the "Gameweek N" pill they flank instead of
+  // drifting below it on the way out. Clamped, because past that they're gone.
+  const arrowShift = useRef(new Animated.Value(0)).current;
+  const shiftFor = (y: number) =>
+    arrowShift.setValue(-Math.min(Math.max(y, 0), ARROW_HIDE_Y));
   useEffect(() => {
     Animated.timing(arrowOpacity, {
       toValue: arrowsVisible ? 1 : 0,
@@ -95,7 +102,7 @@ export default function TeamTab() {
   }
   if (isPending || !at) {
     return (
-      <View style={{ flex: 1, backgroundColor: t.bg, padding: 16 }}>
+      <View style={{ flex: 1, backgroundColor: t.bg, padding: GUTTER }}>
         <Skeleton height={48} />
         <View style={{ height: 12 }} />
         <Skeleton height={180} radius={20} />
@@ -126,12 +133,16 @@ export default function TeamTab() {
     if (landed != null) {
       setActiveGw(landed);
       setArrowsVisible((scrollYByGw.current[landed] ?? 0) <= ARROW_HIDE_Y);
+      shiftFor(scrollYByGw.current[landed] ?? 0);
     }
   };
 
   const handlePageScroll = (gw: number, y: number) => {
     scrollYByGw.current[gw] = y;
-    if (gw === currentGw) setArrowsVisible(y <= ARROW_HIDE_Y);
+    if (gw === currentGw) {
+      setArrowsVisible(y <= ARROW_HIDE_Y);
+      shiftFor(y);
+    }
   };
 
   const toggleSuggestion = (id: string) =>
@@ -156,11 +167,21 @@ export default function TeamTab() {
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <TabHeader title={at.teamName} tk={tk} />
-      {seasonOver && (
-        <View style={styles.bannerWrap}>
+      {/* Outside the carousel: a deadline countdown is least useful the moment
+          it scrolls away, and it is the same next deadline on every page —
+          nextGw, never the page's own gw, or browsing ahead to GW5 would label
+          it with GW2's deadline. */}
+      <View style={styles.bannerWrap}>
+        {seasonOver ? (
           <SeasonCompleteBanner seasonLabel={seasonLabel} tk={tk} />
-        </View>
-      )}
+        ) : (
+          <DeadlineBanner
+            nextGw={at.transfer.nextGw}
+            deadline={at.transfer.deadline}
+            tk={tk}
+          />
+        )}
+      </View>
       {/* Carousel area — measured (not the whole screen) so each page's height
           excludes the team-name header and the fixed arrows sit below it. */}
       <View
@@ -207,7 +228,11 @@ export default function TeamTab() {
             content (incl. the "Gameweek N" pill) swipes beneath them. They fade
             out once the active gameweek is scrolled past the header. */}
         <Animated.View
-          style={[styles.arrow, styles.arrowLeft, { opacity: arrowOpacity }]}
+          style={[
+            styles.arrow,
+            styles.arrowLeft,
+            { opacity: arrowOpacity, transform: [{ translateY: arrowShift }] },
+          ]}
           pointerEvents={arrowsVisible ? 'auto' : 'none'}
         >
           <GwArrow
@@ -218,7 +243,11 @@ export default function TeamTab() {
           />
         </Animated.View>
         <Animated.View
-          style={[styles.arrow, styles.arrowRight, { opacity: arrowOpacity }]}
+          style={[
+            styles.arrow,
+            styles.arrowRight,
+            { opacity: arrowOpacity, transform: [{ translateY: arrowShift }] },
+          ]}
           pointerEvents={arrowsVisible ? 'auto' : 'none'}
         >
           <GwArrow
@@ -235,18 +264,22 @@ export default function TeamTab() {
 
 const styles = StyleSheet.create({
   bannerWrap: {
-    paddingHorizontal: 16,
-    paddingTop: 14,
-    paddingBottom: 12,
+    // Same treatment as the Transfer tab's: cancels TabHeader's own bottom
+    // spacing (paddingBottom 14 + the title row's marginBottom 5) so what is
+    // left above the banner is the title's line-box leading, matching the gap
+    // below it.
+    marginTop: -19,
+    paddingHorizontal: GUTTER,
+    paddingBottom: 14,
   },
   arrow: {
     position: 'absolute',
     top: 18,
   },
   arrowLeft: {
-    left: 16,
+    left: GUTTER,
   },
   arrowRight: {
-    right: 16,
+    right: GUTTER,
   },
 });

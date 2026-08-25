@@ -2,9 +2,10 @@ import React from 'react';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme } from '@/constants/theme';
+import { getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import { useProfile } from '@/api/profile';
+import { usePullRefresh } from '@/lib/query/usePullRefresh';
 import { initialsOf } from '@/lib/name';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -20,7 +21,8 @@ export default function ProfileModal() {
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
-  const { data: profile, isPending, isError, isRefetching, refetch } = useProfile();
+  const { data: profile, isPending, isError, refetch } = useProfile();
+  const pull = usePullRefresh(refetch);
 
   // Error before pending — this screen had no error branch at all (#167).
   if (isError && !profile) {
@@ -76,7 +78,7 @@ export default function ProfileModal() {
         contentContainerStyle={{ paddingTop: 18, paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+          <RefreshControl {...pull} />
         }
       >
         <SectionCard title="Personal details" tk={tk}>
@@ -135,7 +137,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 1.2,
     textTransform: 'uppercase',
-    marginHorizontal: 20,
+    marginHorizontal: GUTTER + 4,
     marginBottom: 8,
   },
 });

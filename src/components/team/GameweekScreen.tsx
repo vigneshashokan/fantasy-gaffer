@@ -3,10 +3,11 @@ import { track } from '@/lib/analytics';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme } from '@/constants/theme';
+import { getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { PitchPlayer, Suggestion } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
+import { usePullRefresh } from '@/lib/query/usePullRefresh';
 import { NoSquadCta } from '@/components/team/NoSquadCta';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -18,7 +19,6 @@ import { SuggestionsCard } from '@/components/team/SuggestionsCard';
 import { CarriedOverNote } from '@/components/team/CarriedOverNote';
 import { GwPill } from '@/components/team/GwNav';
 import { ApplyAllCard } from '@/components/team/ApplyAllCard';
-import { DeadlineBanner } from '@/components/transfer/DeadlineBanner';
 import { ChipsRow } from '@/components/transfer/ChipsRow';
 
 type GwState = 'live' | 'upcoming' | 'past';
@@ -60,7 +60,8 @@ export function GameweekScreen({
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
-  const { data: at, isPending, isError, noSquad, isRefetching, refetch } = useApexTeam(gw);
+  const { data: at, isPending, isError, noSquad, refetch } = useApexTeam(gw);
+  const pull = usePullRefresh(refetch);
 
   // Report a fresh "at the top" position on mount so the shell's per-gameweek
   // scroll record is reset whenever this page (re)mounts after recycling.
@@ -101,7 +102,7 @@ export function GameweekScreen({
   }
   if (isPending || !at) {
     return (
-      <View style={{ width, height, backgroundColor: t.bg, padding: 16 }}>
+      <View style={{ width, height, backgroundColor: t.bg, padding: GUTTER }}>
         <Skeleton height={48} />
         <View style={{ height: 12 }} />
         <Skeleton height={180} radius={20} />
@@ -140,17 +141,15 @@ export function GameweekScreen({
         scrollEventThrottle={16}
         onScroll={(e) => onVerticalScroll?.(e.nativeEvent.contentOffset.y)}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
+          <RefreshControl {...pull} />
         }
       >
         <GwPill gw={gw} state={gwState} tk={tk} />
 
+        {/* The deadline banner is pinned by the shell (team.tsx), above the
+            carousel — it is the same next deadline on every page. */}
         {isUpcoming && (
           <View style={{ marginBottom: 16 }}>
-            {/* nextGw, not this page's gw: the deadline is always the next one
-                you can act on. Passing `gw` labelled GW5's page with GW2's
-                deadline while browsing ahead in the carousel. */}
-            <DeadlineBanner nextGw={at.transfer.nextGw} deadline={at.transfer.deadline} tk={tk} />
             <CarriedOverNote from={at.carriedOverFrom} tk={tk} />
           </View>
         )}
@@ -274,7 +273,7 @@ function BoltGlyph() {
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingHorizontal: 16,
+    paddingHorizontal: GUTTER,
     paddingTop: 16,
     paddingBottom: 32,
   },
@@ -314,8 +313,8 @@ const styles = StyleSheet.create({
   },
   applyWrap: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: GUTTER,
+    right: GUTTER,
     bottom: 24,
     zIndex: 20,
   },

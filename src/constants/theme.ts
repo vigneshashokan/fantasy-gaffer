@@ -1,3 +1,9 @@
+// Distance from the screen edge to page content. One dial for every surface
+// that sits against the edge — tab headers, page sections, pitch, floating
+// bars, docked strips. Component-INTERNAL padding (a card's own inset, a row,
+// an input) is not this and does not follow it.
+export const GUTTER = 8;
+
 export type PaletteKey = 'classic' | 'pitch' | 'electric';
 
 export interface Theme {

@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/Icon';
 import type { Position } from '@/types/fpl';
+import { GUTTER } from '@/constants/theme';
 
 const PLURAL: Record<Position, string> = {
   GKP: 'Goalkeepers',
@@ -45,7 +46,7 @@ export function TransferTargetsHeader({ pos, nextGw, gradFrom, gradTo, onBack }:
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
+    paddingHorizontal: GUTTER,
     paddingBottom: 18,
     overflow: 'hidden',
   },

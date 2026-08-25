@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import type { ApexTokens } from '@/constants/apexTokens';
 import type { ClubCode, Position } from '@/types/fpl';
 import { Kit } from '@/components/ui/Kit';
+import { GUTTER } from '@/constants/theme';
 
 interface PlayerHeroProps {
   name: string;
@@ -29,7 +30,7 @@ export function PlayerHero({ name, club, clubName, pos, price, ownership, tk }: 
 }
 
 const styles = StyleSheet.create({
-  card: { marginHorizontal: 16, borderRadius: 20, borderWidth: 1, padding: 24, alignItems: 'center', gap: 8 },
+  card: { marginHorizontal: GUTTER, borderRadius: 20, borderWidth: 1, padding: 24, alignItems: 'center', gap: 8 },
   name: { fontFamily: 'Archivo_900Black', fontSize: 26, letterSpacing: -0.78, marginTop: 12 },
   club: { fontFamily: 'Archivo_500Medium', fontSize: 14 },
   metaRow: { flexDirection: 'row', gap: 14, marginTop: 6 },
