@@ -472,6 +472,23 @@ describe('SuggestionsCard', () => {
     expect(getByText('Applied')).toBeTruthy();
     expect(getByText('Not applied')).toBeTruthy();
   });
+
+  // An empty list rendered a bare title and nothing else, which reads as
+  // broken. The two reasons it can be empty are not the same claim: with a
+  // served projection "nothing to swap" is a verdict; without one we simply
+  // had nothing to rank.
+  it('says why it is empty, and distinguishes the two reasons', () => {
+    const tk = apexTokens(false, 'classic');
+    const ready = render(<SuggestionsCard suggestions={[]} tk={tk} editable />);
+    expect(ready.getByText(/already the best of your 15/)).toBeTruthy();
+    // No dead "apply all" control over an empty list.
+    expect(ready.queryByRole('checkbox')).toBeNull();
+
+    const cold = render(
+      <SuggestionsCard suggestions={[]} tk={tk} editable projectionsReady={false} />,
+    );
+    expect(cold.getByText(/No projection was served/)).toBeTruthy();
+  });
 });
 
 // ── GwPill ────────────────────────────────────────────────────
@@ -638,6 +655,23 @@ describe('TransferSuggestionsCard', () => {
     expect(getByText('Walker')).toBeTruthy();
     expect(getByText('Muñoz')).toBeTruthy();
     expect(getByText('+6 xPts')).toBeTruthy();
+  });
+
+  // Same as SuggestionsCard: early in a season every projection falls back to
+  // FPL's ep_next, which ties so hard that no swap clears MIN_TRANSFER_GAIN —
+  // so this card is empty for real users and must say which case it is in.
+  it('says why it is empty, and distinguishes the two reasons', () => {
+    const tk = apexTokens(false, 'classic');
+    const ready = render(
+      <TransferSuggestionsCard suggestions={[]} tk={tk} onToggleAll={() => {}} />,
+    );
+    expect(ready.getByText(/No transfer beats what you already have/)).toBeTruthy();
+    expect(ready.queryByRole('checkbox')).toBeNull();
+
+    const cold = render(
+      <TransferSuggestionsCard suggestions={[]} tk={tk} projectionsReady={false} />,
+    );
+    expect(cold.getByText(/Projections aren't in/)).toBeTruthy();
   });
 });
 

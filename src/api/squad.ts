@@ -359,6 +359,14 @@ function buildApexTeam(
         ...(stat ? pitchEventFields(stat, eventStats.finished) : {}),
       };
     }),
+    // Whether the model actually served a projection for any gameweek in the
+    // window. When it hasn't, both advice engines fall back to FPL's ep_next —
+    // which early in a season is capped at 4.0 with ~27 distinct values across
+    // 600+ players, so a squad's best affordable replacement routinely ties its
+    // incumbent exactly and every gain collapses to 0. Both suggestion cards
+    // then render empty, and they must not call that "nothing worth changing":
+    // that is a claim, and it is false when there was nothing to rank with.
+    projectionsReady: projMaps.some((m) => m.size > 0),
     captainPicks: advice.captainPicks,
     captainApplied: squad.starters.find((p) => p.capt)?.name ?? '',
     suggestions: advice.suggestions,
