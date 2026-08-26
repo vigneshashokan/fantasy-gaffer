@@ -15,7 +15,6 @@ import { BiometricCard } from '@/components/settings/BiometricCard';
 import { SettingsRow } from '@/components/settings/SettingsRow';
 import { PrivacyCard } from '@/components/settings/PrivacyCard';
 import { useOnboardingStore } from '@/store/onboardingStore';
-import { supabase } from '@/lib/supabase';
 import { sendTestNotification } from '@/lib/notifications/sendTestNotification';
 import { shareApp, sendFeedback } from '@/lib/external';
 import { FEEDBACK_EMAIL } from '@/constants/links';
@@ -119,29 +118,12 @@ export default function SettingsModal() {
         Fantasy Gaffer · v{Constants.expoConfig?.version ?? '—'}
       </Text>
 
-      {__DEV__ && (
-        <SectionCard title="Connectivity (dev)" tk={tk}>
-          <Pressable
-            onPress={async () => {
-              try {
-                const { data, error } = await supabase.functions.invoke('ping');
-                if (error) throw error;
-                Alert.alert('ping ok', JSON.stringify(data));
-              } catch (e) {
-                Alert.alert('ping failed', e instanceof Error ? e.message : String(e));
-              }
-            }}
-            style={({ pressed }) => [
-              styles.devButton,
-              { backgroundColor: tk.headStrip, borderColor: tk.cardBorder, opacity: pressed ? 0.7 : 1 },
-            ]}
-            accessibilityRole="button"
-          >
-            <Text style={[styles.devButtonText, { color: tk.text }]}>Ping Edge Function</Text>
-          </Pressable>
-        </SectionCard>
-      )}
-
+      {/* Kept while #158 still owes an on-device push pass: local
+          notifications are the only way to fire one and watch the deep link
+          route without a push server. The sibling "Connectivity (dev)" card
+          went — it pinged the `ping` edge function, which nothing else calls,
+          and every real screen already fails loudly when Supabase is
+          unreachable. Delete this one too once that pass is signed off. */}
       {__DEV__ && (
         <SectionCard title="Notifications (dev)" tk={tk}>
           <Text style={[styles.devHint, { color: tk.faint }]}>
