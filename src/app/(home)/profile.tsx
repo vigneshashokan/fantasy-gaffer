@@ -52,7 +52,16 @@ export default function ProfileModal() {
   const heroTo = tk.heroBg2;
 
   return (
-    <View style={{ flex: 1, backgroundColor: tk.bg }}>
+    // One scroll view with the header as its first child, the same shape as
+    // the player sheet. A fixed header ABOVE a flexible ScrollView does not
+    // size correctly inside a form sheet — the scroll view took the whole
+    // sheet and drew straight over the header.
+    <ScrollView
+      style={{ flex: 1, backgroundColor: tk.bg }}
+      contentContainerStyle={{ paddingBottom: 32 }}
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl {...pull} />}
+    >
       {/* No title row and no back chevron: this is a sheet, so the grabber
           at the top, the drag-down and the scrim are the way out — same call
           as the player detail. */}
@@ -72,28 +81,22 @@ export default function ProfileModal() {
         </View>
       </ScreenHeader>
 
-      <ScrollView
-        contentContainerStyle={{ paddingTop: 18, paddingBottom: 32 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl {...pull} />
-        }
-      >
-        <SectionCard title="Personal details" tk={tk}>
-          <ReadField label="First name" value={profile.firstName} tk={tk} />
-          <ReadField label="Last name" value={profile.lastName} tk={tk} showDivider />
-          <ReadField label="Date of birth" value={profile.dob} tk={tk} showDivider />
-          <ReadField label="Email address" value={profile.email} tk={tk} showDivider />
-        </SectionCard>
+      <View style={{ height: 18 }} />
 
-        <SectionCard title="Security" tk={tk}>
-          <ChangePassword tk={tk} />
-        </SectionCard>
+      <SectionCard title="Personal details" tk={tk}>
+        <ReadField label="First name" value={profile.firstName} tk={tk} />
+        <ReadField label="Last name" value={profile.lastName} tk={tk} showDivider />
+        <ReadField label="Date of birth" value={profile.dob} tk={tk} showDivider />
+        <ReadField label="Email address" value={profile.email} tk={tk} showDivider />
+      </SectionCard>
 
-        <Text style={[styles.dangerLabel, { color: tk.faint }]}>Danger zone</Text>
-        <DeleteAccount tk={tk} />
-      </ScrollView>
-    </View>
+      <SectionCard title="Security" tk={tk}>
+        <ChangePassword tk={tk} />
+      </SectionCard>
+
+      <Text style={[styles.dangerLabel, { color: tk.faint }]}>Danger zone</Text>
+      <DeleteAccount tk={tk} />
+    </ScrollView>
   );
 }
 
