@@ -7,11 +7,12 @@ import { initialsOf } from '@/lib/name';
 import { FLOATING_NAV_SPACE, getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import { Icon } from '@/components/ui/Icon';
+import { MAX_FONT_SCALE } from '@/lib/a11y';
 
-const SCHEMES: { key: ColorScheme; label: string }[] = [
-  { key: 'system', label: 'System' },
-  { key: 'light', label: 'Light' },
-  { key: 'dark', label: 'Dark' },
+const SCHEMES: { key: ColorScheme; label: string; icon: 'device' | 'sun' | 'moon' }[] = [
+  { key: 'system', label: 'System', icon: 'device' },
+  { key: 'light', label: 'Light', icon: 'sun' },
+  { key: 'dark', label: 'Dark', icon: 'moon' },
 ];
 
 interface AccountMenuProps {
@@ -97,7 +98,7 @@ export function AccountMenu({
               neither Light nor Dark is highlighted, even though one of them is
               in force. Highlighting the resolved one would leave no way to see
               that the app is following the device. */}
-          {SCHEMES.map(({ key, label }) => {
+          {SCHEMES.map(({ key, label, icon }) => {
             const active = scheme === key;
             return (
               <Pressable
@@ -114,7 +115,12 @@ export function AccountMenu({
                   ],
                 ]}
               >
+                <Icon name={icon} color={active ? t.text : t.textMuted} size={13} />
+                {/* One line, capped scale: three segments in a fixed-width
+                    card, so a wrapped label would push the menu around. */}
                 <Text
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={MAX_FONT_SCALE}
                   style={[
                     styles.segmentText,
                     active
@@ -163,7 +169,8 @@ const styles = StyleSheet.create({
     // Sits clear of the floating nav's top edge.
     bottom: FLOATING_NAV_SPACE + 8,
     right: 16,
-    width: 244,
+    // 244 fitted two segments; three with icons need the room.
+    width: 268,
     borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',
@@ -218,8 +225,11 @@ const styles = StyleSheet.create({
   },
   segment: {
     flex: 1,
+    flexDirection: 'row',
+    gap: 4,
     paddingVertical: 8,
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 7,
   },
   segmentActive: {
@@ -231,6 +241,6 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     fontFamily: 'Archivo_600SemiBold',
-    fontSize: 14,
+    fontSize: 13,
   },
 });
