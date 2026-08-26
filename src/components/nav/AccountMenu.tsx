@@ -99,7 +99,19 @@ export function AccountMenu({
           { backgroundColor: t.surface, borderColor: tk.cardBorder },
         ]}
       >
-        <View style={[styles.identity, { borderBottomColor: t.line }]}>
+        {/* The identity block IS the Profile button — it names the person
+            whose profile it opens, so a separate "Profile" row below it was
+            a second control for the same destination. */}
+        <Pressable
+          onPress={onProfile}
+          accessibilityRole="button"
+          accessibilityHint="Opens your profile"
+          testID="account-menu-profile"
+          style={({ pressed }) => [
+            styles.identity,
+            { borderBottomColor: t.line, opacity: pressed ? 0.6 : 1 },
+          ]}
+        >
           <View style={[styles.avatar, { backgroundColor: t.primary }]}>
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
@@ -113,7 +125,7 @@ export function AccountMenu({
               </Text>
             ) : null}
           </View>
-        </View>
+        </Pressable>
 
         <View
           onLayout={(e: LayoutChangeEvent) => setTrackW(e.nativeEvent.layout.width)}
@@ -165,10 +177,6 @@ export function AccountMenu({
         </View>
 
         <View style={[styles.divider, { backgroundColor: t.line }]} />
-        <Pressable style={styles.row} onPress={onProfile} accessibilityRole="button">
-          <Icon name="person" color={t.text} size={18} />
-          <Text style={[styles.rowText, { color: t.text }]}>Profile</Text>
-        </Pressable>
         <Pressable style={styles.row} onPress={onSettings} accessibilityRole="button" testID="account-menu-settings">
           <Icon name="gear" color={t.text} size={18} />
           <Text style={[styles.rowText, { color: t.text }]}>Settings</Text>
