@@ -1,12 +1,11 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import { useProfile } from '@/api/profile';
 import { useManager } from '@/api/manager';
-import { usePullRefresh } from '@/lib/query/usePullRefresh';
 import { initialsOf } from '@/lib/name';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
@@ -26,7 +25,6 @@ export default function ProfileModal() {
 
   const { data: profile, isPending, isError, refetch } = useProfile();
   const { data: manager } = useManager();
-  const pull = usePullRefresh(refetch);
 
   // Error before pending — this screen had no error branch at all (#167).
   if (isError && !profile) {
@@ -64,7 +62,6 @@ export default function ProfileModal() {
       style={{ flex: 1, backgroundColor: tk.bg }}
       contentContainerStyle={{ paddingBottom: 32 }}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl {...pull} />}
     >
       {/* No title row and no back chevron: this is a sheet, so the grabber
           at the top, the drag-down and the scrim are the way out — same call

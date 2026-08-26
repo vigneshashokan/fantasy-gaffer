@@ -180,7 +180,11 @@ describe('#167 — pull-to-refresh exists on the data scrollers', () => {
     expect(apexRefetch).toHaveBeenCalled();
   });
 
-  it('Profile wires its RefreshControl to refetch', () => {
+  // Profile deliberately has NONE. The row is written only by connect-team,
+  // which invalidates the query itself, so a pull could never return anything
+  // new — and the control fights the sheet's own drag-down-to-dismiss, which
+  // is one of only three ways off this screen. The error branch's retry stays.
+  it('Profile has no RefreshControl at all', () => {
     mockProfile = {
       data: {
         firstName: 'Apex', lastName: 'Gaffer', dob: '14 Aug 1990',
@@ -188,8 +192,7 @@ describe('#167 — pull-to-refresh exists on the data scrollers', () => {
       },
       isPending: false, isError: false, isRefetching: false, refetch: profileRefetch,
     };
-    const { UNSAFE_getByType } = renderWithProviders(<ProfileModal />);
-    UNSAFE_getByType(RefreshControl).props.onRefresh();
-    expect(profileRefetch).toHaveBeenCalled();
+    const { UNSAFE_queryAllByType } = renderWithProviders(<ProfileModal />);
+    expect(UNSAFE_queryAllByType(RefreshControl)).toHaveLength(0);
   });
 });
