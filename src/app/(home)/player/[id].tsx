@@ -9,14 +9,20 @@ import { useElementSummary, last5FromHistory, next5Fixtures, gwBreakdown } from 
 import { GwBreakdownCard } from '@/components/player/GwBreakdownCard';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { Icon } from '@/components/ui/Icon';
 import { PlayerHero } from '@/components/player/PlayerHero';
 import { AvailabilityBanner } from '@/components/player/AvailabilityBanner';
-import { KeyStatsRow } from '@/components/player/KeyStatsRow';
+import { SeasonCard } from '@/components/player/SeasonCard';
 import { FormSparkline } from '@/components/player/FormSparkline';
 import { FixtureStrip } from '@/components/player/FixtureStrip';
+import { SectionLabel } from '@/components/player/StatLinesCard';
 import { GUTTER } from '@/constants/theme';
 
+/**
+ * Presented as a native form sheet (see the `(home)` stack layout) to match the
+ * v2 mock's bottom sheet — which is why there is no header row or back button
+ * here: the grabber, the drag-down and the scrim are the way out, and iOS/
+ * Android give a screen reader the standard escape gesture for them.
+ */
 export default function PlayerDetailModal() {
   const router = useRouter();
   const { id, gw } = useLocalSearchParams<{ id: string; gw?: string }>();
@@ -59,17 +65,10 @@ export default function PlayerDetailModal() {
   }
 
   const clubName = clubs?.[player.club]?.name ?? player.club;
+  const upcoming = summary.data ? next5Fixtures(summary.data.fixtures) : [];
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: tk.bg }} contentContainerStyle={{ paddingBottom: 32 }}>
-      <View style={styles.headerRow}>
-        <Pressable onPress={() => router.back()} hitSlop={12} accessibilityRole="button" accessibilityLabel="Back">
-          <Icon name="chevL" color={tk.text} size={24} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: tk.text }]}>Player</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
+    <ScrollView style={{ flex: 1, backgroundColor: tk.bg }} contentContainerStyle={styles.content}>
       <PlayerHero
         name={player.name}
         club={player.club}
@@ -91,36 +90,41 @@ export default function PlayerDetailModal() {
           />
         ) : summary.isError ? null : (
           <View style={{ paddingHorizontal: GUTTER, paddingTop: 16 }}>
-            <Skeleton height={120} radius={16} />
+            <Skeleton height={120} radius={20} />
           </View>
         )
       ) : (
-        <KeyStatsRow form={player.f} total={player.tp} ep={player.gw} ict={player.ict} bps={player.bps} tk={tk} />
+        <SeasonCard
+          form={player.f}
+          total={player.tp}
+          ep={player.gw}
+          ict={player.ict}
+          bps={player.bps}
+          chanceNext={player.chanceNext}
+          next={upcoming[0]}
+          codeByTeamId={codeByTeamId ?? {}}
+          tk={tk}
+        />
       )}
 
       {summary.isError ? (
         <SummaryError tk={tk} onRetry={() => summary.refetch()} />
       ) : summary.data ? (
         <>
-          <Text style={[styles.sectionTitle, { color: tk.text }]}>Last 5 gameweeks</Text>
+          <SectionLabel tk={tk}>Last 5 gameweeks</SectionLabel>
           <FormSparkline gameweeks={last5FromHistory(summary.data.history)} tk={tk} />
-          <Text style={[styles.sectionTitle, { color: tk.text }]}>Next 5 fixtures</Text>
-          <FixtureStrip
-            fixtures={next5Fixtures(summary.data.fixtures)}
-            codeByTeamId={codeByTeamId ?? {}}
-            dark={dark}
-            tk={tk}
-          />
+          <SectionLabel tk={tk}>Next 5 fixtures</SectionLabel>
+          <FixtureStrip fixtures={upcoming} codeByTeamId={codeByTeamId ?? {}} dark={dark} tk={tk} />
         </>
       ) : (
         <>
-          <Text style={[styles.sectionTitle, { color: tk.text }]}>Last 5 gameweeks</Text>
+          <SectionLabel tk={tk}>Last 5 gameweeks</SectionLabel>
           <View style={{ paddingHorizontal: GUTTER }}>
-            <Skeleton height={80} radius={14} />
+            <Skeleton height={92} radius={20} />
           </View>
-          <Text style={[styles.sectionTitle, { color: tk.text }]}>Next 5 fixtures</Text>
+          <SectionLabel tk={tk}>Next 5 fixtures</SectionLabel>
           <View style={{ paddingHorizontal: GUTTER }}>
-            <Skeleton height={48} radius={14} />
+            <Skeleton height={62} radius={14} />
           </View>
         </>
       )}
@@ -140,13 +144,12 @@ function SummaryError({ tk, onRetry }: { tk: ReturnType<typeof apexTokens>; onRe
 }
 
 const styles = StyleSheet.create({
+  // Top padding clears the sheet's grabber; the mock's own is 6 on top of it.
+  content: { paddingTop: 12, paddingBottom: 30 },
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: GUTTER, gap: 16 },
   notFound: { fontFamily: 'Archivo_700Bold', fontSize: 18 },
   closeBtn: { borderRadius: 999, paddingHorizontal: 22, paddingVertical: 13 },
   closeText: { color: '#fff', fontFamily: 'Archivo_800ExtraBold', fontSize: 15 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: GUTTER, paddingTop: 16, paddingBottom: 12 },
-  headerTitle: { fontFamily: 'Archivo_800ExtraBold', fontSize: 16 },
-  sectionTitle: { fontFamily: 'Archivo_800ExtraBold', fontSize: 15, paddingHorizontal: GUTTER, paddingTop: 22, paddingBottom: 2 },
   errRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: GUTTER, paddingTop: 12 },
   errText: { fontFamily: 'Archivo_500Medium', fontSize: 13, flexShrink: 1 },
   retry: { fontFamily: 'Archivo_800ExtraBold', fontSize: 13 },

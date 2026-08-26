@@ -1,17 +1,17 @@
-import { fdrColor } from '@/constants/fdr';
+import { fdrSoft } from '@/constants/fdr';
 
-describe('fdrColor', () => {
+describe('fdrSoft', () => {
   it('returns the easy band for difficulty 2 in light mode', () => {
-    expect(fdrColor(2, false)).toEqual({ bg: '#4FC07E', text: '#06281A' });
+    expect(fdrSoft(2, false)).toEqual({ bg: 'rgba(0,180,90,0.09)', border: '#4FC07E' });
   });
   it('returns the very-hard band for difficulty 5 in dark mode', () => {
-    expect(fdrColor(5, true)).toEqual({ bg: '#7A1031', text: '#FFE3EA' });
+    expect(fdrSoft(5, true)).toEqual({ bg: 'rgba(255,40,90,0.22)', border: '#FF8AA3' });
   });
   it('clamps out-of-range difficulty into 1..5', () => {
-    expect(fdrColor(0, false)).toEqual(fdrColor(1, false));
-    expect(fdrColor(9, false)).toEqual(fdrColor(5, false));
+    expect(fdrSoft(0, false)).toEqual(fdrSoft(1, false));
+    expect(fdrSoft(9, false)).toEqual(fdrSoft(5, false));
   });
   it('rounds fractional difficulty', () => {
-    expect(fdrColor(3.4, false)).toEqual(fdrColor(3, false));
+    expect(fdrSoft(3.4, false)).toEqual(fdrSoft(3, false));
   });
 });

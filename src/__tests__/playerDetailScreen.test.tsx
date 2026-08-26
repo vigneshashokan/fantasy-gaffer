@@ -15,7 +15,6 @@ jest.mock('@/store/themeStore', () => ({
   useThemeStore: () => ({ paletteKey: 'classic', dark: true }),
 }));
 jest.mock('@/components/ui/Kit', () => ({ __esModule: true, Kit: () => null }));
-jest.mock('@/components/ui/Icon', () => ({ __esModule: true, Icon: () => null }));
 
 const PLAYER: Player = {
   id: '401', name: 'Haaland', pos: 'FWD', club: 'MCI',
@@ -66,7 +65,7 @@ describe('Player detail screen', () => {
     mockSummary = freshSummary();
   });
 
-  it('renders hero, key stats, form sparkline and the resolved next fixture', () => {
+  it('renders hero, season card, form sparkline and the resolved next fixture', () => {
     const { getByText, queryByText } = renderWithProviders(<PlayerDetail />);
     expect(getByText('Haaland')).toBeTruthy();
     expect(getByText('Man City · FWD')).toBeTruthy();
@@ -137,10 +136,29 @@ describe('Player detail screen', () => {
     expect(queryByText('ICT')).toBeNull();
   });
 
-  it('keeps season tiles when there is no gw param', () => {
+  it('keeps the season card when there is no gw param', () => {
     // default mockParams = { id: '401' }
     const { getByText } = renderWithProviders(<PlayerDetail />);
     expect(getByText('ICT')).toBeTruthy();
+  });
+
+  // Off the mock's upcoming-gameweek variant: the card is headed by the next
+  // fixture and reads "Yet to play" rather than a score.
+  it('heads the season card with the next fixture once the summary resolves', () => {
+    const { getByText } = renderWithProviders(<PlayerDetail />);
+    expect(getByText('GW7 · ARS (H)')).toBeTruthy();
+    expect(getByText('Yet to play')).toBeTruthy();
+    expect(getByText('Projected points')).toBeTruthy();
+    expect(getByText('100%')).toBeTruthy();
+  });
+
+  // ...and falls back to the season while those fixtures are still in flight,
+  // rather than printing "GW? · —".
+  it('falls back to a season heading with no fixture to name', () => {
+    mockSummary = { isPending: true, isError: false, refetch: jest.fn(), data: undefined };
+    const { getByText } = renderWithProviders(<PlayerDetail />);
+    expect(getByText('This season')).toBeTruthy();
+    expect(getByText('175 pts')).toBeTruthy();
   });
 
   it("shows 'Hasn't played yet' for an upcoming gameweek with no history row", () => {

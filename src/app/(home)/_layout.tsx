@@ -27,7 +27,24 @@ export default function HomeStackLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
         <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="player/[id]" options={{ presentation: 'modal' }} />
+        {/* Player details is a bottom sheet: it rises from the bottom edge and
+            settles at full height, so the content reads as a page rather than
+            a floating card. The grabber + drag-down ARE the dismiss affordance
+            — the screen deliberately draws no back button.
+
+            The single 1.0 detent is what takes it to the top; the mock caps
+            its sheet at 0.82, so this is a deliberate deviation. Adding 0.82
+            back as a FIRST detent would open it part-height and let a drag
+            expand it — not what we want here. */}
+        <Stack.Screen
+          name="player/[id]"
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [1.0],
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 26,
+          }}
+        />
         <Stack.Screen name="transfer-targets/[id]" />
       </Stack>
       <PushOrchestrator />

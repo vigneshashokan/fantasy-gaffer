@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import type { ApexTokens } from '@/constants/apexTokens';
 import type { ClubCode } from '@/types/fpl';
 import type { GwBreakdown, GwFixtureBreakdown } from '@/api/playerSummary';
-import { GUTTER } from '@/constants/theme';
+import { StatLinesCard, type StatLine } from './StatLinesCard';
 
 interface GwBreakdownCardProps {
   breakdown: GwBreakdown;
@@ -17,17 +17,26 @@ export function GwBreakdownCard({ breakdown, codeByTeamId, tk }: GwBreakdownCard
   if (breakdown.state === 'upcoming') {
     return (
       <View style={styles.wrap}>
-        <View style={[styles.card, { backgroundColor: tk.card, borderColor: tk.cardBorder }]}>
-          <Text style={[styles.gwLabel, { color: tk.faint }]}>GW{breakdown.round}</Text>
-          <Text style={[styles.note, { color: tk.text }]}>{"Hasn't played yet"}</Text>
-        </View>
+        <StatLinesCard
+          label={`GW${breakdown.round}`}
+          total="Hasn't played yet"
+          totalColor={tk.yellow}
+          lines={[]}
+          tk={tk}
+        />
       </View>
     );
   }
   return (
     <View style={styles.wrap}>
       {breakdown.fixtures.map((fx, idx) => (
-        <FixtureBlock key={`${idx}-${fx.opponentTeamId}-${fx.isHome ? 'H' : 'A'}`} round={breakdown.round} fx={fx} codeByTeamId={codeByTeamId} tk={tk} />
+        <FixtureBlock
+          key={`${idx}-${fx.opponentTeamId}-${fx.isHome ? 'H' : 'A'}`}
+          round={breakdown.round}
+          fx={fx}
+          codeByTeamId={codeByTeamId}
+          tk={tk}
+        />
       ))}
     </View>
   );
@@ -51,38 +60,25 @@ function FixtureBlock({
         ? ` ${fx.teamHScore}–${fx.teamAScore}`
         : ` ${fx.teamAScore}–${fx.teamHScore}`
       : '';
+  // The mock colours a zero line faint rather than green — a 0 is neither a
+  // gain nor a loss.
+  const lines: StatLine[] = fx.played
+    ? fx.lines.map((l) => ({
+        label: l.label,
+        value: fmt(l.points),
+        color: l.points > 0 ? tk.green : l.points < 0 ? tk.pink : tk.faint,
+      }))
+    : [{ label: 'Did not play', value: '0', color: tk.faint }];
   return (
-    <View style={[styles.card, { backgroundColor: tk.card, borderColor: tk.cardBorder }]}>
-      <View style={styles.header}>
-        <Text style={[styles.gwLabel, { color: tk.faint }]}>
-          GW{round} · {opp} ({venue}){score}
-        </Text>
-        <Text style={[styles.gwPts, { color: tk.text }]}>{fx.points} pts</Text>
-      </View>
-      {fx.played ? (
-        fx.lines.map((line) => (
-          <View key={line.label} style={[styles.line, { borderTopColor: tk.line }]}>
-            <Text style={[styles.lineLabel, { color: tk.text }]}>{line.label}</Text>
-            <Text style={[styles.linePts, { color: line.points >= 0 ? tk.green : tk.pink }]}>
-              {fmt(line.points)}
-            </Text>
-          </View>
-        ))
-      ) : (
-        <Text style={[styles.note, { color: tk.faint }]}>Did not play</Text>
-      )}
-    </View>
+    <StatLinesCard
+      label={`GW${round} · ${opp} (${venue})${score}`}
+      total={`${fx.points} pts`}
+      lines={lines}
+      tk={tk}
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: GUTTER, paddingTop: 16, gap: 12 },
-  card: { borderRadius: 16, borderWidth: 1, padding: 14 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 },
-  gwLabel: { fontFamily: 'Archivo_700Bold', fontSize: 12, letterSpacing: 0.4, textTransform: 'uppercase', flexShrink: 1 },
-  gwPts: { fontFamily: 'Archivo_800ExtraBold', fontSize: 18 },
-  line: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, paddingVertical: 9 },
-  lineLabel: { fontFamily: 'Archivo_500Medium', fontSize: 14 },
-  linePts: { fontFamily: 'JetBrainsMono_700Bold', fontSize: 15 },
-  note: { fontFamily: 'Archivo_700Bold', fontSize: 15, marginTop: 6 },
+  wrap: { paddingTop: 16, gap: 12 },
 });
