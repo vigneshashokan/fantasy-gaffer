@@ -1,12 +1,18 @@
 import React, { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, BackHandler } from 'react-native';
-import { useThemeStore } from '@/store/themeStore';
+import { useThemeStore, type ColorScheme } from '@/store/themeStore';
 import { useProfile } from '@/api/profile';
 import { useManager } from '@/api/manager';
 import { initialsOf } from '@/lib/name';
 import { FLOATING_NAV_SPACE, getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import { Icon } from '@/components/ui/Icon';
+
+const SCHEMES: { key: ColorScheme; label: string }[] = [
+  { key: 'system', label: 'System' },
+  { key: 'light', label: 'Light' },
+  { key: 'dark', label: 'Dark' },
+];
 
 interface AccountMenuProps {
   visible: boolean;
@@ -23,7 +29,7 @@ export function AccountMenu({
   onSettings,
   onSignOut,
 }: AccountMenuProps) {
-  const { paletteKey, dark, setDark } = useThemeStore();
+  const { paletteKey, dark, scheme, setScheme } = useThemeStore();
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
@@ -87,14 +93,18 @@ export function AccountMenu({
             { backgroundColor: dark ? 'rgba(255,255,255,0.08)' : '#E7E9F2' },
           ]}
         >
-          {(['light', 'dark'] as const).map((mode) => {
-            const active = mode === 'dark' ? dark : !dark;
+          {/* Selection tracks the CHOICE, not the resolved theme: on 'System'
+              neither Light nor Dark is highlighted, even though one of them is
+              in force. Highlighting the resolved one would leave no way to see
+              that the app is following the device. */}
+          {SCHEMES.map(({ key, label }) => {
+            const active = scheme === key;
             return (
               <Pressable
-                key={mode}
-                onPress={() => setDark(mode === 'dark')}
+                key={key}
+                onPress={() => setScheme(key)}
                 accessibilityRole="button"
-                accessibilityLabel={mode === 'dark' ? 'Dark theme' : 'Light theme'}
+                accessibilityLabel={`${label} theme`}
                 accessibilityState={{ selected: active }}
                 style={[
                   styles.segment,
@@ -112,7 +122,7 @@ export function AccountMenu({
                       : { color: t.textMuted },
                   ]}
                 >
-                  {mode === 'dark' ? 'Dark' : 'Light'}
+                  {label}
                 </Text>
               </Pressable>
             );
