@@ -27,14 +27,19 @@ export default function HomeStackLayout() {
         <Stack.Screen name="(tabs)" />
         {/* A form sheet rather than a plain modal, so iOS draws the grabber
             that replaced the screen's back button. One 1.0 detent for the same
-            reason as the player sheet below. */}
+            reason as the player sheet below.
+
+            No `sheetCornerRadius`: Settings sits right beside this in the
+            account menu and is a plain modal, so it takes iOS's own sheet
+            radius. Pinning 26 here made the two visibly different corners on
+            adjacent screens. The player sheet keeps 26 — it opens from a card,
+            not from that menu, so it is never seen next to Settings. */}
         <Stack.Screen
           name="profile"
           options={{
             presentation: 'formSheet',
             sheetAllowedDetents: [1.0],
             sheetGrabberVisible: true,
-            sheetCornerRadius: 26,
           }}
         />
         <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
