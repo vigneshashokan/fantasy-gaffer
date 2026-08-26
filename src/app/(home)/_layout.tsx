@@ -25,15 +25,15 @@ export default function HomeStackLayout() {
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
-        {/* A form sheet rather than a plain modal, so iOS draws the grabber
-            that replaced the screen's back button. One 1.0 detent for the same
-            reason as the player sheet below.
+        {/* Both account-menu screens are form sheets rather than plain modals,
+            so iOS draws the grabber that replaced their back buttons. One 1.0
+            detent for the same reason as the player sheet below.
 
-            No `sheetCornerRadius`: Settings sits right beside this in the
-            account menu and is a plain modal, so it takes iOS's own sheet
-            radius. Pinning 26 here made the two visibly different corners on
-            adjacent screens. The player sheet keeps 26 — it opens from a card,
-            not from that menu, so it is never seen next to Settings. */}
+            Neither pins `sheetCornerRadius`: they open from the same menu and
+            are seen one after the other, so they take iOS's own sheet radius
+            and agree with each other on any device. Pinning 26 on one of them
+            made the two visibly different corners. The player sheet keeps 26 —
+            it opens from a card, not from that menu. */}
         <Stack.Screen
           name="profile"
           options={{
@@ -42,7 +42,14 @@ export default function HomeStackLayout() {
             sheetGrabberVisible: true,
           }}
         />
-        <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
+        <Stack.Screen
+          name="settings"
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [1.0],
+            sheetGrabberVisible: true,
+          }}
+        />
         {/* Player details is a bottom sheet: it rises from the bottom edge and
             settles at full height, so the content reads as a page rather than
             a floating card. The grabber + drag-down ARE the dismiss affordance

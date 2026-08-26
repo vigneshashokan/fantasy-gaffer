@@ -15,7 +15,6 @@ import { BiometricCard } from '@/components/settings/BiometricCard';
 import { SettingsRow } from '@/components/settings/SettingsRow';
 import { PrivacyCard } from '@/components/settings/PrivacyCard';
 import { useOnboardingStore } from '@/store/onboardingStore';
-import { supabase } from '@/lib/supabase';
 import { sendTestNotification } from '@/lib/notifications/sendTestNotification';
 import { shareApp, sendFeedback } from '@/lib/external';
 import { FEEDBACK_EMAIL } from '@/constants/links';
@@ -31,172 +30,159 @@ export default function SettingsModal() {
   const heroTo = tk.heroBg2;
 
   return (
-    <View style={{ flex: 1, backgroundColor: tk.bg }}>
-      <ScreenHeader
-        title="Settings"
-        onBack={() => router.back()}
-        gradFrom={heroFrom}
-        gradTo={heroTo}
-      />
+    // One scroll view with the header as its first child, the same shape as
+    // the profile sheet. A fixed header ABOVE a flexible ScrollView does not
+    // size correctly inside a form sheet — the scroll view takes the whole
+    // sheet and draws straight over the header.
+    <ScrollView
+      style={{ flex: 1, backgroundColor: tk.bg }}
+      contentContainerStyle={{ paddingBottom: 28 }}
+      showsVerticalScrollIndicator={false}
+    >
+      {/* No back chevron: this is a sheet now, so the grabber at the top, the
+          drag-down and the scrim are the way out — same call as profile and
+          the player detail. The title stays; unlike profile there is no hero
+          identity block underneath it saying which screen this is. */}
+      <ScreenHeader title="Settings" gradFrom={heroFrom} gradTo={heroTo} />
 
-      <ScrollView
-        contentContainerStyle={{ paddingTop: 18, paddingBottom: 28 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <PlusCard gradFrom={heroFrom} gradTo={heroTo} />
+      <View style={{ height: 18 }} />
 
-        <SectionCard title="Appearance" tk={tk}>
-          <ThemeToggle palette={paletteKey} onSetPalette={setPaletteKey} />
-        </SectionCard>
+      <PlusCard gradFrom={heroFrom} gradTo={heroTo} />
 
-        <Text style={[styles.sectionLabel, { color: tk.faint }]}>Preferences</Text>
-        <NotificationsCard tk={tk} />
-        <BiometricCard tk={tk} />
-        <PrivacyCard tk={tk} />
+      <SectionCard title="Appearance" tk={tk}>
+        <ThemeToggle palette={paletteKey} onSetPalette={setPaletteKey} />
+      </SectionCard>
 
-        <SectionCard title="More" tk={tk}>
-          <SettingsRow
-            icon={<ShareIcon color={tk.faint} />}
-            label="Share Fantasy Gaffer"
-            onPress={() => {
-              shareApp().catch(() => {});
-            }}
-            tk={tk}
-            // Hands off to the system share sheet, so it reads as external —
-            // it used to render no trailing glyph at all, while "Send
-            // Feedback" (which leaves for the mail app) got an in-app chevron.
-            external
-          />
-          {/* The "Follow Us" accordion lived here with five social rows whose
-              onPress was `() => {}` — external-link affordances pointing at
-              handles that don't exist yet. Removed rather than faked; add it
-              back (with real URLs) when the accounts are live. (#174) */}
-          <SettingsRow
-            icon={<FeedbackIcon color={tk.faint} />}
-            label="Send Feedback"
+      <Text style={[styles.sectionLabel, { color: tk.faint }]}>Preferences</Text>
+      <NotificationsCard tk={tk} />
+      <BiometricCard tk={tk} />
+      <PrivacyCard tk={tk} />
+
+      <SectionCard title="More" tk={tk}>
+        <SettingsRow
+          icon={<ShareIcon color={tk.faint} />}
+          label="Share Fantasy Gaffer"
+          onPress={() => {
+            shareApp().catch(() => {});
+          }}
+          tk={tk}
+          // Hands off to the system share sheet, so it reads as external —
+          // it used to render no trailing glyph at all, while "Send
+          // Feedback" (which leaves for the mail app) got an in-app chevron.
+          external
+        />
+        {/* The "Follow Us" accordion lived here with five social rows whose
+            onPress was `() => {}` — external-link affordances pointing at
+            handles that don't exist yet. Removed rather than faked; add it
+            back (with real URLs) when the accounts are live. (#174) */}
+        <SettingsRow
+          icon={<FeedbackIcon color={tk.faint} />}
+          label="Send Feedback"
+          onPress={async () => {
+            const { ok } = await sendFeedback();
+            if (!ok) Alert.alert('No mail app', `Email us at ${FEEDBACK_EMAIL}`);
+          }}
+          tk={tk}
+          external
+          showDivider
+        />
+        <SettingsRow
+          icon={<PrivacyIcon color={tk.faint} />}
+          label="Privacy Policy"
+          onPress={() => router.push('/legal/privacy')}
+          tk={tk}
+          showDivider
+        />
+        <SettingsRow
+          icon={<TermsIcon color={tk.faint} />}
+          label="Terms of Service"
+          onPress={() => router.push('/legal/terms')}
+          tk={tk}
+          showDivider
+        />
+        <SettingsRow
+          icon={<TutorialIcon color={tk.faint} />}
+          label="Replay tutorial"
+          onPress={() => {
+            resetOnboarding();
+            Alert.alert('Tutorial reset', "You'll see the tips again next time you open each tab.");
+          }}
+          tk={tk}
+          showDivider
+        />
+      </SectionCard>
+
+      {/* Read from the build rather than hardcoded, so a bug report's
+          version string is the version the user is actually running (#181). */}
+      <Text style={[styles.version, { color: tk.faint }]}>
+        Fantasy Gaffer · v{Constants.expoConfig?.version ?? '—'}
+      </Text>
+
+      {/* Kept while #158 still owes an on-device push pass: local
+          notifications are the only way to fire one and watch the deep link
+          route without a push server. The sibling "Connectivity (dev)" card
+          went — it pinged the `ping` edge function, which nothing else calls,
+          and every real screen already fails loudly when Supabase is
+          unreachable. Delete this one too once that pass is signed off. */}
+      {__DEV__ && (
+        <SectionCard title="Notifications (dev)" tk={tk}>
+          <Text style={[styles.devHint, { color: tk.faint }]}>
+            Fires a local notification in 4s. Background the app to test a
+            background/cold-start tap, or tap the banner — either should deep-link.
+          </Text>
+          <Pressable
             onPress={async () => {
-              const { ok } = await sendFeedback();
-              if (!ok) Alert.alert('No mail app', `Email us at ${FEEDBACK_EMAIL}`);
+              const r = await sendTestNotification({
+                title: 'Deadline approaching',
+                body: 'GW deadline in 1 hour — set your team.',
+                url: '/(home)/(tabs)/transfer',
+                type: 'deadline',
+              });
+              Alert.alert(
+                r.scheduled ? 'Scheduled' : 'Notifications not enabled',
+                r.scheduled
+                  ? 'Deadline test → Transfer tab in 4s'
+                  : 'Allow when prompted, or enable for this app in iOS Settings → Notifications, then retry.',
+              );
             }}
-            tk={tk}
-            external
-            showDivider
-          />
-          <SettingsRow
-            icon={<PrivacyIcon color={tk.faint} />}
-            label="Privacy Policy"
-            onPress={() => router.push('/legal/privacy')}
-            tk={tk}
-            showDivider
-          />
-          <SettingsRow
-            icon={<TermsIcon color={tk.faint} />}
-            label="Terms of Service"
-            onPress={() => router.push('/legal/terms')}
-            tk={tk}
-            showDivider
-          />
-          <SettingsRow
-            icon={<TutorialIcon color={tk.faint} />}
-            label="Replay tutorial"
-            onPress={() => {
-              resetOnboarding();
-              Alert.alert('Tutorial reset', "You'll see the tips again next time you open each tab.");
-            }}
-            tk={tk}
-            showDivider
-          />
-        </SectionCard>
-
-        {/* Read from the build rather than hardcoded, so a bug report's
-            version string is the version the user is actually running (#181). */}
-        <Text style={[styles.version, { color: tk.faint }]}>
-          Fantasy Gaffer · v{Constants.expoConfig?.version ?? '—'}
-        </Text>
-
-        {__DEV__ && (
-          <SectionCard title="Connectivity (dev)" tk={tk}>
-            <Pressable
-              onPress={async () => {
-                try {
-                  const { data, error } = await supabase.functions.invoke('ping');
-                  if (error) throw error;
-                  Alert.alert('ping ok', JSON.stringify(data));
-                } catch (e) {
-                  Alert.alert('ping failed', e instanceof Error ? e.message : String(e));
-                }
-              }}
-              style={({ pressed }) => [
-                styles.devButton,
-                { backgroundColor: tk.headStrip, borderColor: tk.cardBorder, opacity: pressed ? 0.7 : 1 },
-              ]}
-              accessibilityRole="button"
-            >
-              <Text style={[styles.devButtonText, { color: tk.text }]}>Ping Edge Function</Text>
-            </Pressable>
-          </SectionCard>
-        )}
-
-        {__DEV__ && (
-          <SectionCard title="Notifications (dev)" tk={tk}>
-            <Text style={[styles.devHint, { color: tk.faint }]}>
-              Fires a local notification in 4s. Background the app to test a
-              background/cold-start tap, or tap the banner — either should deep-link.
+            style={({ pressed }) => [
+              styles.devButton,
+              { backgroundColor: tk.headStrip, borderColor: tk.cardBorder, opacity: pressed ? 0.7 : 1 },
+            ]}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.devButtonText, { color: tk.text }]}>
+              Test deadline → Transfer tab
             </Text>
-            <Pressable
-              onPress={async () => {
-                const r = await sendTestNotification({
-                  title: 'Deadline approaching',
-                  body: 'GW deadline in 1 hour — set your team.',
-                  url: '/(home)/(tabs)/transfer',
-                  type: 'deadline',
-                });
-                Alert.alert(
-                  r.scheduled ? 'Scheduled' : 'Notifications not enabled',
-                  r.scheduled
-                    ? 'Deadline test → Transfer tab in 4s'
-                    : 'Allow when prompted, or enable for this app in iOS Settings → Notifications, then retry.',
-                );
-              }}
-              style={({ pressed }) => [
-                styles.devButton,
-                { backgroundColor: tk.headStrip, borderColor: tk.cardBorder, opacity: pressed ? 0.7 : 1 },
-              ]}
-              accessibilityRole="button"
-            >
-              <Text style={[styles.devButtonText, { color: tk.text }]}>
-                Test deadline → Transfer tab
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={async () => {
-                const r = await sendTestNotification({
-                  title: 'Team confirmed',
-                  body: 'Your XI is locked in for the gameweek.',
-                  url: '/(home)/(tabs)/team',
-                  type: 'gw_confirm',
-                });
-                Alert.alert(
-                  r.scheduled ? 'Scheduled' : 'Notifications not enabled',
-                  r.scheduled
-                    ? 'GW-confirm test → Team tab in 4s'
-                    : 'Allow when prompted, or enable for this app in iOS Settings → Notifications, then retry.',
-                );
-              }}
-              style={({ pressed }) => [
-                styles.devButton,
-                { backgroundColor: tk.headStrip, borderColor: tk.cardBorder, opacity: pressed ? 0.7 : 1 },
-              ]}
-              accessibilityRole="button"
-            >
-              <Text style={[styles.devButtonText, { color: tk.text }]}>
-                Test gw_confirm → Team tab
-              </Text>
-            </Pressable>
-          </SectionCard>
-        )}
-      </ScrollView>
-    </View>
+          </Pressable>
+          <Pressable
+            onPress={async () => {
+              const r = await sendTestNotification({
+                title: 'Team confirmed',
+                body: 'Your XI is locked in for the gameweek.',
+                url: '/(home)/(tabs)/team',
+                type: 'gw_confirm',
+              });
+              Alert.alert(
+                r.scheduled ? 'Scheduled' : 'Notifications not enabled',
+                r.scheduled
+                  ? 'GW-confirm test → Team tab in 4s'
+                  : 'Allow when prompted, or enable for this app in iOS Settings → Notifications, then retry.',
+              );
+            }}
+            style={({ pressed }) => [
+              styles.devButton,
+              { backgroundColor: tk.headStrip, borderColor: tk.cardBorder, opacity: pressed ? 0.7 : 1 },
+            ]}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.devButtonText, { color: tk.text }]}>
+              Test gw_confirm → Team tab
+            </Text>
+          </Pressable>
+        </SectionCard>
+      )}
+    </ScrollView>
   );
 }
 
