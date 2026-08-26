@@ -1,12 +1,25 @@
-import React, { useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, BackHandler } from 'react-native';
-import { useThemeStore } from '@/store/themeStore';
+import React, { useEffect, useState } from 'react';
+import {
+  View, Text, Pressable, StyleSheet, BackHandler, type LayoutChangeEvent,
+} from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { useThemeStore, type ColorScheme } from '@/store/themeStore';
 import { useProfile } from '@/api/profile';
 import { useManager } from '@/api/manager';
 import { initialsOf } from '@/lib/name';
 import { FLOATING_NAV_SPACE, getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import { Icon } from '@/components/ui/Icon';
+import { MAX_FONT_SCALE, useReducedMotion } from '@/lib/a11y';
+
+const SEG_PAD = 3;
+const SPRING = { damping: 16, stiffness: 190, mass: 0.6 };
+
+const SCHEMES: { key: ColorScheme; label: string; icon: 'device' | 'sun' | 'moon' }[] = [
+  { key: 'system', label: 'System', icon: 'device' },
+  { key: 'light', label: 'Light', icon: 'sun' },
+  { key: 'dark', label: 'Dark', icon: 'moon' },
+];
 
 interface AccountMenuProps {
   visible: boolean;
@@ -23,7 +36,7 @@ export function AccountMenu({
   onSettings,
   onSignOut,
 }: AccountMenuProps) {
-  const { paletteKey, dark, setDark } = useThemeStore();
+  const { paletteKey, dark, scheme, setScheme } = useThemeStore();
   const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
@@ -32,6 +45,27 @@ export function AccountMenu({
   const fullName = [profile?.firstName, profile?.lastName].filter(Boolean).join(' ');
   const initials = initialsOf(profile?.firstName, profile?.lastName);
   const teamName = manager?.name;
+
+  // One sliding pill rather than a per-segment background, which cannot
+  // animate — the same shape as the Top Picks SegmentedControl.
+  const reduceMotion = useReducedMotion();
+  const [trackW, setTrackW] = useState(0);
+  const segW = trackW ? (trackW - SEG_PAD * 2) / SCHEMES.length : 0;
+  const index = Math.max(SCHEMES.findIndex((o) => o.key === scheme), 0);
+
+  // Animate the slot INDEX, not the pixel offset: `segW` is 0 until the first
+  // layout pass, and the menu unmounts on close, so animating pixels would
+  // slide the pill in from the left edge every time it opens.
+  const slot = useSharedValue(index);
+  useEffect(() => {
+    slot.value = reduceMotion ? index : withSpring(index, SPRING);
+  }, [index, reduceMotion, slot]);
+
+  const pillStyle = useAnimatedStyle(() => ({
+    width: segW,
+    transform: [{ translateX: slot.value * segW }],
+    opacity: segW ? 1 : 0, // nothing to place before onLayout measures the track
+  }));
 
   // Android's back button was the <Modal>'s onRequestClose; an overlay has to
   // claim it itself or back pops the route out from under an open menu.
@@ -82,29 +116,40 @@ export function AccountMenu({
         </View>
 
         <View
+          onLayout={(e: LayoutChangeEvent) => setTrackW(e.nativeEvent.layout.width)}
           style={[
             styles.segmentedRow,
             { backgroundColor: dark ? 'rgba(255,255,255,0.08)' : '#E7E9F2' },
           ]}
         >
-          {(['light', 'dark'] as const).map((mode) => {
-            const active = mode === 'dark' ? dark : !dark;
+          <Animated.View
+            style={[
+              styles.segmentPill,
+              { backgroundColor: dark ? '#2D3247' : '#FFFFFF' },
+              pillStyle,
+            ]}
+          />
+          {/* Selection tracks the CHOICE, not the resolved theme: on 'System'
+              neither Light nor Dark is highlighted, even though one of them is
+              in force. Highlighting the resolved one would leave no way to see
+              that the app is following the device. */}
+          {SCHEMES.map(({ key, label, icon }) => {
+            const active = scheme === key;
             return (
               <Pressable
-                key={mode}
-                onPress={() => setDark(mode === 'dark')}
+                key={key}
+                onPress={() => setScheme(key)}
                 accessibilityRole="button"
-                accessibilityLabel={mode === 'dark' ? 'Dark theme' : 'Light theme'}
+                accessibilityLabel={`${label} theme`}
                 accessibilityState={{ selected: active }}
-                style={[
-                  styles.segment,
-                  active && [
-                    styles.segmentActive,
-                    { backgroundColor: dark ? '#2D3247' : '#FFFFFF' },
-                  ],
-                ]}
+                style={styles.segment}
               >
+                <Icon name={icon} color={active ? t.text : t.textMuted} size={13} />
+                {/* One line, capped scale: three segments in a fixed-width
+                    card, so a wrapped label would push the menu around. */}
                 <Text
+                  numberOfLines={1}
+                  maxFontSizeMultiplier={MAX_FONT_SCALE}
                   style={[
                     styles.segmentText,
                     active
@@ -112,7 +157,7 @@ export function AccountMenu({
                       : { color: t.textMuted },
                   ]}
                 >
-                  {mode === 'dark' ? 'Dark' : 'Light'}
+                  {label}
                 </Text>
               </Pressable>
             );
@@ -153,7 +198,8 @@ const styles = StyleSheet.create({
     // Sits clear of the floating nav's top edge.
     bottom: FLOATING_NAV_SPACE + 8,
     right: 16,
-    width: 244,
+    // 244 fitted two segments; three with icons need the room.
+    width: 268,
     borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',
@@ -203,16 +249,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: 12,
     marginVertical: 10,
-    padding: 3,
+    padding: SEG_PAD,
     borderRadius: 10,
   },
   segment: {
     flex: 1,
+    flexDirection: 'row',
+    gap: 4,
     paddingVertical: 8,
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 7,
   },
-  segmentActive: {
+  segmentPill: {
+    position: 'absolute',
+    left: SEG_PAD,
+    top: SEG_PAD,
+    bottom: SEG_PAD,
+    borderRadius: 7,
     shadowColor: '#000',
     shadowOpacity: 0.06,
     shadowRadius: 2,
@@ -221,6 +275,6 @@ const styles = StyleSheet.create({
   },
   segmentText: {
     fontFamily: 'Archivo_600SemiBold',
-    fontSize: 14,
+    fontSize: 13,
   },
 });

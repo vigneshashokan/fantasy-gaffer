@@ -6,7 +6,7 @@
 // item that opens the account menu popup.
 
 import React from 'react';
-import { Alert } from 'react-native';
+import { AccessibilityInfo, Alert } from 'react-native';
 import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { renderWithProviders as render } from '../utils/renderWithProviders';
 import { AccountMenu } from '@/components/nav/AccountMenu';
@@ -15,9 +15,13 @@ import type { Profile, TeamInfo } from '@/types/fpl';
 
 const mockSignOut = jest.fn();
 
+let mockScheme = 'dark';
+const mockSetScheme = jest.fn();
 jest.mock('@/store/themeStore', () => ({
   __esModule: true,
-  useThemeStore: () => ({ paletteKey: 'classic', dark: true, setDark: jest.fn() }),
+  useThemeStore: () => ({
+    paletteKey: 'classic', dark: true, scheme: mockScheme, setScheme: mockSetScheme,
+  }),
 }));
 
 jest.mock('@/store/authStore', () => {
@@ -69,6 +73,7 @@ jest.mock('@/api/manager', () => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockScheme = 'dark';
   mockSignOut.mockResolvedValue({ error: null });
   mockUseProfile.mockReturnValue({
     data: { firstName: 'Vignesh', lastName: 'Ashokan', fplTeamId: 12345 } satisfies Partial<Profile>,
@@ -206,5 +211,55 @@ describe('signing out', () => {
 
     await waitFor(() => expect(alertSpy).toHaveBeenCalledWith("Couldn't sign out", expect.any(String)));
     alertSpy.mockRestore();
+  });
+});
+
+// The theme segments follow the user's CHOICE, not the theme in force: on
+// System neither Light nor Dark may claim `selected`, or there is nothing on
+// screen saying the app is tracking the device.
+describe('AccountMenu theme segments', () => {
+  const open = () =>
+    render(
+      <AccountMenu
+        visible
+        onClose={jest.fn()}
+        onProfile={jest.fn()}
+        onSettings={jest.fn()}
+        onSignOut={jest.fn()}
+      />,
+    );
+
+  it('offers System before Light and Dark', () => {
+    const { getAllByRole } = open();
+    const labels = getAllByRole('button')
+      .map((n) => n.props.accessibilityLabel)
+      .filter((l: string | undefined) => l?.endsWith('theme'));
+    expect(labels).toEqual(['System theme', 'Light theme', 'Dark theme']);
+  });
+
+  it('selects only the chosen scheme, not the resolved one', () => {
+    mockScheme = 'system';
+    const { getByLabelText } = open();
+    expect(getByLabelText('System theme').props.accessibilityState?.selected).toBe(true);
+    // `dark` is true in this mock, so a resolved-theme highlight would light
+    // Dark up here.
+    expect(getByLabelText('Dark theme').props.accessibilityState?.selected).toBe(false);
+  });
+
+  it('records the pick', () => {
+    fireEvent.press(open().getByLabelText('Light theme'));
+    expect(mockSetScheme).toHaveBeenCalledWith('light');
+  });
+
+  // The highlight is one pill that slides between the three. jest can see
+  // neither the travel nor its suppression, so what is pinned is that the
+  // component ASKS — the pill has to jump, not glide, under reduced motion.
+  it('consults reduced motion before sliding the highlight', async () => {
+    const spy = jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockResolvedValue(true);
+    open();
+    await act(async () => {});
+    expect(spy).toHaveBeenCalled();
   });
 });

@@ -18,7 +18,7 @@ let mockSegments: string[] = ['(home)', '(tabs)', 'team'];
 
 jest.mock('@/store/themeStore', () => ({
   __esModule: true,
-  useThemeStore: () => ({ paletteKey: 'classic', dark: false, setDark: jest.fn() }),
+  useThemeStore: () => ({ paletteKey: 'classic', dark: false, scheme: 'light', setScheme: jest.fn() }),
 }));
 
 jest.mock('@/store/authStore', () => {
