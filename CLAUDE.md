@@ -54,6 +54,35 @@ CI (`.github/workflows/deploy-supabase.yml`) runs `db push` + deploys the edge f
 - CI for the suite is designed-not-built (**#152**: Android-emulator-on-Linux, because macOS runners lack Docker).
 - **The mock-fixture-typing lesson above was swept repo-wide — #155 SHIPPED (PR #159, 2026-07-08).** 14 `src/__tests__/**` files that hand-mock `@/api/*` hooks now pin their data literals against the real hook types. Two additive type-only exports enabled it: `ApexTeamData` (`squad.ts`, `ReturnType<typeof buildApexTeam>` — there was no named type for `useApexTeam().data` before) and `FplHistory` (`manager.ts`, existed but wasn't exported). **The technique, and its gotcha:** TS excess-property checking — the thing that actually catches a renamed/removed field — only fires on a **fresh literal at its own declaration site** (a `const X: Type = {...}` initializer, a `satisfies Type` applied directly to the literal, or a function with an **explicit return-type annotation** wrapping a directly-returned literal). It does **NOT** fire when a literal is built inside a plain helper function (no return-type annotation) and the result flows into an already-typed variable elsewhere (`mockTeam = liveTeam(30)`) — the assignment only checks structural compatibility, not excess properties, so a rename that removed a field would slip through silently. Fix: put the `satisfies`/return-type annotation on the helper itself, not just on the receiving variable. Pattern used throughout: full-shape fixture → direct annotation; a deliberate subset (shell tests that only read a few fields) → `Partial<Type>` (or a nested `Partial<Type['field']>` for one partial sub-object) rather than `Pick<>` — still catches a rename on any field that IS provided, without forcing the test to pad out fields it never reads. **Scope boundary:** files that mock only their hook's *own* raw dependencies (`fpl-client`/`profile`/`supabase`) while testing that hook's real implementation directly (`fixtures.test.tsx`, `manager.test.tsx`, `playerSummary.test.tsx`) were left alone — a real shape change there breaks the same file's assertions, so they don't fit the silent-drift bug class the audit was for.
 
+## The v2 reference mock — `design/FPL Gaffer v2.dc.html` (imported PR #228)
+
+**When the user says "the mock", this is it.** Imported 2026-08-25 from the Claude
+Design project *Fantasy Gaffer v2* (`bb152479-0665-4f40-9399-fc051f0d2060`) with the
+DesignSync tool. It is the **design target the shipped app is being rebuilt toward**,
+screen by screen — not a description of what already ships, so never read it as
+documentation of current behaviour.
+
+One interactive prototype (~1500 lines, a `DCLogic` component): Landing (3 slides) →
+Sign In → Home with tabs Top Picks / My Team / Transfer, plus floating glass nav,
+account menu, player-stats bottom sheet, player-detail overlay, profile and settings
+overlays. Its `theme(dark)` method holds a complete dark+light token set and `data()`
+holds the sample data — both are the reference when porting a screen.
+
+- **Viewing it:** `cd design && python3 -m http.server`. `file://` fails — the page
+  `<x-import>`s `ios-frame.jsx` over fetch, which a null origin blocks. `support.js`
+  is the generated dc-runtime (it pulls React 18.3.1 from unpkg, so it needs network).
+- **`design/assets/` is symlinks** into the repo's real `assets/jerseys` +
+  `assets/logos` — all 20 kits and all four logos were already in the repo, byte-identical,
+  so nothing was duplicated. A new mock asset must be added to the real `assets/` tree
+  and symlinked, never copied in.
+- **Two sibling artboards were deliberately NOT imported** — `V2 Directions.dc.html`
+  and `V3 Directions.dc.html`. Fetch them from the same project if a question needs them.
+- **The mock is single-palette and pre-dates our a11y guards.** Porting it verbatim is
+  not automatically right: it has one purple/green palette where the app has three, and
+  its greyed-out text fails WCAG AA in places (see the nav bullet below). Match it, then
+  check it against the contrast guard — and record any deviation at the token, the way
+  `apexTokens`' nav comment does.
+
 ## Architecture (the parts that span files)
 
 - **Routing** — `expo-router` v6, file-based under `src/app/`. `src/app/index.tsx` redirects on `authStore.session` to either `(onboarding)` or `(home)/(tabs)/team`. Two route groups: `(onboarding)` (signin/signup/connect-team/reset flows) and `(home)` (post-auth tabs: team / top-picks / transfer, plus player/profile/settings). `typedRoutes` and `reactCompiler` are both enabled experiments in `app.config.ts` — **React Compiler is on, so don't hand-roll `useMemo`/`useCallback`/`React.memo` for memoization** unless profiling proves it's needed.
@@ -88,6 +117,36 @@ CI (`.github/workflows/deploy-supabase.yml`) runs `db push` + deploys the edge f
 - **Client state** — Zustand stores in `src/store/` (`auth`, `biometric`, `team`, `theme`), persisted via AsyncStorage. Keep them narrow: anything server-derived belongs in React Query, not a store.
 
 - **Theming** — there is **no Tailwind/NativeWind** here (the lone `src/global.css` only declares web font variables). Styling runs off a custom token system: `src/constants/theme.ts` defines a `Theme` shape and three palettes (`classic | pitch | electric`), selected via `themeStore`. Companion tokens in `constants/apexTokens.ts`, `clubColors.ts`, `jerseys.ts`. Fonts are Archivo (display) + JetBrains Mono, loaded at the root layout. **`apexTokens` gotcha:** keys like `purpleD`/`purpleL`/`glowD`/`moneyD`/`active` live on the per-palette **base** objects, **not** on the resolved `ApexTokens` type returned by `apexTokens(dark, paletteKey)`. The resolver maps them (e.g. `purple: B.purpleD`/`B.purpleL`; `activeFill: B.active` — the solid brand accent, same in light/dark, white-text-safe). Grepping the file shows `purpleD`, so it's easy to write `tk.purpleD` — which is `undefined` at runtime (tests pass, `tsc` fails). Use `tk.purple` for accent text/icons and `tk.activeFill` for a dark brand-accent fill; only use keys that exist on the `ApexTokens` interface. **Text tokens are WCAG AA-tuned and guarded** — before changing any `text`/`faint`/`variant`/accent colour, see the **Accessibility** bullet (the contrast guard test breaks if a text token drops below 4.5:1).
+
+- **The bottom nav FLOATS, and that is a two-file invariant (#228, first slice off the v2 mock).**
+  `src/components/nav/FloatingNav.tsx` is the mock's rounded pill: inset 16pt each side,
+  `barBottom(insets.bottom)` above the home indicator (28pt on a 34pt-inset device — the
+  mock's number — collapsing to 16 with no inset), one sliding highlight, and Account
+  taking that highlight while its menu is open. **Its root is `position: 'absolute'`, so it
+  leaves the tab navigator's column and the screens run full height.** Nothing reserves
+  space for it any more: every tab surface pays with **`FLOATING_NAV_SPACE`** (declared
+  beside `GUTTER` in `constants/theme.ts`) — the two scroll containers, the Top Picks
+  panel, both docked apply-all bars (`+ 16`) and the account menu's anchor (`+ 8`).
+  **Change the bar's height and you must re-check that constant**, because the failure is
+  silent: content simply hides under the bar while `tsc` and jest stay green. A
+  `tabsLayout` test pins the absolute positioning and both bottom offsets.
+  - **The highlight animates the slot INDEX, not a pixel offset.** `slotW` is 0 until the
+    first layout pass, so animating pixels slides the pill in from the left edge on every
+    mount. It jumps rather than springs under reduced motion.
+  - **Two token-level deviations from the mock, both recorded in `apexTokens`' own comment
+    — do not "restore" either without reading it.** `navBg` is **opaque**, not the mock's
+    0.85/0.88 alpha (a translucent fill over a full-height screen shows the pitch shifting
+    underneath, which reads as distracting rather than as glass — and with it opaque there
+    is nothing left to blur, which is why `expo-glass-effect` stays an unused dep).
+    `navIdle` is **lifted to clear AA**: the mock's `#A79FB3` / `rgba(200,190,220,0.5)`
+    measure **2.53:1** and **3.46:1** against the bar. The replacements keep the mock's hue
+    and saturation and move only lightness; all four nav text pairs are now pinned in the
+    contrast guard.
+  - The nav tokens (`navBg`/`navBorder`/`navActive`/`navIdle`/`navPill`) are
+    **palette-independent** literals, like `green`/`pink`/`deadlineFg` — the mock has one
+    palette. Make them per-palette only when a palette actually needs to diverge.
+  - The three tab icons needed no work: `Icon`'s `fire`/`team`/`swap` paths are already
+    byte-identical to the mock's SVGs.
 
 - **`ClubCode` is compile-time only, and the Premier League changes every August (#218, PR #220).**
   Club codes reach the app as **plain strings from Supabase**, so the `ClubCode` union in
@@ -598,6 +657,7 @@ The pre-launch/launch-readiness set: crash reporting, legal, a11y, onboarding, E
 
 ## Docs worth reading before non-trivial work
 
+- `design/FPL Gaffer v2.dc.html` — **the v2 reference mock** ("the mock"); see its section above for how to view it
 - `docs/architecture.md` — stack rationale, env/Vault setup, deploy flow
 - `docs/schema.md` — DB schema · `docs/fpl-api.md` — upstream FPL API notes
 - `docs/auth-*.md` — per-provider auth flows (email/password, Google, **Apple**, biometric, account deletion)
