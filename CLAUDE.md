@@ -199,6 +199,14 @@ neither a bar height nor a count-up. A pass over all six together is outstanding
   - The nav tokens (`navBg`/`navBorder`/`navActive`/`navIdle`/`navPill`) are
     **palette-independent** literals, like `green`/`pink`/`deadlineFg` — the mock has one
     palette. Make them per-palette only when a palette actually needs to diverge.
+  - **`AccountMenu` is deliberately NOT a react-native `<Modal>`.** Every row in it opens a
+    route that is itself `presentation:'modal'`, and iOS will not present one modal while
+    another is dismissing — so the menu's fade had to finish before Profile/Settings could
+    even begin, which read as a ~1s hang after the tap. It is a plain absolutely-positioned
+    overlay in the tabs layout instead. Two things it must therefore do itself: **return
+    `null` when closed** (a transparent full-screen view otherwise eats every tap — pinned in
+    `navIdentity.test.tsx`) and **claim the Android back button** via `BackHandler`, which
+    used to be the `Modal`'s `onRequestClose`.
   - The three tab icons needed no work: `Icon`'s `fire`/`team`/`swap` paths are already
     byte-identical to the mock's SVGs.
 

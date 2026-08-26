@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, Pressable, StyleSheet, BackHandler } from 'react-native';
 import { useThemeStore } from '@/store/themeStore';
 import { useProfile } from '@/api/profile';
 import { useManager } from '@/api/manager';
@@ -33,8 +33,26 @@ export function AccountMenu({
   const initials = initialsOf(profile?.firstName, profile?.lastName);
   const teamName = manager?.name;
 
+  // Android's back button was the <Modal>'s onRequestClose; an overlay has to
+  // claim it itself or back pops the route out from under an open menu.
+  useEffect(() => {
+    if (!visible) return;
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      onClose();
+      return true;
+    });
+    return () => sub.remove();
+  }, [visible, onClose]);
+
+  if (!visible) return null;
+
+  // Deliberately NOT a react-native <Modal>: every row here opens a route that
+  // is itself a native modal presentation, and iOS will not present one while
+  // another is dismissing — so the menu's fade had to finish before Profile or
+  // Settings could even start, a full second of dead time. An overlay in the
+  // ordinary tree has nothing to dismiss.
   return (
-    <Modal transparent animationType="fade" onRequestClose={onClose} visible={visible}>
+    <View style={StyleSheet.absoluteFill}>
       <Pressable
         style={StyleSheet.absoluteFill}
         onPress={onClose}
@@ -125,7 +143,7 @@ export function AccountMenu({
           <Text style={[styles.rowText, { color: t.danger }]}>Sign out</Text>
         </Pressable>
       </View>
-    </Modal>
+    </View>
   );
 }
 

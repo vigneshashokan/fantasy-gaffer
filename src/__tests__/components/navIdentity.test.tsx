@@ -116,6 +116,24 @@ describe('AccountMenu identity', () => {
     expect(getByText('Vignesh Ashokan')).toBeTruthy();
     expect(queryByText('Apex Pitch FC')).toBeNull();
   });
+
+  // The menu is a plain overlay rather than a <Modal>, so nothing hides it for
+  // us: closed HAS to render nothing, or a full-screen transparent view sits
+  // over the app swallowing every tap.
+  it('renders nothing while closed', () => {
+    const { queryByLabelText, queryByText } = render(
+      <AccountMenu
+        visible={false}
+        onClose={jest.fn()}
+        onProfile={jest.fn()}
+        onSettings={jest.fn()}
+        onSignOut={jest.fn()}
+      />,
+    );
+
+    expect(queryByLabelText('Close menu')).toBeNull();
+    expect(queryByText('Profile')).toBeNull();
+  });
 });
 
 describe('Account tab (bottom nav)', () => {
