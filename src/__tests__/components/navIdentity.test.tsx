@@ -6,7 +6,7 @@
 // item that opens the account menu popup.
 
 import React from 'react';
-import { Alert } from 'react-native';
+import { AccessibilityInfo, Alert } from 'react-native';
 import { act, fireEvent, waitFor } from '@testing-library/react-native';
 import { renderWithProviders as render } from '../utils/renderWithProviders';
 import { AccountMenu } from '@/components/nav/AccountMenu';
@@ -249,5 +249,17 @@ describe('AccountMenu theme segments', () => {
   it('records the pick', () => {
     fireEvent.press(open().getByLabelText('Light theme'));
     expect(mockSetScheme).toHaveBeenCalledWith('light');
+  });
+
+  // The highlight is one pill that slides between the three. jest can see
+  // neither the travel nor its suppression, so what is pinned is that the
+  // component ASKS — the pill has to jump, not glide, under reduced motion.
+  it('consults reduced motion before sliding the highlight', async () => {
+    const spy = jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockResolvedValue(true);
+    open();
+    await act(async () => {});
+    expect(spy).toHaveBeenCalled();
   });
 });
