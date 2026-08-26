@@ -5,7 +5,8 @@
 // link_error). The implementation collapses to a 4-variant `Stage` type:
 // validating / invalid / fetch_error are derived from the useTeamPreview
 // hook's status, not stored separately. This avoids two sources of truth.
-// Reachable from Complete Profile (after submit) and from LinkTeamCta.
+// Reachable from Complete Profile (after submit), from LinkTeamCta, and from
+// the Profile sheet's FPL-team row with ?relink=1 (an already-linked team).
 
 import { useLinkTeam } from '@/api/linkTeam';
 import { useTeamPreview, type Preview } from '@/api/teamPreview';
@@ -17,7 +18,7 @@ import { apexTokens } from '@/constants/apexTokens';
 import { getTheme } from '@/constants/theme';
 import { PillBtn } from '@/components/ui/PillBtn';
 import { useThemeStore } from '@/store/themeStore';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -43,6 +44,11 @@ export default function ConnectTeam() {
   const tk = apexTokens(dark, paletteKey);
   const t = getTheme(paletteKey, dark);
   const insets = useSafeAreaInsets();
+
+  // Reached from Profile when a team is already linked: the same flow, but a
+  // switch rather than first-time setup, so there is nothing to "skip" — and
+  // no home tab to land on if you back out.
+  const relinking = useLocalSearchParams<{ relink?: string }>().relink === '1';
 
   const [teamIdStr, setTeamIdStr] = useState('');
   const [stage, setStage] = useState<Stage>({ kind: 'idle' });
@@ -101,7 +107,8 @@ export default function ConnectTeam() {
     setStage({ kind: 'submitted', teamId: Number(teamIdStr) });
   };
 
-  const onSkip = () => router.replace('/(home)/(tabs)/team');
+  const onDismiss = () =>
+    relinking ? router.back() : router.replace('/(home)/(tabs)/team');
 
   const onLink = async () => {
     if (stage.kind !== 'confirming') return;
@@ -152,10 +159,12 @@ export default function ConnectTeam() {
         {(stage.kind === 'idle' || stage.kind === 'submitted') && (
           <View style={styles.inputColumn}>
             <Text style={[styles.title, { color: tk.text, textAlign: 'center' }]}>
-              Connect your FPL team
+              {relinking ? 'Change your FPL team' : 'Connect your FPL team'}
             </Text>
             <Text style={[styles.subtitle, { color: tk.faint, textAlign: 'center' }]}>
-              Paste your FPL team ID.
+              {relinking
+                ? 'Paste the team ID you want to switch to.'
+                : 'Paste your FPL team ID.'}
             </Text>
             <TeamIdInput
               value={teamIdStr}
@@ -199,8 +208,10 @@ export default function ConnectTeam() {
                   'Continue'
                 )}
               </PillBtn>
-              <Pressable onPress={onSkip} accessibilityRole="button" style={styles.ghostBtn}>
-                <Text style={[styles.ghostBtnText, { color: tk.faint }]}>Skip for now</Text>
+              <Pressable onPress={onDismiss} accessibilityRole="button" style={styles.ghostBtn}>
+                <Text style={[styles.ghostBtnText, { color: tk.faint }]}>
+                  {relinking ? 'Cancel' : 'Skip for now'}
+                </Text>
               </Pressable>
             </View>
           </View>

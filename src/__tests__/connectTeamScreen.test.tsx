@@ -14,11 +14,13 @@ jest.mock('@/api/linkTeam', () => ({
 }));
 const mockReplace = jest.fn();
 const mockBack = jest.fn();
+let mockParams: Record<string, string> = {};
 jest.mock('expo-router', () => ({
   router: {
     replace: (...args: unknown[]) => mockReplace(...args),
     back: (...args: unknown[]) => mockBack(...args),
   },
+  useLocalSearchParams: () => mockParams,
 }));
 
 import ConnectTeam from '@/app/(onboarding)/connect-team';
@@ -57,6 +59,7 @@ function setHook(state: 'idle' | 'loading' | 'success' | 'error_404' | 'error_50
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockParams = {};
   (useLinkTeam as jest.Mock).mockReturnValue({
     mutateAsync: jest.fn().mockResolvedValue(undefined),
     isPending: false,
@@ -111,5 +114,23 @@ describe('<ConnectTeam />', () => {
     fireEvent.press(getByText('Yes, link team'));
     await waitFor(() => expect(mutateAsync).toHaveBeenCalled());
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/(home)/(tabs)/team'));
+  });
+});
+
+// Relink mode (reached from Profile with a team already linked): the copy
+// says switch rather than connect, and there is no "skip" — backing out has
+// to return to the Profile sheet, not replace the stack with the Team tab.
+describe('<ConnectTeam /> — relink mode', () => {
+  it('cancels back to where it came from instead of skipping to the Team tab', () => {
+    mockParams = { relink: '1' };
+    (useTeamPreview as jest.Mock).mockReturnValue({ isLoading: false, isError: false, isSuccess: false });
+    const { getByText, queryByText } = renderWithProviders(<ConnectTeam />);
+
+    expect(getByText('Change your FPL team')).toBeTruthy();
+    expect(queryByText('Skip for now')).toBeNull();
+
+    fireEvent.press(getByText('Cancel'));
+    expect(mockBack).toHaveBeenCalled();
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 });
