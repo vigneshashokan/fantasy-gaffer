@@ -147,9 +147,21 @@ thing that breaks *silently* if the next person undoes it.
     with `jest.useFakeTimers()` + `advanceTimersByTime`; a new test asserting a GW score will
     otherwise fail on a number that is correct but not on screen yet.
 
-**None of the six has been seen on a device or simulator.** Every claim above is pinned in jest
+- **One page background — PR #236.** All three tabs paint **`tk.bg`**, the mock's single page
+  colour. My Team used to paint the legacy `t.bg` (`#120016`/`#EFE9F3`) against the other two tabs'
+  `#020617`/`#FAF8FF`, so switching tabs changed the colour underneath you; the
+  `activeTab === 'team' ? t.bg : tk.bg` branch in `(tabs)/_layout.tsx` is gone. **The trap:
+  `team.tsx` is NOT the My Team page background — `GameweekScreen` is.** It fills the carousel, so
+  it owns nearly the whole tab's height; `team.tsx` only paints the header/banner strip above it.
+  Recolour the screen file alone and the tab looks completely unchanged, which is exactly how the
+  mismatch survived. Both halves are pinned (`tabsLayout` walks all three tabs' inset strips;
+  `gameweekScreen` pins the page body via a `gw-page` testID) because **a wrong colour is invisible
+  to jest unless something asserts it**. The eight onboarding screens and `LockScreen` deliberately
+  keep `t.bg` — pre-auth surfaces, not yet ported off the mock.
+
+**None of the seven has been seen on a device or simulator.** Every claim above is pinned in jest
 only, and jest can see neither a colour, nor a gradient, nor a sheet detent, nor motion — and now
-neither a bar height nor a count-up. A pass over all six together is outstanding.
+neither a bar height nor a count-up. A pass over all seven together is outstanding.
 
 ## Architecture (the parts that span files)
 
