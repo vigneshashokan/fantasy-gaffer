@@ -92,7 +92,15 @@ describe('TeamTab carousel shell', () => {
     expect(getByText('Apex Pitch FC')).toBeTruthy();
   });
 
-  it('renders both fixed paging arrows, enabled mid-season', () => {
+  // The pill used to live inside each carousel page. It sits in the shell now,
+  // beside the arrows that page it, so it neither scrolls away nor lags a swipe.
+  it('labels the active gameweek beside the paging arrows', () => {
+    mockTeam = liveTeam(30);
+    const { getByText } = renderWithProviders(<TeamTab />);
+    expect(getByText('Gameweek 30')).toBeTruthy();
+  });
+
+  it('renders both paging arrows, enabled mid-season', () => {
     mockTeam = liveTeam(30); // active gw defaults to 30, maxGw 31
     const { getByTestId } = renderWithProviders(<TeamTab />);
     expect(getByTestId('gw-prev').props.accessibilityState?.disabled).toBe(false);
