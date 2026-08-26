@@ -91,3 +91,14 @@ describe('Profile screen — Face ID row moved to Settings', () => {
     expect(queryByText('Face ID login')).toBeNull();
   });
 });
+
+// The screen is presented as a form sheet with a grabber, so it deliberately
+// draws no header row of its own — the grabber, the drag-down and the scrim
+// are the way out. Putting a back chevron back would leave two.
+describe('Profile screen — no header row', () => {
+  it('renders neither a back button nor a title', () => {
+    const { queryByLabelText, queryByText } = render(<Profile />);
+    expect(queryByLabelText('Back')).toBeNull();
+    expect(queryByText('Profile')).toBeNull();
+  });
+});

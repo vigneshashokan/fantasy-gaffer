@@ -53,12 +53,10 @@ export default function ProfileModal() {
 
   return (
     <View style={{ flex: 1, backgroundColor: tk.bg }}>
-      <ScreenHeader
-        title="Profile"
-        onBack={() => router.back()}
-        gradFrom={heroFrom}
-        gradTo={heroTo}
-      >
+      {/* No title row and no back chevron: this is a sheet, so the grabber
+          at the top, the drag-down and the scrim are the way out — same call
+          as the player detail. */}
+      <ScreenHeader gradFrom={heroFrom} gradTo={heroTo}>
         <View style={styles.identity}>
           <View style={styles.avatar}>
             <Text style={styles.initials}>{initials}</Text>

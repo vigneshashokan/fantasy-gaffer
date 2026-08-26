@@ -96,6 +96,12 @@ thing that breaks *silently* if the next person undoes it.
   open it part-height). Two things kept *against* the mock: **five FDR bands, not its three**
   (a 5 away to the champions is worth telling apart from a 4), and the season Form/Total/ICT/BPS
   lines retained as extra rows inside the mock's projected-points card.
+- **Profile sheet.** `/profile` is a `formSheet` with `sheetGrabberVisible`, one `1.0` detent,
+  and **no header row** — same call as the player detail above, and a deliberate deviation from
+  the mock, which still draws a chevron + "Profile" title there. `ScreenHeader`'s `title` is
+  optional for this: with neither `title` nor `onBack` it drops the row and gives its children
+  headroom to clear the grabber. Settings and the legal screens still pass both and are
+  unchanged. `profileScreen.test.tsx` pins the absent chevron and title.
 - **Gameweek control — PR #231.** `[<] [Gameweek N] [>]` is **one capsule**, and it lives in the
   shell (`team.tsx`) above the carousel — never inside a `GameweekScreen` page. A page drawing
   its own gives you two of them, scrolling out of step. Paging reads `onScroll`, not
