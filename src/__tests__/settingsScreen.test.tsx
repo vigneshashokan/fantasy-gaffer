@@ -172,4 +172,14 @@ describe('Settings screen — More actions', () => {
     const { queryByText } = render(<Settings />);
     expect(queryByText('Follow Us')).toBeNull();
   });
+
+  // Presented as a form sheet with a grabber, like profile — so the grabber,
+  // the drag-down and the scrim are the way out. A back chevron on top of them
+  // would be a second, redundant dismiss. The title stays: there is no hero
+  // identity block here to say which screen this is.
+  it('draws the title but no back chevron', () => {
+    const { getByText, queryByLabelText } = render(<Settings />);
+    getByText('Settings');
+    expect(queryByLabelText('Back')).toBeNull();
+  });
 });
