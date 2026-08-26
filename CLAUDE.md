@@ -96,6 +96,12 @@ thing that breaks *silently* if the next person undoes it.
   open it part-height). Two things kept *against* the mock: **five FDR bands, not its three**
   (a 5 away to the champions is worth telling apart from a 4), and the season Form/Total/ICT/BPS
   lines retained as extra rows inside the mock's projected-points card.
+- **Profile sheet.** `/profile` is a `formSheet` with `sheetGrabberVisible`, one `1.0` detent,
+  and **no header row** — same call as the player detail above, and a deliberate deviation from
+  the mock, which still draws a chevron + "Profile" title there. `ScreenHeader`'s `title` is
+  optional for this: with neither `title` nor `onBack` it drops the row and gives its children
+  headroom to clear the grabber. Settings and the legal screens still pass both and are
+  unchanged. `profileScreen.test.tsx` pins the absent chevron and title.
 - **Gameweek control — PR #231.** `[<] [Gameweek N] [>]` is **one capsule**, and it lives in the
   shell (`team.tsx`) above the carousel — never inside a `GameweekScreen` page. A page drawing
   its own gives you two of them, scrolling out of step. Paging reads `onScroll`, not
@@ -199,6 +205,14 @@ neither a bar height nor a count-up. A pass over all six together is outstanding
   - The nav tokens (`navBg`/`navBorder`/`navActive`/`navIdle`/`navPill`) are
     **palette-independent** literals, like `green`/`pink`/`deadlineFg` — the mock has one
     palette. Make them per-palette only when a palette actually needs to diverge.
+  - **`AccountMenu` is deliberately NOT a react-native `<Modal>`.** Every row in it opens a
+    route that is itself `presentation:'modal'`, and iOS will not present one modal while
+    another is dismissing — so the menu's fade had to finish before Profile/Settings could
+    even begin, which read as a ~1s hang after the tap. It is a plain absolutely-positioned
+    overlay in the tabs layout instead. Two things it must therefore do itself: **return
+    `null` when closed** (a transparent full-screen view otherwise eats every tap — pinned in
+    `navIdentity.test.tsx`) and **claim the Android back button** via `BackHandler`, which
+    used to be the `Modal`'s `onRequestClose`.
   - The three tab icons needed no work: `Icon`'s `fire`/`team`/`swap` paths are already
     byte-identical to the mock's SVGs.
 

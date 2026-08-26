@@ -6,7 +6,8 @@ import { Icon } from './Icon';
 import { GUTTER } from '@/constants/theme';
 
 interface ScreenHeaderProps {
-  title: string;
+  /** Omit along with `onBack` to drop the title row entirely — see below. */
+  title?: string;
   onBack?: () => void;
   gradFrom: string;
   gradTo: string;
@@ -30,12 +31,16 @@ export function ScreenHeader({
   // down the *window* inset — adding it left a dead band of gradient above the
   // title. Android modals are full-screen and do still need it.
   const insets = useSafeAreaInsets();
+  // A sheet with a native grabber wants neither a title nor a back button (the
+  // grabber and the drag-down are the way out), so the row goes and the
+  // children take a little more headroom to clear the grabber instead.
+  const titleRow = Boolean(title || onBack);
   return (
     <View
       testID="screen-header"
       style={[
         styles.container,
-        { paddingTop: (Platform.OS === 'ios' ? 0 : insets.top) + 12 },
+        { paddingTop: (Platform.OS === 'ios' ? 0 : insets.top) + (titleRow ? 12 : 26) },
       ]}
     >
       <LinearGradient
@@ -44,6 +49,7 @@ export function ScreenHeader({
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
+      {titleRow && (
       <View style={styles.titleRow}>
         {onBack ? (
           <Pressable
@@ -61,6 +67,7 @@ export function ScreenHeader({
         <Text style={styles.title}>{title}</Text>
         <View style={{ width: 40 }} />
       </View>
+      )}
       {children && <View style={[styles.body, contentStyle]}>{children}</View>}
     </View>
   );
