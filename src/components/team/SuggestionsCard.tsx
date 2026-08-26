@@ -169,8 +169,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 17,
-    letterSpacing: -0.17,
+    fontSize: 16.5,
+    letterSpacing: -0.165,
   },
   lockedBadge: {
     paddingVertical: 4,
@@ -179,10 +179,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   lockedText: {
-    fontFamily: 'Archivo_700Bold',
+    fontFamily: 'Archivo_600SemiBold',
     fontSize: 11,
-    letterSpacing: 0.33,
-    textTransform: 'uppercase',
   },
   note: {
     fontFamily: 'Archivo_500Medium',
@@ -213,8 +211,8 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: 'Archivo_700Bold',
-    fontSize: 14,
-    letterSpacing: -0.14,
+    fontSize: 13.5,
+    letterSpacing: -0.135,
   },
   gain: {
     paddingVertical: 2,
@@ -223,7 +221,7 @@ const styles = StyleSheet.create({
   },
   gainText: {
     fontFamily: 'Archivo_700Bold',
-    fontSize: 11,
+    fontSize: 10.5,
   },
   detail: {
     fontFamily: 'Archivo_500Medium',
@@ -238,6 +236,6 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontFamily: 'Archivo_700Bold',
-    fontSize: 12,
+    fontSize: 11.5,
   },
 });

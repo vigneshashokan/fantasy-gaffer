@@ -142,6 +142,7 @@ export function GameweekScreen({
           gwPts={at.gwPts}
           avgPoints={at.avgPoints}
           highestPoints={at.highestPoints}
+          recentPoints={at.recentPoints}
           gwInProgress={!at.gwFinished}
           upcoming={isUpcoming}
           gradFrom={heroFrom}
@@ -269,8 +270,8 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 12,
-    letterSpacing: 1.2,
+    fontSize: 11.5,
+    letterSpacing: 1.15,
     textTransform: 'uppercase',
     marginBottom: 10,
   },

@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { CornerGlow } from '@/components/ui/CornerGlow';
+import { HERO_ON_DARK } from '@/constants/apexTokens';
 
 interface TransferInfoCardProps {
   nextGw: number;
@@ -27,6 +29,9 @@ export function TransferInfoCard({
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
+      {/* Fainter than the points card's 0.2 — the mock's own number. */}
+      <CornerGlow color={HERO_ON_DARK.glowPlayed} opacity={0.16} />
+
       <View style={styles.inner}>
         <Text style={styles.gwTitle}>Gameweek {nextGw}</Text>
 
@@ -61,7 +66,7 @@ export function TransferInfoCard({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 20,
+    borderRadius: 22,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOpacity: 0.18,
@@ -70,23 +75,21 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   inner: {
-    paddingHorizontal: 18,
-    paddingTop: 20,
-    paddingBottom: 18,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 16,
   },
   gwTitle: {
     fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 26,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    fontSize: 21,
     color: '#fff',
     textAlign: 'center',
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    marginTop: 16,
-    marginBottom: 16,
+    backgroundColor: 'rgba(255,255,255,0.13)',
+    marginTop: 12,
+    marginBottom: 14,
   },
   statsRow: {
     flexDirection: 'row',
@@ -99,21 +102,20 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     height: 34,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.13)',
   },
   label: {
     fontFamily: 'Archivo_700Bold',
-    fontSize: 10.5,
-    letterSpacing: 0.95,
+    fontSize: 9.5,
+    letterSpacing: 0.67,
     textTransform: 'uppercase',
     color: 'rgba(255,255,255,0.55)',
     textAlign: 'center',
   },
   statValue: {
-    fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 23,
-    letterSpacing: -0.4,
+    fontFamily: 'JetBrainsMono_700Bold',
+    fontSize: 21,
     color: '#fff',
-    marginTop: 5,
+    marginTop: 4,
   },
 });

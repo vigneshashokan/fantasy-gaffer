@@ -21,7 +21,7 @@ const APEX_BRAND: Record<string, {
  * These are fixed on-dark values, like the hero's sibling stats.
  */
 export const HERO_ON_DARK = {
-  accent: '#7CFFB0',
+  accent: '#9BF6C4',
   muted: 'rgba(255,255,255,0.85)',
   pill: 'rgba(255,255,255,0.14)',
   /** Wash behind a positive vs-avg pill. A negative one keeps `pill`. */
@@ -34,6 +34,9 @@ export const HERO_ON_DARK = {
    * separate `stopOpacity`. Tinted by STATE (gold before kickoff, green after),
    * matching each variant's pill, which is why this isn't `tk.heroGlow`.
    */
+  /** The form bars: at-or-above the five's own average, and below it. */
+  formUp: '#00E478',
+  formDown: '#FF5C6E',
   glowUpcoming: '#FFC53D',
   glowPlayed: '#00FF87',
 } as const;

@@ -24,6 +24,7 @@ const makeTeam = (gw: number): ApexTeamData => ({
   liveGw: mockLiveGw, liveGwFinished: mockLiveFinished,
   liveGwDataChecked: true, gwPts: 50, totalPoints: 1200, gwFinished: false,
   gwDataChecked: false, avgPoints: 45, highestPoints: 90,
+  recentPoints: [58, 71, 49, 82, 64],
   projectionsReady: true,
   pitch: [], bench: [], captainPicks: [], captainApplied: '', suggestions: [],
   transfer: {

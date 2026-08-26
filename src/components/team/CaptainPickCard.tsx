@@ -123,8 +123,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 17,
-    letterSpacing: -0.17,
+    fontSize: 16.5,
+    letterSpacing: -0.165,
   },
   lockedBadge: {
     flexDirection: 'row',
@@ -138,7 +138,6 @@ const styles = StyleSheet.create({
   lockedText: {
     fontFamily: 'Archivo_700Bold',
     fontSize: 10.5,
-    letterSpacing: 0.21,
   },
   row: {
     flexDirection: 'row',
@@ -163,7 +162,7 @@ const styles = StyleSheet.create({
   captBadgeText: {
     color: '#fff',
     fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 10,
+    fontSize: 9.5,
     lineHeight: 12,
   },
   nameRow: {
@@ -172,8 +171,8 @@ const styles = StyleSheet.create({
     gap: 7,
   },
   name: {
-    fontSize: 15.5,
-    letterSpacing: -0.16,
+    fontSize: 15,
+    letterSpacing: -0.15,
   },
   topPickBadge: {
     paddingHorizontal: 6,
@@ -182,8 +181,8 @@ const styles = StyleSheet.create({
   },
   topPickText: {
     fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 9,
-    letterSpacing: 0.54,
+    fontSize: 8.5,
+    letterSpacing: 0.51,
     color: '#fff',
   },
   note: {
