@@ -349,7 +349,7 @@ describe('ApexPitch', () => {
 
 // ── HeroCard ──────────────────────────────────────────────────
 describe('HeroCard', () => {
-  it('shows centered GW points with the vs-avg pill and the stat row, no chip section', () => {
+  it('leads on GW points, with the vs-avg pill and the season stats beside them', () => {
     const { getByText, queryByText } = render(
       <HeroCard
         totalPoints={1452}
@@ -369,6 +369,26 @@ describe('HeroCard', () => {
     expect(queryByText('None')).toBeNull();
     expect(queryByText('Chip Played')).toBeNull();
     expect(queryByText('Apex Pitch FC')).toBeNull(); // team name removed
+  });
+
+  // Before kickoff every per-gameweek number is zero, so leading on them would
+  // read as a scoreless gameweek rather than one that hasn't started.
+  it('leads on the season total, not a zero score, before the gameweek starts', () => {
+    const { getByText, queryByText } = render(
+      <HeroCard
+        totalPoints={1452}
+        gwPts={0}
+        avgPoints={0}
+        highestPoints={0}
+        upcoming
+        gradFrom="#37003C"
+        gradTo="#5B0F63"
+      />
+    );
+    expect(getByText('1,452')).toBeTruthy();
+    expect(getByText('Yet to play')).toBeTruthy();
+    expect(queryByText('0')).toBeNull();
+    expect(queryByText('GW Points')).toBeNull();
   });
 });
 

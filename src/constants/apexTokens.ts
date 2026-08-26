@@ -24,6 +24,18 @@ export const HERO_ON_DARK = {
   accent: '#7CFFB0',
   muted: 'rgba(255,255,255,0.85)',
   pill: 'rgba(255,255,255,0.14)',
+  /** Wash behind a positive vs-avg pill. A negative one keeps `pill`. */
+  upPill: 'rgba(0,228,114,0.16)',
+  /** The "Yet to play" state pill: gold on gold, per the mock. */
+  gold: '#FFE08A',
+  goldPill: 'rgba(255,197,61,0.18)',
+  /**
+   * Corner glow. Solid hex, not rgba — react-native-svg takes the alpha as a
+   * separate `stopOpacity`. Tinted by STATE (gold before kickoff, green after),
+   * matching each variant's pill, which is why this isn't `tk.heroGlow`.
+   */
+  glowUpcoming: '#FFC53D',
+  glowPlayed: '#00FF87',
 } as const;
 
 /**

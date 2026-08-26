@@ -160,6 +160,7 @@ export function GameweekScreen({
           avgPoints={at.avgPoints}
           highestPoints={at.highestPoints}
           gwInProgress={!at.gwFinished}
+          upcoming={isUpcoming}
           gradFrom={heroFrom}
           gradTo={heroTo}
         />
