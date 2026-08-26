@@ -126,7 +126,7 @@ describe('AccountMenu identity', () => {
   // us: closed HAS to render nothing, or a full-screen transparent view sits
   // over the app swallowing every tap.
   it('renders nothing while closed', () => {
-    const { queryByLabelText, queryByText } = render(
+    const { queryByLabelText, queryByTestId } = render(
       <AccountMenu
         visible={false}
         onClose={jest.fn()}
@@ -137,7 +137,26 @@ describe('AccountMenu identity', () => {
     );
 
     expect(queryByLabelText('Close menu')).toBeNull();
+    expect(queryByTestId('account-menu-profile')).toBeNull();
+  });
+
+  // The block naming the user IS the way to their profile, so the separate
+  // "Profile" row underneath was a second control for one destination.
+  it('opens the profile from the identity block, with no Profile row left', () => {
+    const onProfile = jest.fn();
+    const { getByTestId, queryByText } = render(
+      <AccountMenu
+        visible
+        onClose={jest.fn()}
+        onProfile={onProfile}
+        onSettings={jest.fn()}
+        onSignOut={jest.fn()}
+      />,
+    );
+
     expect(queryByText('Profile')).toBeNull();
+    fireEvent.press(getByTestId('account-menu-profile'));
+    expect(onProfile).toHaveBeenCalledTimes(1);
   });
 });
 
