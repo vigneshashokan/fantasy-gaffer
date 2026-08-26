@@ -83,6 +83,41 @@ holds the sample data — both are the reference when porting a screen.
   check it against the contrast guard — and record any deviation at the token, the way
   `apexTokens`' nav comment does.
 
+**Ported so far.** Each PR carries the full reasoning; what follows is the invariant — the
+thing that breaks *silently* if the next person undoes it.
+
+- **Floating nav — PR #228.** The bar is `position:absolute`, so it reserves no space and
+  every tab surface pays `FLOATING_NAV_SPACE` itself. Full bullet under **Theming**.
+- **Player detail — PR #229.** `presentation:'formSheet'` in the `(home)` stack, one `1.0`
+  detent. **The screen draws no back button on purpose** — the grabber, the drag-down and the
+  scrim are the way out, which is why `playerDetailA11y.test.tsx` guards the layout *option*
+  and not a label. Drop it back to a plain card and the screen has no exit. The mock caps its
+  sheet at 0.82; the single `1.0` detent is deliberate (re-adding 0.82 as a FIRST detent would
+  open it part-height). Two things kept *against* the mock: **five FDR bands, not its three**
+  (a 5 away to the champions is worth telling apart from a 4), and the season Form/Total/ICT/BPS
+  lines retained as extra rows inside the mock's projected-points card.
+- **Gameweek control — PR #231.** `[<] [Gameweek N] [>]` is **one capsule**, and it lives in the
+  shell (`team.tsx`) above the carousel — never inside a `GameweekScreen` page. A page drawing
+  its own gives you two of them, scrolling out of step. Paging reads `onScroll`, not
+  `onMomentumScrollEnd`, so the label flips as a swipe passes halfway instead of lagging until
+  it settles. This replaced edge-pinned fixed arrows that had to fade out on scroll so they
+  didn't float over the pitch; grouping them into the capsule deleted that machinery outright
+  (per-gameweek scroll ledger, two `Animated.Value`s, the `onVerticalScroll` prop). Don't
+  reintroduce it.
+- **Points card — PR #232.** Two variants, and the second is the one that was missing: **before
+  kickoff every per-gameweek number is zero**, so the card leads on the season total plus a
+  "Yet to play" pill rather than a 58pt `0` over three em-dashes. That is the state the Team tab
+  opens on for most of the week, since the upcoming gameweek is the only one the decision layer
+  is actionable for. Hero colours belong in **`HERO_ON_DARK`, not `ApexTokens`** — the hero
+  gradient is dark in *both* modes, so surface-tuned tokens are wrong on it (light mode's
+  `green` measured 2.56:1 there). The vs-avg pill keeps a neutral wash when the diff is
+  negative: the mock only ever draws the positive case, and a green pill under a `↓ −6` says the
+  opposite of the number inside it.
+
+**None of the four has been seen on a device or simulator.** Every claim above is pinned in jest
+only, and jest can see neither a colour, nor a gradient, nor a sheet detent, nor motion. A pass
+over all four together is outstanding.
+
 ## Architecture (the parts that span files)
 
 - **Routing** — `expo-router` v6, file-based under `src/app/`. `src/app/index.tsx` redirects on `authStore.session` to either `(onboarding)` or `(home)/(tabs)/team`. Two route groups: `(onboarding)` (signin/signup/connect-team/reset flows) and `(home)` (post-auth tabs: team / top-picks / transfer, plus player/profile/settings). `typedRoutes` and `reactCompiler` are both enabled experiments in `app.config.ts` — **React Compiler is on, so don't hand-roll `useMemo`/`useCallback`/`React.memo` for memoization** unless profiling proves it's needed.
