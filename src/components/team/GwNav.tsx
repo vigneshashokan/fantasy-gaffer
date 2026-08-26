@@ -1,43 +1,94 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { Icon } from '@/components/ui/Icon';
 import { ApexTokens } from '@/constants/apexTokens';
-import { MAX_FONT_SCALE } from '@/lib/a11y';
+import { MAX_FONT_SCALE, useReducedMotion } from '@/lib/a11y';
 
-interface GwPillProps {
+export type GwState = 'live' | 'upcoming' | 'past';
+
+interface GwSelectorProps {
   gw: number;
-  state?: 'live' | 'upcoming' | 'past';
+  state?: GwState;
+  onPrev: () => void;
+  onNext: () => void;
+  prevDisabled?: boolean;
+  nextDisabled?: boolean;
   tk: ApexTokens;
 }
 
-// The "Gameweek N" status pill. Lives inside each carousel page so it swipes
-// with the gameweek content; the prev/next arrows are rendered separately
-// (GwArrow) as fixed overlays by the carousel shell.
-export function GwPill({ gw, state = 'live', tk }: GwPillProps) {
-  const pillColors = (() => {
-    if (state === 'live')
-      return { bg: tk.greenSoft, fg: tk.green, dotBg: tk.green };
-    if (state === 'upcoming')
-      return { bg: tk.yellowSoft, fg: tk.yellow, dotBg: tk.yellow };
-    const pastBg = tk.dark ? '#1E2434' : '#E7E9F2';
-    return { bg: pastBg, fg: tk.faint, dotBg: null as string | null };
-  })();
-
+/**
+ * The v2 mock's gameweek control: one capsule holding both paging chevrons
+ * around the "Gameweek N" status pill.
+ *
+ * It lives in the shell above the carousel, not inside a page — so it stays
+ * put while the gameweek content swipes beneath it. That is what retired the
+ * old arrangement (pill inside each page, arrows as fixed overlays pinned to
+ * the screen edges, fading out on scroll so they didn't float over the pitch).
+ */
+export function GwSelector({
+  gw,
+  state = 'live',
+  onPrev,
+  onNext,
+  prevDisabled,
+  nextDisabled,
+  tk,
+}: GwSelectorProps) {
   return (
-    <View style={styles.pillRow}>
-      <View style={[styles.pill, { backgroundColor: pillColors.bg }]}>
-        {pillColors.dotBg && (
-          <View style={[styles.dot, { backgroundColor: pillColors.dotBg }]} />
-        )}
-        <Text
-          style={[styles.pillText, { color: pillColors.fg }]}
-          maxFontSizeMultiplier={MAX_FONT_SCALE}
-        >
-          Gameweek {gw}
-        </Text>
+    <View style={styles.row}>
+      <View style={[styles.capsule, { backgroundColor: tk.card, borderColor: tk.cardBorder }]}>
+        <GwArrow dir="l" onPress={onPrev} disabled={prevDisabled} tk={tk} />
+        <GwPill gw={gw} state={state} tk={tk} />
+        <GwArrow dir="r" onPress={onNext} disabled={nextDisabled} tk={tk} />
       </View>
     </View>
   );
+}
+
+interface GwPillProps {
+  gw: number;
+  state?: GwState;
+  tk: ApexTokens;
+}
+
+// The "Gameweek N" status pill — the capsule's centre.
+export function GwPill({ gw, state = 'live', tk }: GwPillProps) {
+  const pillColors = (() => {
+    if (state === 'live') return { bg: tk.greenSoft, fg: tk.green, dotBg: tk.green };
+    if (state === 'upcoming') return { bg: tk.yellowSoft, fg: tk.yellow, dotBg: tk.yellow };
+    return { bg: tk.headStrip, fg: tk.faint, dotBg: null as string | null };
+  })();
+
+  return (
+    <View style={[styles.pill, { backgroundColor: pillColors.bg }]}>
+      {pillColors.dotBg && <PulseDot color={pillColors.dotBg} />}
+      <Text
+        style={[styles.pillText, { color: pillColors.fg }]}
+        maxFontSizeMultiplier={MAX_FONT_SCALE}
+      >
+        Gameweek {gw}
+      </Text>
+    </View>
+  );
+}
+
+// A gameweek that is live or still to come is a moving target, so its dot
+// breathes (the mock's `livePulse`). A finished one gets no dot at all.
+function PulseDot({ color }: { color: string }) {
+  const reduced = useReducedMotion();
+  const opacity = useSharedValue(1);
+  useEffect(() => {
+    if (reduced) return; // static dot — no looping pulse
+    opacity.value = withRepeat(withTiming(0.35, { duration: 1000 }), -1, true);
+  }, [opacity, reduced]);
+  const animated = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  return <Animated.View style={[styles.dot, { backgroundColor: color }, animated]} />;
 }
 
 interface GwArrowProps {
@@ -47,9 +98,7 @@ interface GwArrowProps {
   tk: ApexTokens;
 }
 
-// A single fixed gameweek-paging chevron. The carousel shell positions two of
-// these as absolute overlays pinned at the screen edges so they stay put while
-// the gameweek content swipes beneath them.
+// One paging chevron. Borderless — the capsule around it is the affordance.
 export function GwArrow({ dir, onPress, disabled, tk }: GwArrowProps) {
   return (
     <Pressable
@@ -60,55 +109,52 @@ export function GwArrow({ dir, onPress, disabled, tk }: GwArrowProps) {
       accessibilityRole="button"
       accessibilityLabel={dir === 'l' ? 'Previous gameweek' : 'Next gameweek'}
       accessibilityState={{ disabled: !!disabled }}
-      style={[
-        styles.btn,
-        {
-          backgroundColor: tk.card,
-          borderColor: tk.dark ? 'rgba(255,255,255,0.22)' : '#C4C8D2',
-          opacity: disabled ? 0.35 : 1,
-        },
-      ]}
+      style={[styles.btn, { opacity: disabled ? 0.3 : 1 }]}
     >
-      <Icon name={dir === 'l' ? 'chevL' : 'chevR'} color={tk.variant} size={22} />
+      <Icon name={dir === 'l' ? 'chevL' : 'chevR'} color={tk.variant} size={20} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  pillRow: {
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingBottom: 14,
+  },
+  capsule: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 4,
-    paddingBottom: 16,
+    gap: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    padding: 5,
   },
   btn: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    borderWidth: 1.5,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 999,
-    minWidth: 168,
-    height: 46,
     justifyContent: 'center',
+    gap: 7,
+    minWidth: 150,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 999,
   },
   dot: {
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
   pillText: {
     fontFamily: 'Archivo_700Bold',
-    fontSize: 17,
-    letterSpacing: 0.68,
+    fontSize: 14,
+    letterSpacing: -0.14,
   },
 });

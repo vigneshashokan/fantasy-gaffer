@@ -1,5 +1,4 @@
 import React from 'react';
-import { fireEvent } from '@testing-library/react-native';
 import { renderWithProviders } from './utils/renderWithProviders';
 
 jest.mock('@/store/themeStore', () => ({
@@ -69,32 +68,15 @@ describe('GameweekScreen', () => {
     expect(queryByTestId('carried-over-note')).toBeNull();
   });
 
-  it('shows the gameweek label (pill) for the given gw', () => {
-    const { getByText } = renderWithProviders(<GameweekScreen {...baseProps} gw={30} />);
-    expect(getByText('Gameweek 30')).toBeTruthy();
-  });
-
-  it('does not render the paging arrows — those are fixed overlays in the shell', () => {
-    const { queryByTestId } = renderWithProviders(<GameweekScreen {...baseProps} gw={30} />);
+  // The whole gameweek control — label and both chevrons — belongs to the
+  // shell, so it stays put while these pages swipe beneath it. A page drawing
+  // its own would give you two of them, scrolling out of step.
+  it('renders no gameweek control of its own', () => {
+    const { queryByText, queryByTestId } = renderWithProviders(
+      <GameweekScreen {...baseProps} gw={30} />,
+    );
+    expect(queryByText('Gameweek 30')).toBeNull();
     expect(queryByTestId('gw-prev')).toBeNull();
     expect(queryByTestId('gw-next')).toBeNull();
-  });
-
-  it('reports its vertical scroll offset (0 on mount, then live offsets)', () => {
-    const onVerticalScroll = jest.fn();
-    const { getByTestId } = renderWithProviders(
-      <GameweekScreen {...baseProps} gw={30} onVerticalScroll={onVerticalScroll} />,
-    );
-    // Mount reports the top so the shell's per-gameweek record stays fresh.
-    expect(onVerticalScroll).toHaveBeenCalledWith(0);
-
-    fireEvent.scroll(getByTestId('gw-scroll'), {
-      nativeEvent: {
-        contentOffset: { x: 0, y: 140 },
-        contentSize: { width: 320, height: 1200 },
-        layoutMeasurement: { width: 320, height: 640 },
-      },
-    });
-    expect(onVerticalScroll).toHaveBeenLastCalledWith(140);
   });
 });

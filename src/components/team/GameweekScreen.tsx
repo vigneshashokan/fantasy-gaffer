@@ -17,7 +17,6 @@ import { ApexDugout } from '@/components/team/ApexDugout';
 import { CaptainPickCard } from '@/components/team/CaptainPickCard';
 import { SuggestionsCard } from '@/components/team/SuggestionsCard';
 import { CarriedOverNote } from '@/components/team/CarriedOverNote';
-import { GwPill } from '@/components/team/GwNav';
 import { ApplyAllCard } from '@/components/team/ApplyAllCard';
 import { ChipsRow } from '@/components/transfer/ChipsRow';
 
@@ -36,9 +35,6 @@ interface GameweekScreenProps {
   onUndo: () => void;
   onConfirm: () => void;
   onOpenPlayer: (p: PitchPlayer) => void;
-  // Reports this page's vertical scroll offset so the shell can hide the fixed
-  // paging arrows once the user scrolls past the header.
-  onVerticalScroll?: (y: number) => void;
 }
 
 export function GameweekScreen({
@@ -54,7 +50,6 @@ export function GameweekScreen({
   onUndo,
   onConfirm,
   onOpenPlayer,
-  onVerticalScroll,
 }: GameweekScreenProps) {
   const { paletteKey, dark, pitchStyle } = useThemeStore();
   const t = getTheme(paletteKey, dark);
@@ -62,15 +57,6 @@ export function GameweekScreen({
 
   const { data: at, isPending, isError, noSquad, refetch } = useApexTeam(gw);
   const pull = usePullRefresh(refetch);
-
-  // Report a fresh "at the top" position on mount so the shell's per-gameweek
-  // scroll record is reset whenever this page (re)mounts after recycling.
-  useEffect(() => {
-    onVerticalScroll?.(0);
-    // Mount-only: re-running on every onVerticalScroll identity change would
-    // clobber the live scroll position with 0.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Decision surfaces are only actionable on the upcoming GW (editable). Fire
   // one decision_viewed per surface when that page's data is ready. (Carousel
@@ -138,16 +124,13 @@ export function GameweekScreen({
           isUpcoming && totalChanges > 0 && { paddingBottom: FLOATING_NAV_SPACE + 132 },
         ]}
         showsVerticalScrollIndicator={false}
-        scrollEventThrottle={16}
-        onScroll={(e) => onVerticalScroll?.(e.nativeEvent.contentOffset.y)}
         refreshControl={
           <RefreshControl {...pull} />
         }
       >
-        <GwPill gw={gw} state={gwState} tk={tk} />
-
-        {/* The deadline banner is pinned by the shell (team.tsx), above the
-            carousel — it is the same next deadline on every page. */}
+        {/* The "Gameweek N" selector and the deadline banner are both pinned
+            by the shell (team.tsx), above the carousel — one is the control
+            for this carousel, the other the same next deadline on every page. */}
         {isUpcoming && (
           <View style={{ marginBottom: 16 }}>
             <CarriedOverNote from={at.carriedOverFrom} tk={tk} />
