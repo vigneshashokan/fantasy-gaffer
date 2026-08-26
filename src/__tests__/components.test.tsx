@@ -38,8 +38,8 @@ jest.mock('@/store/authStore', () => ({
 
 import React from 'react';
 import type { NotificationPrefs } from '@/api/notificationPrefs';
-import { StyleSheet } from 'react-native';
-import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
+import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { Icon } from '@/components/ui/Icon';
 import { PosTag } from '@/components/ui/PosTag';
 import { PillBtn } from '@/components/ui/PillBtn';
@@ -77,7 +77,7 @@ import { SettingsRow } from '@/components/settings/SettingsRow';
 import { ApplyCheckbox } from '@/components/ui/ApplyCheckbox';
 import { ApplyAllCard } from '@/components/team/ApplyAllCard';
 import { SubPill, SubInPill, GoalsBadge, AssistsBadge, CardIcons, CaptViceBadge } from '@/components/ui/PitchBadges';
-import { apexTokens, ON_PITCH } from '@/constants/apexTokens';
+import { apexTokens, HERO_ON_DARK, ON_PITCH } from '@/constants/apexTokens';
 import { PALETTE } from '@/constants/theme';
 import { PitchMarks } from '@/components/pitch/PitchMarks';
 import { ApexPitchMarks } from '@/components/pitch/ApexPitchMarks';
@@ -349,7 +349,10 @@ describe('ApexPitch', () => {
 
 // ── HeroCard ──────────────────────────────────────────────────
 describe('HeroCard', () => {
+  // The score counts up from zero over a second, so the final value is only on
+  // screen once the animation has run.
   it('leads on GW points, with the vs-avg pill and the season stats beside them', () => {
+    jest.useFakeTimers();
     const { getByText, queryByText } = render(
       <HeroCard
         totalPoints={1452}
@@ -360,8 +363,11 @@ describe('HeroCard', () => {
         gradTo="#5B0F63"
       />
     );
+    expect(getByText('0')).toBeTruthy();              // count-up starts at zero
+    act(() => { jest.advanceTimersByTime(1200); });
+    jest.useRealTimers();
     expect(getByText('64')).toBeTruthy();            // GW PTS
-    expect(getByText('↑ +12 vs avg')).toBeTruthy();  // 64 - 52
+    expect(getByText('+12 vs avg')).toBeTruthy();    // 64 - 52
     expect(getByText('52')).toBeTruthy();            // avg
     expect(getByText('118')).toBeTruthy();           // highest
     expect(getByText('1,452')).toBeTruthy();         // total
@@ -389,6 +395,48 @@ describe('HeroCard', () => {
     expect(getByText('Yet to play')).toBeTruthy();
     expect(queryByText('0')).toBeNull();
     expect(queryByText('GW Points')).toBeNull();
+  });
+
+  // Reduced motion gets the score, not the count-up. jest can't see the frames
+  // either way, so what is pinned is the settled value.
+  it('lands on the score without counting up under reduced motion', async () => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    const { getByText } = render(
+      <HeroCard
+        totalPoints={1452}
+        gwPts={64}
+        avgPoints={52}
+        highestPoints={118}
+        gradFrom="#37003C"
+        gradTo="#5B0F63"
+      />
+    );
+    await act(async () => {});
+    expect(getByText('64')).toBeTruthy();
+    jest.restoreAllMocks();
+  });
+
+  it('draws the last five gameweeks, tallest for the best and red below their average', () => {
+    const { getByText, getAllByTestId, queryByText } = render(
+      <HeroCard
+        totalPoints={1452}
+        gwPts={0}
+        avgPoints={0}
+        highestPoints={0}
+        upcoming
+        recentPoints={[58, 71, 49, 82, 64]}
+        gradFrom="#37003C"
+        gradTo="#5B0F63"
+      />
+    );
+    expect(getByText('Last 5 Gameweeks')).toBeTruthy();
+    expect(queryByText('Yet to play')).toBeNull();  // the bars replace it
+    const bars = getAllByTestId('form-bar').map((b) => StyleSheet.flatten(b.props.style));
+    // 82 is the best of the five, so it alone gets the full 14 + 30.
+    expect(bars.map((b) => b.height)).toEqual([35, 40, 32, 44, 37]);
+    // Their own average is 64.8, so 58, 49 and 64 all fall below it.
+    expect(bars.map((b) => b.backgroundColor === HERO_ON_DARK.formDown))
+      .toEqual([true, false, true, false, true]);
   });
 });
 

@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { HERO_ON_DARK } from '@/constants/apexTokens';
+import { Icon } from '@/components/ui/Icon';
+import { CornerGlow } from '@/components/ui/CornerGlow';
+import { useReducedMotion } from '@/lib/a11y';
 
 interface HeroCardProps {
   totalPoints: number;
   gwPts: number;
   avgPoints: number;
   highestPoints: number;
+  /** Points for the five gameweeks before this one, oldest first. */
+  recentPoints?: number[];
   gwInProgress?: boolean;
   /** Before kickoff there is nothing to score yet — see the two variants below. */
   upcoming?: boolean;
@@ -29,19 +33,21 @@ export function HeroCard({
   gwPts,
   avgPoints,
   highestPoints,
+  recentPoints,
   gwInProgress,
   upcoming,
   gradFrom,
   gradTo,
 }: HeroCardProps) {
   const showStat = (val: number) => (gwInProgress && val === 0 ? '—' : val);
+  const shownPts = useCountUp(gwPts, !upcoming);
 
   // GW points relative to the gameweek average. Only meaningful once the
   // gameweek has finished (and an average exists).
   const diff = gwPts - avgPoints;
   const up = diff >= 0;
   const showVsAvg = !gwInProgress && avgPoints > 0;
-  const vsAvgText = `${up ? '↑' : '↓'} ${diff > 0 ? '+' : ''}${diff} vs avg`;
+  const vsAvgText = `${diff > 0 ? '+' : ''}${diff} vs avg`;
 
   return (
     <View style={styles.container}>
@@ -51,28 +57,44 @@ export function HeroCard({
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <CornerGlow color={upcoming ? HERO_ON_DARK.glowUpcoming : HERO_ON_DARK.glowPlayed} />
+      {upcoming ? (
+        <CornerGlow color={HERO_ON_DARK.glowUpcoming} opacity={0.18} />
+      ) : (
+        <CornerGlow color={HERO_ON_DARK.glowPlayed} opacity={0.2} />
+      )}
 
       {upcoming ? (
         <View style={styles.upcomingInner}>
-          <View>
+          <View style={styles.totalBlock}>
             <Text style={styles.label}>Total Points</Text>
             <Text style={styles.totalBig}>{totalPoints.toLocaleString()}</Text>
           </View>
-          <View style={[styles.statePill, { backgroundColor: HERO_ON_DARK.goldPill }]}>
-            <Text style={[styles.statePillText, { color: HERO_ON_DARK.gold }]}>Yet to play</Text>
-          </View>
+          {recentPoints?.length ? (
+            <FormBars points={recentPoints} />
+          ) : (
+            // Not in the mock, which always has five gameweeks to draw. Before
+            // the season's first deadline there are none, and a card carrying
+            // one lonely zero reads as broken rather than as not-started.
+            <View style={[styles.statePill, { backgroundColor: HERO_ON_DARK.goldPill }]}>
+              <Text
+                style={[styles.statePillText, { color: HERO_ON_DARK.gold }]}
+                numberOfLines={1}
+              >
+                Yet to play
+              </Text>
+            </View>
+          )}
         </View>
       ) : (
         <View style={styles.playedInner}>
           <View style={styles.gwBlock}>
-            <Text style={styles.gwBig}>{gwPts}</Text>
+            <Text style={styles.gwBig}>{shownPts}</Text>
             <Text style={[styles.label, styles.gwLabel]}>GW Points</Text>
             {showVsAvg && (
               // The hero gradient is dark in BOTH modes, so this pill takes
               // fixed on-dark colours like its sibling stats — `tk.green` is
               // tuned for the light card surface and measured 2.56:1 here.
-              // Direction is also carried by the ↑/↓ glyph and the sign, so the
+              // Direction is also carried by the arrow and the sign, so the
               // colour is not the only signal. The mock only ever draws the
               // positive case; a negative one keeps the neutral wash.
               <View
@@ -81,6 +103,11 @@ export function HeroCard({
                   { backgroundColor: up ? HERO_ON_DARK.upPill : HERO_ON_DARK.pill },
                 ]}
               >
+                <Icon
+                  name={up ? 'arrowUp' : 'arrowDown'}
+                  color={up ? HERO_ON_DARK.accent : HERO_ON_DARK.muted}
+                  size={11}
+                />
                 <Text
                   style={[
                     styles.vsAvgText,
@@ -106,35 +133,75 @@ export function HeroCard({
   );
 }
 
+/**
+ * The mock counts the gameweek's score up from zero over a second, easing out.
+ * Driven by `requestAnimationFrame` + state rather than Animated, because the
+ * number is the text itself and neither Animated nor reanimated can drive that
+ * without a per-frame listener doing exactly this anyway.
+ */
+function useCountUp(target: number, enabled: boolean): number {
+  const [shown, setShown] = useState(0);
+  const reduced = useReducedMotion();
+  useEffect(() => {
+    if (!enabled || reduced) {
+      setShown(target);
+      return;
+    }
+    let raf = 0;
+    const t0 = Date.now();
+    const tick = () => {
+      const t = Math.min(1, (Date.now() - t0) / COUNT_UP_MS);
+      setShown(Math.round(target * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, enabled, reduced]);
+  return shown;
+}
+
+const COUNT_UP_MS = 1000;
+
+/**
+ * The last five gameweeks as bars, tallest = best of the five. A gameweek at or
+ * above the five's own average is green, below it red — a relative read, so the
+ * colours say "good week for you", not "good week".
+ */
+function FormBars({ points }: { points: number[] }) {
+  const max = Math.max(...points);
+  const avg = points.reduce((a, b) => a + b, 0) / points.length;
+  return (
+    <View style={styles.formCol}>
+      <View style={styles.formRow}>
+        {points.map((p, i) => (
+          <View key={i} style={styles.formBarCol}>
+            <Text style={styles.formPts}>{p}</Text>
+            <View
+              testID="form-bar"
+              style={[
+                styles.formBar,
+                {
+                  // max is 0 only if every one of the five is 0 — then they all
+                  // draw at the floor height rather than dividing by zero.
+                  height: Math.round(14 + (max > 0 ? p / max : 0) * 30),
+                  backgroundColor: p >= avg ? HERO_ON_DARK.formUp : HERO_ON_DARK.formDown,
+                },
+              ]}
+            />
+          </View>
+        ))}
+      </View>
+      <Text style={styles.formLabel}>Last 5 Gameweeks</Text>
+    </View>
+  );
+}
+
 function Stat({ value, label }: { value: string | number; label: string }) {
   return (
     <View>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={[styles.label, styles.statLabel]}>{label}</Text>
     </View>
-  );
-}
-
-// The mock's radial wash bleeding in from the top-right corner. Its centre sits
-// off the card, so only the faded tail shows.
-function CornerGlow({ color }: { color: string }) {
-  return (
-    <Svg
-      width={200}
-      height={200}
-      style={styles.glow}
-      pointerEvents="none"
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-    >
-      <Defs>
-        <RadialGradient id="heroCornerGlow" cx="50%" cy="50%" r="50%">
-          <Stop offset="0" stopColor={color} stopOpacity={0.2} />
-          <Stop offset="0.68" stopColor={color} stopOpacity={0} />
-        </RadialGradient>
-      </Defs>
-      <Circle cx={100} cy={100} r={100} fill="url(#heroCornerGlow)" />
-    </Svg>
   );
 }
 
@@ -148,19 +215,19 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     elevation: 4,
   },
-  glow: {
-    position: 'absolute',
-    top: -60,
-    right: -40,
-  },
   upcomingInner: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'flex-end',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 18,
     paddingHorizontal: 22,
     paddingTop: 20,
-    paddingBottom: 22,
+    paddingBottom: 20,
+  },
+  totalBlock: {
+    // The row bottom-aligns so the form bars sit on one baseline; the total
+    // opts out and centres against the full height of that column instead.
+    alignSelf: 'center',
   },
   playedInner: {
     flexDirection: 'row',
@@ -170,8 +237,13 @@ const styles = StyleSheet.create({
     paddingBottom: 14,
   },
   gwBlock: {
-    flex: 1.2,
+    flex: 1,
     justifyContent: 'center',
+    // The card pads 20 on the left, so centring inside the column alone would
+    // land 10pt right of true centre — matching that padding on the right
+    // cancels it, and the block sits centred between the edge and the divider.
+    alignItems: 'center',
+    paddingRight: 20,
   },
   statsCol: {
     flex: 1,
@@ -201,7 +273,7 @@ const styles = StyleSheet.create({
     lineHeight: 48,
     letterSpacing: -1.44,
     color: '#fff',
-    marginTop: 5,
+    marginTop: 6,
   },
   gwBig: {
     fontFamily: 'Archivo_800ExtraBold',
@@ -226,7 +298,9 @@ const styles = StyleSheet.create({
     letterSpacing: 0.44,
   },
   vsAvgPill: {
-    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     marginTop: 10,
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -235,7 +309,35 @@ const styles = StyleSheet.create({
   vsAvgText: {
     fontFamily: 'Archivo_700Bold',
     fontSize: 12,
-    letterSpacing: -0.12,
+  },
+  formCol: {
+    alignItems: 'flex-end',
+    gap: 9,
+  },
+  formRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 9,
+  },
+  formBarCol: {
+    alignItems: 'center',
+    gap: 5,
+  },
+  formPts: {
+    fontFamily: 'JetBrainsMono_700Bold',
+    fontSize: 10.5,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  formBar: {
+    width: 13,
+    borderRadius: 6,
+  },
+  formLabel: {
+    fontFamily: 'Archivo_800ExtraBold',
+    fontSize: 10,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: 'rgba(255,255,255,0.5)',
   },
   divider: {
     width: 1,

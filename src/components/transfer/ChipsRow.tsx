@@ -157,13 +157,13 @@ const styles = StyleSheet.create({
   },
   name: {
     fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 16,
-    letterSpacing: -0.16,
+    fontSize: 15,
+    letterSpacing: -0.15,
     textAlign: 'center',
   },
   usedStatus: {
-    fontFamily: 'Archivo_600SemiBold',
-    fontSize: 12,
+    fontFamily: 'Archivo_700Bold',
+    fontSize: 10.5,
   },
   available: {
     flexDirection: 'row',
@@ -180,8 +180,7 @@ const styles = StyleSheet.create({
   },
   availText: {
     fontFamily: 'Archivo_700Bold',
-    fontSize: 11,
-    letterSpacing: 0.22,
+    fontSize: 10.5,
   },
   tipWrap: {
     paddingHorizontal: 16,
@@ -205,9 +204,9 @@ const styles = StyleSheet.create({
   },
   tipTitle: {
     fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 14,
+    fontSize: 13.5,
     color: '#fff',
-    letterSpacing: -0.14,
+    letterSpacing: -0.135,
   },
   tipLine: {
     flexDirection: 'row',
@@ -223,7 +222,7 @@ const styles = StyleSheet.create({
   tipText: {
     flex: 1,
     fontFamily: 'Archivo_500Medium',
-    fontSize: 13,
+    fontSize: 12.5,
     lineHeight: 18,
     color: 'rgba(255,255,255,0.88)',
   },

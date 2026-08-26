@@ -2,7 +2,7 @@ import React from 'react';
 import Svg, { Path, Rect, Circle, G } from 'react-native-svg';
 
 type IconName =
-  | 'chevL' | 'chevR' | 'arrowR' | 'check'
+  | 'chevL' | 'chevR' | 'arrowR' | 'arrowUp' | 'arrowDown' | 'check'
   | 'mail' | 'lock' | 'swap' | 'team'
   | 'fire' | 'google' | 'apple' | 'faceid'
   | 'person' | 'gear' | 'signOut'
@@ -23,6 +23,10 @@ export function Icon({ name, color = '#fff', size = 20 }: IconProps) {
       return <Svg width={s} height={s} viewBox="0 0 24 24"><Path d="M9 5l7 7-7 7" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" /></Svg>;
     case 'arrowR':
       return <Svg width={s} height={s} viewBox="0 0 24 24"><Path d="M4 12h15M13 5l7 7-7 7" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" fill="none" /></Svg>;
+    case 'arrowUp':
+      return <Svg width={s} height={s} viewBox="0 0 24 24"><Path d="M12 19V5M5 12l7-7 7 7" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" /></Svg>;
+    case 'arrowDown':
+      return <Svg width={s} height={s} viewBox="0 0 24 24"><Path d="M12 5v14M5 12l7 7 7-7" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none" /></Svg>;
     case 'check':
       return <Svg width={s} height={s} viewBox="0 0 24 24"><Path d="M5 12.5l4.5 4.5L19 6.5" stroke={color} strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" fill="none" /></Svg>;
     case 'mail':

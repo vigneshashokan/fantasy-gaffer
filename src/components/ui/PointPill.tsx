@@ -82,8 +82,8 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   name: {
-    fontFamily: 'Archivo_500Medium',
-    fontSize: 12,
+    fontFamily: 'Archivo_600SemiBold',
+    fontSize: 11.5,
     letterSpacing: -0.12,
     // No flexShrink: the name keeps its full width so the pill grows to fit it
     // (and overflows the fixed avatar slot) instead of truncating to the slot.

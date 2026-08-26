@@ -102,8 +102,8 @@ const styles = StyleSheet.create({
   },
   headerText: {
     fontFamily: 'Archivo_800ExtraBold',
-    fontSize: 12,
-    letterSpacing: 1.44,
+    fontSize: 11.5,
+    letterSpacing: 1.38,
     textTransform: 'uppercase',
   },
   row: {

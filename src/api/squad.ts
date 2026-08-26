@@ -351,6 +351,13 @@ function buildApexTeam(
     gwDataChecked: eventStats.dataChecked,
     avgPoints: eventStats.avgPoints,
     highestPoints: eventStats.highestPoints,
+    // Points for the five gameweeks before this one, oldest first — the hero
+    // card's form bars. `history.current` only carries gameweeks that have
+    // started, so no filtering for "finished" is needed beyond `event < gw`.
+    recentPoints: (history.current ?? [])
+      .filter((e) => e.event < gw)
+      .slice(-5)
+      .map((e) => e.points),
     pitch: groupByPosition(squad.starters, liveById, eventStats.finished),
     bench: squad.bench.map((p): PitchPlayer => {
       const stat = liveById?.get(Number(p.id));

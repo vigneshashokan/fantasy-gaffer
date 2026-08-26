@@ -113,10 +113,29 @@ thing that breaks *silently* if the next person undoes it.
   `green` measured 2.56:1 there). The vs-avg pill keeps a neutral wash when the diff is
   negative: the mock only ever draws the positive case, and a green pill under a `↓ −6` says the
   opposite of the number inside it.
+- **Points card, second pass + transfer card + team typography — PR #233.** The mock was
+  **re-pulled** mid-work (`DesignSync`, same project) and had moved: the upcoming variant's
+  "Yet to play" pill is now a **last-five-gameweeks bar chart** (green at or above those five's
+  own average, red below — a relative read, so it says "good week for you", not "good week"), and
+  the played variant centres its GW block. **The pill survives only as the no-history fallback**
+  — before the season's first deadline there is nothing to plot, and a card carrying one lonely
+  zero reads as broken. `recentPoints` comes off `history.current`, which `buildApexTeam` already
+  had. The score **counts up from zero over 1s, ease-out-cubic**, ported from the mock's
+  `animateHero()` as rAF + state rather than Animated — the number *is* the text, so either
+  animation library would need a per-frame listener doing exactly this; reduced motion snaps to
+  the score. **`CornerGlow` moved to `components/ui/` when the transfer card needed one, and that
+  fixed a latent bug**: its gradient id was the literal `"heroCornerGlow"` and react-native-svg
+  resolves `url(#id)` against one namespace, so two of them on two mounted tabs would both draw
+  whichever mounted last. It is `useId()` per instance now. **`V2 Directions.dc.html` was deleted
+  from the design project** — only `V3 Directions.dc.html` remains to fetch.
+  - **A jest gotcha the count-up introduces:** anything rendering `HeroCard` for a *played*
+    gameweek now paints `0` first and reaches the real score a second later. The suite flushes it
+    with `jest.useFakeTimers()` + `advanceTimersByTime`; a new test asserting a GW score will
+    otherwise fail on a number that is correct but not on screen yet.
 
-**None of the four has been seen on a device or simulator.** Every claim above is pinned in jest
-only, and jest can see neither a colour, nor a gradient, nor a sheet detent, nor motion. A pass
-over all four together is outstanding.
+**None of the six has been seen on a device or simulator.** Every claim above is pinned in jest
+only, and jest can see neither a colour, nor a gradient, nor a sheet detent, nor motion — and now
+neither a bar height nor a count-up. A pass over all six together is outstanding.
 
 ## Architecture (the parts that span files)
 

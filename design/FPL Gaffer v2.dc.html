@@ -237,12 +237,22 @@ input::placeholder{color:rgba(140,120,150,0.6);font-weight:500}
     <sc-if value="{{ heroUpcoming }}" hint-placeholder-val="{{ false }}">
       <div style="margin:0 16px;border-radius:22px;background:{{ t.heroBg }};position:relative;overflow:hidden;box-shadow:{{ t.heroShadow }}">
         <div style="position:absolute;top:-60px;right:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(255,197,61,0.18),transparent 68%)"></div>
-        <div style="position:relative;display:flex;align-items:flex-start;justify-content:space-between;padding:20px 22px 22px">
+        <div style="position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:20px 22px 20px">
           <div>
             <div style="font-family:Inter,sans-serif;font-weight:700;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.55)">Total Points</div>
-            <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:48px;line-height:1;letter-spacing:-0.03em;color:#fff;margin-top:5px">1,452</div>
+            <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:48px;line-height:1;letter-spacing:-0.03em;color:#fff;margin-top:6px">1,452</div>
           </div>
-          <span style="font-family:Inter,sans-serif;font-weight:700;font-size:11px;letter-spacing:0.04em;white-space:nowrap;color:#FFE08A;background:rgba(255,197,61,0.18);padding:6px 12px;border-radius:999px">Yet to play</span>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:9px">
+            <div style="display:flex;align-items:flex-end;gap:9px">
+              <sc-for list="{{ heroForm }}" as="f" hint-placeholder-count="5">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:5px">
+                  <span style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10.5px;color:rgba(255,255,255,0.7)">{{ f.pts }}</span>
+                  <span style="width:13px;height:{{ f.h }};border-radius:6px;background:{{ f.color }}"></span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="font-family:Inter,sans-serif;font-weight:800;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5)">Last 5 Gameweeks</div>
+          </div>
         </div>
       </div>
     </sc-if>
@@ -250,10 +260,10 @@ input::placeholder{color:rgba(140,120,150,0.6);font-weight:500}
       <div style="margin:0 16px;border-radius:22px;background:{{ t.heroBg }};position:relative;overflow:hidden;box-shadow:{{ t.heroShadow }}">
         <div style="position:absolute;top:-60px;right:-40px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(0,255,135,0.2),transparent 68%)"></div>
         <div style="position:relative;display:flex;align-items:stretch;padding:18px 20px 14px">
-          <div style="flex:1.2;display:flex;flex-direction:column;justify-content:center">
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:center;padding-right:20px">
             <div style="font-family:Montserrat,sans-serif;font-weight:800;font-size:56px;line-height:0.95;letter-spacing:-0.03em;color:#fff">{{ heroPts }}</div>
             <div style="font-family:Inter,sans-serif;font-weight:700;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-top:7px">GW Points</div>
-            <span style="display:inline-flex;align-self:flex-start;align-items:center;gap:4px;font-family:Inter,sans-serif;font-weight:700;font-size:12px;color:#9BF6C4;background:rgba(0,228,114,0.16);padding:5px 10px;border-radius:999px;margin-top:10px">
+            <span style="display:inline-flex;align-items:center;gap:4px;font-family:Inter,sans-serif;font-weight:700;font-size:12px;color:#9BF6C4;background:rgba(0,228,114,0.16);padding:5px 10px;border-radius:999px;margin-top:10px">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"></path></svg>+12 vs avg
             </span>
           </div>
@@ -1095,6 +1105,15 @@ class Component extends DCLogic {
     const gw = st.gw, LIVE = 24, MAX = 25;
     const gwIsNext = gw > LIVE, gwIsLive = gw === LIVE, gwIsPast = gw < LIVE;
     const gwLocked = !gwIsNext;
+    // team points for the 5 completed gameweeks before the next deadline
+    const HIST = [58, 71, 49, 82, 64];
+    const histMax = Math.max.apply(null, HIST);
+    const histAvg = HIST.reduce((a, b) => a + b, 0) / HIST.length;
+    const heroForm = HIST.map((p) => ({
+      pts: String(p),
+      h: Math.round(14 + (p / histMax) * 30) + 'px',
+      color: p >= histAvg ? '#00E478' : '#FF5C6E'
+    }));
 
     // ── match centre ──
     const MATCHES = gwIsLive
@@ -1402,8 +1421,10 @@ class Component extends DCLogic {
       lockedOp: gwIsNext ? 1 : 0.78,
       // hero
       heroUpcoming: gwIsNext, heroPlayed: !gwIsNext,
+      
       showMatches: !gwIsNext, matchRows,
       heroPts: String(st.heroPts),
+      heroForm,
       // pitch
       pitchRows, benchRows, captainRows, suggRows,
       // apply team
