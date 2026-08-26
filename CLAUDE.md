@@ -102,6 +102,14 @@ thing that breaks *silently* if the next person undoes it.
   optional for this: with neither `title` nor `onBack` it drops the row and gives its children
   headroom to clear the grabber. Settings and the legal screens still pass both and are
   unchanged. `profileScreen.test.tsx` pins the absent chevron and title.
+  **Relinking a wrong FPL team lives here, not in Settings** — `fpl_team_id` is a column on
+  the same `profiles` row as the fields above, while Settings holds only app behaviour. The
+  row reuses the existing `/(onboarding)/connect-team` route (already whitelisted for
+  `status === 'complete'` in the onboarding layout, and `useLinkTeam` is an UPDATE, so
+  relinking needed no new API); `?relink=1` only swaps the copy and turns "Skip for now"
+  into a Cancel that goes *back* rather than replacing the stack with the Team tab.
+  **It must `router.back()` BEFORE `router.push()`** — a root-level route pushed from a
+  native modal renders behind it on iOS, the same trap the legal screens hit.
 - **Gameweek control — PR #231.** `[<] [Gameweek N] [>]` is **one capsule**, and it lives in the
   shell (`team.tsx`) above the carousel — never inside a `GameweekScreen` page. A page drawing
   its own gives you two of them, scrolling out of step. Paging reads `onScroll`, not

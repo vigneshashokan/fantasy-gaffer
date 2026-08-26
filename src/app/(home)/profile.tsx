@@ -5,6 +5,7 @@ import { useThemeStore } from '@/store/themeStore';
 import { getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import { useProfile } from '@/api/profile';
+import { useManager } from '@/api/manager';
 import { usePullRefresh } from '@/lib/query/usePullRefresh';
 import { initialsOf } from '@/lib/name';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -12,6 +13,8 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SectionCard } from '@/components/ui/SectionCard';
 import { ReadField } from '@/components/profile/ReadField';
+import { SettingsRow } from '@/components/settings/SettingsRow';
+import { Icon } from '@/components/ui/Icon';
 import { ChangePassword } from '@/components/profile/ChangePassword';
 import { DeleteAccount } from '@/components/profile/DeleteAccount';
 
@@ -22,6 +25,7 @@ export default function ProfileModal() {
   const tk = apexTokens(dark, paletteKey);
 
   const { data: profile, isPending, isError, refetch } = useProfile();
+  const { data: manager } = useManager();
   const pull = usePullRefresh(refetch);
 
   // Error before pending — this screen had no error branch at all (#167).
@@ -88,6 +92,33 @@ export default function ProfileModal() {
         <ReadField label="Last name" value={profile.lastName} tk={tk} showDivider />
         <ReadField label="Date of birth" value={profile.dob} tk={tk} showDivider />
         <ReadField label="Email address" value={profile.email} tk={tk} showDivider />
+      </SectionCard>
+
+      {/* The linked team is account data — it's a column on the same
+          `profiles` row as the fields above — so it lives here rather than in
+          Settings, which holds only app behaviour. */}
+      <SectionCard title="FPL team" tk={tk}>
+        <SettingsRow
+          icon={<Icon name="swap" color={tk.faint} size={20} />}
+          label={profile.fplTeamId ? 'Change FPL team' : 'Connect FPL team'}
+          sub={
+            profile.fplTeamId
+              ? `${manager?.name ?? 'Linked'} · ID ${profile.fplTeamId}`
+              : 'No team linked yet'
+          }
+          onPress={() => {
+            // Dismiss this sheet BEFORE pushing: a root-level route pushed
+            // from a native modal renders behind it on iOS (the same trap the
+            // legal screens hit). Popping first puts connect-team on the stack
+            // underneath, and the sheet slides down to reveal it.
+            router.back();
+            router.push({
+              pathname: '/(onboarding)/connect-team',
+              params: profile.fplTeamId ? { relink: '1' } : {},
+            });
+          }}
+          tk={tk}
+        />
       </SectionCard>
 
       <SectionCard title="Security" tk={tk}>

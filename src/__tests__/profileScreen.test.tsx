@@ -1,5 +1,5 @@
 import React from 'react';
-import { act } from '@testing-library/react-native';
+import { act, fireEvent } from '@testing-library/react-native';
 import { renderWithProviders as render } from './utils/renderWithProviders';
 
 const mockEnable = jest.fn();
@@ -42,23 +42,28 @@ jest.mock('@/store/themeStore', () => ({
   useThemeStore: () => ({ paletteKey: 'classic', dark: true }),
 }));
 
+const mockBack = jest.fn();
+const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
   __esModule: true,
-  useRouter: () => ({ back: jest.fn() }),
+  useRouter: () => ({ back: mockBack, push: mockPush }),
 }));
 
+jest.mock('@/api/manager', () => ({
+  __esModule: true,
+  useManager: () => ({ data: { name: 'Apex Pitch FC' } }),
+}));
+
+const mockBaseProfile = {
+  firstName: 'Apex',
+  lastName: 'Gaffer',
+  dob: '14 Aug 1990',
+  email: 'apex.gaffer@example.com',
+  faceId: true,
+  fplTeamId: null,
+};
 jest.mock('@/api/profile', () => ({
-  useProfile: jest.fn().mockReturnValue({
-    data: {
-      firstName: 'Apex',
-      lastName: 'Gaffer',
-      dob: '14 Aug 1990',
-      email: 'apex.gaffer@example.com',
-      faceId: true,
-      fplTeamId: null,
-    } satisfies ProfileData,
-    isPending: false,
-  }),
+  useProfile: jest.fn().mockReturnValue({ data: mockBaseProfile, isPending: false }),
 }));
 
 // ChangePassword (rendered by Profile) imports @/lib/auth/email, which pulls
@@ -70,7 +75,10 @@ jest.mock('@/lib/auth/email', () => ({
 }));
 
 import Profile from '@/app/(home)/profile';
+import { useProfile } from '@/api/profile';
 import type { Profile as ProfileData } from '@/types/fpl';
+
+const BASE_PROFILE: ProfileData = mockBaseProfile;
 
 describe('Profile screen — Face ID row moved to Settings', () => {
   beforeEach(() => {
@@ -100,5 +108,41 @@ describe('Profile screen — no header row', () => {
     const { queryByLabelText, queryByText } = render(<Profile />);
     expect(queryByLabelText('Back')).toBeNull();
     expect(queryByText('Profile')).toBeNull();
+  });
+});
+
+// The linked team is account data, so it is changed from here. The row has to
+// dismiss the sheet BEFORE pushing — a root route pushed from a native modal
+// renders behind it on iOS — and flag the push as a relink so connect-team
+// drops its "skip for now" first-run affordance.
+describe('Profile screen — FPL team row', () => {
+  afterEach(() => {
+    (useProfile as jest.Mock).mockReturnValue({ data: BASE_PROFILE, isPending: false });
+  });
+
+  it('dismisses the sheet and opens connect-team in relink mode', () => {
+    (useProfile as jest.Mock).mockReturnValue({
+      data: { ...BASE_PROFILE, fplTeamId: 1234567 } satisfies ProfileData,
+      isPending: false,
+    });
+    const { getByLabelText, getByText } = render(<Profile />);
+
+    expect(getByText('Apex Pitch FC · ID 1234567')).toBeTruthy();
+    fireEvent.press(getByLabelText('Change FPL team'));
+
+    expect(mockBack).toHaveBeenCalled();
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/(onboarding)/connect-team',
+      params: { relink: '1' },
+    });
+  });
+
+  it('offers a plain connect when no team is linked', () => {
+    const { getByLabelText } = render(<Profile />);
+    fireEvent.press(getByLabelText('Connect FPL team'));
+    expect(mockPush).toHaveBeenCalledWith({
+      pathname: '/(onboarding)/connect-team',
+      params: {},
+    });
   });
 });
