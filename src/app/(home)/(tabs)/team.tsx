@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, FlatList, StyleSheet, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
-import { getTheme, GUTTER } from '@/constants/theme';
+import { GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { PitchPlayer, Suggestion } from '@/types/fpl';
 import { useApexTeam } from '@/api/squad';
@@ -24,7 +24,6 @@ const SEASON_FINAL_GW = 38;
 export default function TeamTab() {
   const router = useRouter();
   const { paletteKey, dark } = useThemeStore();
-  const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
 
   const reduced = useReducedMotion();
@@ -55,7 +54,7 @@ export default function TeamTab() {
 
   if (noTeam) {
     return (
-      <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <View style={{ flex: 1, backgroundColor: tk.bg }}>
         <LinkTeamCta tk={tk} variant="team" />
       </View>
     );
@@ -65,7 +64,7 @@ export default function TeamTab() {
   // false, so `isPending || !at` would swallow either one and pulse forever.
   if (noSquad) {
     return (
-      <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <View style={{ flex: 1, backgroundColor: tk.bg }}>
         <NoSquadCta tk={tk} />
       </View>
     );
@@ -79,7 +78,7 @@ export default function TeamTab() {
   }
   if (isPending || !at) {
     return (
-      <View style={{ flex: 1, backgroundColor: t.bg, padding: GUTTER }}>
+      <View style={{ flex: 1, backgroundColor: tk.bg, padding: GUTTER }}>
         <Skeleton height={48} />
         <View style={{ height: 12 }} />
         <Skeleton height={180} radius={20} />
@@ -140,7 +139,7 @@ export default function TeamTab() {
     router.push({ pathname: '/(home)/player/[id]', params: { id: p.id, gw: String(gw) } });
 
   return (
-    <View style={{ flex: 1, backgroundColor: t.bg }}>
+    <View style={{ flex: 1, backgroundColor: tk.bg }}>
       <TabHeader title={at.teamName} tk={tk} />
       {/* Outside the carousel: a deadline countdown is least useful the moment
           it scrolls away, and it is the same next deadline on every page —

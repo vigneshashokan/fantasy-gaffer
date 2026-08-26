@@ -76,7 +76,7 @@ export function GameweekScreen({
   // even mid-season.
   if (noSquad) {
     return (
-      <View style={{ width, height, backgroundColor: t.bg }}>
+      <View style={{ width, height, backgroundColor: tk.bg }}>
         <NoSquadCta tk={tk} gw={gw} />
       </View>
     );
@@ -88,7 +88,7 @@ export function GameweekScreen({
   }
   if (isPending || !at) {
     return (
-      <View style={{ width, height, backgroundColor: t.bg, padding: GUTTER }}>
+      <View style={{ width, height, backgroundColor: tk.bg, padding: GUTTER }}>
         <Skeleton height={48} />
         <View style={{ height: 12 }} />
         <Skeleton height={180} radius={20} />
@@ -115,7 +115,7 @@ export function GameweekScreen({
   const activeChip = at.transfer.chips.find((c) => c.playedGw === gw);
 
   return (
-    <View style={{ width, height, backgroundColor: t.bg }}>
+    <View testID="gw-page" style={{ width, height, backgroundColor: tk.bg }}>
       <ScrollView
         testID="gw-scroll"
         style={{ flex: 1 }}

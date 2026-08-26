@@ -8,7 +8,6 @@ import { useThemeStore } from '@/store/themeStore';
 import { useAuthStore } from '@/store/authStore';
 import { useProfile } from '@/api/profile';
 import { initialsOf } from '@/lib/name';
-import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import { TabCoachmark } from '@/components/onboarding/TabCoachmark';
 import { useOfflineStripVisible } from '@/components/OfflineBanner';
@@ -18,7 +17,6 @@ const SIGN_OUT_FAILED_BODY = 'Check your connection and try again.';
 
 export default function TabsLayout() {
   const { paletteKey, dark } = useThemeStore();
-  const t = getTheme(paletteKey, dark);
   const tk = apexTokens(dark, paletteKey);
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -28,12 +26,13 @@ export default function TabsLayout() {
   const initials = initialsOf(profile?.firstName, profile?.lastName);
 
   // There's no top banner anymore — the status-bar inset is painted in the
-  // active screen's own background colour so the top stays flush with the
-  // content. `team` uses the theme bg; the other tabs use the apex token bg.
+  // screen background so the top stays flush with the content. Every tab uses
+  // `tk.bg`, the mock's single page background — `team` used to paint the
+  // legacy `t.bg` instead, which made switching tabs flash a different colour.
   //
-  // This used to be set only in the tab bar's `onPress`, so any navigation
-  // the user didn't tap — a notification deep link, a back-navigation —
-  // left it stale: the inset strip was painted in the wrong tab's colour and
+  // `activeTab` still has to track the router for TabCoachmark. It used to be
+  // set only in the tab bar's `onPress`, so any navigation the user didn't tap
+  // — a notification deep link, a back-navigation — left it stale, and
   // TabCoachmark showed (and marked seen) the wrong tab's tip. Derive it from
   // the router instead. Non-tab routes (the profile/settings/player modals)
   // contribute no tab segment, so the last tab is kept while they're open.
@@ -43,7 +42,7 @@ export default function TabsLayout() {
     const leaf = segments[segments.length - 1];
     if (TABS.some((tab) => tab.name === leaf)) setActiveTab(leaf as TabName);
   }, [segments]);
-  const screenBg = activeTab === 'team' ? t.bg : tk.bg;
+  const screenBg = tk.bg;
 
   const [menuOpen, setMenuOpen] = useState(false);
 

@@ -41,6 +41,7 @@ jest.mock('@/api/squad', () => ({
 
 import { GameweekScreen } from '@/components/team/GameweekScreen';
 import type { ApexTeamData } from '@/api/squad';
+import { apexTokens } from '@/constants/apexTokens';
 
 const baseProps = {
   width: 320, height: 640,
@@ -79,5 +80,14 @@ describe('GameweekScreen', () => {
     expect(queryByText('Gameweek 30')).toBeNull();
     expect(queryByTestId('gw-prev')).toBeNull();
     expect(queryByTestId('gw-next')).toBeNull();
+  });
+
+  // This fills the carousel, so it IS the My Team page background. It used to
+  // paint the legacy theme bg while Top Picks and Transfer painted the apex
+  // one, which made the three tabs visibly different colours.
+  it('paints the same page background as the other tabs', () => {
+    const { getByTestId } = renderWithProviders(<GameweekScreen {...baseProps} gw={30} />);
+    const style = Object.assign({}, ...[getByTestId('gw-page').props.style].flat(4));
+    expect(style.backgroundColor).toBe(apexTokens(true, 'classic').bg);
   });
 });

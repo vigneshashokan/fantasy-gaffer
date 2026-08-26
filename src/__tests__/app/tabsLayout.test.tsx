@@ -11,7 +11,6 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useNetInfo } from '@react-native-community/netinfo';
 import TabsLayout from '@/app/(home)/(tabs)/_layout';
-import { getTheme } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
 import type { Profile } from '@/types/fpl';
 
@@ -93,21 +92,29 @@ beforeEach(() => {
 });
 
 describe('tabs layout — active tab derives from the router', () => {
-  const t = getTheme('classic', false);
   const tk = apexTokens(false, 'classic');
 
   it('paints the team background and coachmark on the team route', () => {
     const { getByTestId } = renderLayout();
     expect(getByTestId('coachmark-tab').props.children).toBe('team');
-    expect(flat(getByTestId('tabs-top-inset').props.style).backgroundColor).toBe(t.bg);
+    expect(flat(getByTestId('tabs-top-inset').props.style).backgroundColor).toBe(tk.bg);
   });
 
   it('follows a deep link straight into top-picks, with no tab press', () => {
     mockSegments = ['(home)', '(tabs)', 'top-picks'];
     const { getByTestId } = renderLayout();
     expect(getByTestId('coachmark-tab').props.children).toBe('top-picks');
-    // Non-team tabs paint the apex background, not the theme one.
     expect(flat(getByTestId('tabs-top-inset').props.style).backgroundColor).toBe(tk.bg);
+  });
+
+  // Every tab paints the same page background. `team` used to paint the legacy
+  // theme bg, so switching tabs flashed a different colour.
+  it('paints the same background on every tab', () => {
+    const bgOf = (tab: string) => {
+      mockSegments = ['(home)', '(tabs)', tab];
+      return flat(renderLayout().getByTestId('tabs-top-inset').props.style).backgroundColor;
+    };
+    expect([bgOf('team'), bgOf('top-picks'), bgOf('transfer')]).toEqual([tk.bg, tk.bg, tk.bg]);
   });
 
   it('follows a deep link into transfer', () => {
