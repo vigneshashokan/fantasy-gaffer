@@ -4,7 +4,11 @@ import type { ApexTokens } from '@/constants/apexTokens';
 import type { FormGameweek } from '@/api/playerSummary';
 import { GUTTER } from '@/constants/theme';
 
-const MAX_H = 48;
+// Mock geometry: bars run 8pt (a blank) to 60pt (the best return in view).
+const MIN_H = 8;
+const RANGE = 52;
+// Floor for the scale, so a run of 1-pointers doesn't draw one full-height bar.
+const MIN_SCALE = 6;
 
 interface FormSparklineProps {
   gameweeks: FormGameweek[];
@@ -17,21 +21,27 @@ export function FormSparkline({ gameweeks, tk }: FormSparklineProps) {
   }
   // Scale every bar against the best single-fixture score so heights are
   // comparable; a double gameweek renders two bars side by side under one GW.
-  const max = Math.max(1, ...gameweeks.flatMap((g) => g.fixtures));
+  const max = Math.max(MIN_SCALE, ...gameweeks.flatMap((g) => g.fixtures));
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.card, { backgroundColor: tk.card, borderColor: tk.cardBorder }]}>
       {gameweeks.map((g) => (
         <View key={g.round} style={styles.col}>
           <View style={styles.bars}>
-            {g.fixtures.map((pts, i) => {
-              const h = Math.max(3, (Math.max(0, pts) / max) * MAX_H);
-              return (
-                <View key={`${g.round}-${i}`} style={styles.barCol}>
-                  <Text style={[styles.val, { color: tk.text }]}>{pts}</Text>
-                  <View style={[styles.bar, { height: h, backgroundColor: tk.green }]} />
-                </View>
-              );
-            })}
+            {g.fixtures.map((pts, i) => (
+              <View key={`${g.round}-${i}`} style={styles.barCol}>
+                <Text style={[styles.val, { color: tk.variant }]}>{pts}</Text>
+                <View
+                  style={[
+                    styles.bar,
+                    {
+                      height: MIN_H + (Math.max(0, pts) / max) * RANGE,
+                      // Haul / decent / blank, as the mock bands them.
+                      backgroundColor: pts >= 8 ? tk.green : pts >= 4 ? tk.purple : tk.track,
+                    },
+                  ]}
+                />
+              </View>
+            ))}
           </View>
           <Text style={[styles.round, { color: tk.faint }]}>GW{g.round}</Text>
         </View>
@@ -41,12 +51,23 @@ export function FormSparkline({ gameweeks, tk }: FormSparklineProps) {
 }
 
 const styles = StyleSheet.create({
-  wrap: { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'flex-end', paddingHorizontal: GUTTER, paddingTop: 12, height: MAX_H + 44 },
-  col: { alignItems: 'center', gap: 4 },
-  bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 3 },
-  barCol: { alignItems: 'center', gap: 4 },
-  val: { fontFamily: 'JetBrainsMono_700Bold', fontSize: 11 },
-  bar: { width: 16, borderRadius: 5 },
-  round: { fontFamily: 'Archivo_500Medium', fontSize: 11 },
-  empty: { fontFamily: 'Archivo_500Medium', fontSize: 13, fontStyle: 'italic', paddingHorizontal: GUTTER, paddingTop: 12 },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginHorizontal: GUTTER,
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
+  },
+  col: { flex: 1, alignItems: 'center', gap: 6 },
+  bars: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 3, alignSelf: 'stretch' },
+  barCol: { flex: 1, maxWidth: 26, alignItems: 'stretch', gap: 6 },
+  val: { fontFamily: 'JetBrainsMono_700Bold', fontSize: 11.5, textAlign: 'center' },
+  bar: { borderRadius: 5 },
+  round: { fontFamily: 'Archivo_600SemiBold', fontSize: 10 },
+  empty: { fontFamily: 'Archivo_500Medium', fontSize: 13, fontStyle: 'italic', paddingHorizontal: GUTTER },
 });

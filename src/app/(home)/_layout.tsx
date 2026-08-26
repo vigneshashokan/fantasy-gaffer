@@ -27,7 +27,19 @@ export default function HomeStackLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="profile" options={{ presentation: 'modal' }} />
         <Stack.Screen name="settings" options={{ presentation: 'modal' }} />
-        <Stack.Screen name="player/[id]" options={{ presentation: 'modal' }} />
+        {/* The v2 mock opens player details as a bottom sheet over the tab
+            it was tapped from, so this is a native form sheet rather than a
+            full-screen modal. The grabber + drag-down + scrim ARE the dismiss
+            affordance — the screen deliberately draws no back button. */}
+        <Stack.Screen
+          name="player/[id]"
+          options={{
+            presentation: 'formSheet',
+            sheetAllowedDetents: [0.82],
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 26,
+          }}
+        />
         <Stack.Screen name="transfer-targets/[id]" />
       </Stack>
       <PushOrchestrator />

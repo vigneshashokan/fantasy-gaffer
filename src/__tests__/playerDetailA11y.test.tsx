@@ -1,65 +1,52 @@
 // src/__tests__/playerDetailA11y.test.tsx
 //
-// A11y-focused test for the player detail screen.
-// Verifies that the icon-only back chevron is labelled so screen readers
-// can announce it — this is the invariant from Task 7 of the a11y audit.
+// The player detail used to be a full-screen modal with its own labelled back
+// chevron, and this file guarded that label. Porting the screen to the v2
+// mock's bottom sheet removed the header entirely — so the dismiss affordance
+// is now the native sheet's grabber/drag/scrim, and the escape gesture a
+// screen reader gets from them. That is a layout option, so this guards the
+// option: drop it back to a plain card presentation and the sheet chrome goes
+// with it, leaving a screen with no way out.
 
 import React from 'react';
-import { renderWithProviders } from './utils/renderWithProviders';
+import { render } from '@testing-library/react-native';
 
-const mockBack = jest.fn();
+const mockScreens: { name: string; options?: Record<string, unknown> }[] = [];
 
-jest.mock('expo-router', () => ({
-  __esModule: true,
-  useRouter: () => ({ back: mockBack, push: jest.fn() }),
-  useLocalSearchParams: () => ({ id: '401' }),
-}));
-jest.mock('@/store/themeStore', () => ({
-  __esModule: true,
-  useThemeStore: () => ({ paletteKey: 'classic', dark: true }),
-}));
-jest.mock('@/components/ui/Kit', () => ({ __esModule: true, Kit: () => null }));
-jest.mock('@/components/ui/Icon', () => ({ __esModule: true, Icon: () => null }));
-
-const PLAYER: Player = {
-  id: '401', name: 'Haaland', pos: 'FWD', club: 'MCI',
-  p: 14.2, f: 8.4, tp: 175, own: 62.3, gw: 9.1,
-  status: 'a', news: '', chanceNext: null, ict: 312.4, bps: 640,
-};
-
-jest.mock('@/api/players', () => ({
-  __esModule: true,
-  usePlayers: () => ({ data: [PLAYER], isPending: false }),
-}));
-jest.mock('@/api/clubs', () => ({
-  __esModule: true,
-  useClubs: () => ({ data: { MCI: { name: 'Man City', kit: '#fff', kit2: '#fff', ink: '#000' } } satisfies Partial<Record<ClubCode, Club>> }),
-  useClubCodeByTeamId: () => ({ data: { 1: 'ARS', 13: 'MCI' } satisfies Record<number, ClubCode> }),
-}));
-jest.mock('@/api/playerSummary', () => {
-  const actual = jest.requireActual('@/api/playerSummary');
-  return {
-    __esModule: true,
-    ...actual,
-    useElementSummary: () => ({
-      isPending: false,
-      isError: false,
-      refetch: jest.fn(),
-      data: {
-        history: [{ round: 4, total_points: 8 } satisfies Partial<SummaryHistoryRow>],
-        fixtures: [{ event: 7, is_home: true, team_h: 13, team_a: 1, difficulty: 2 } satisfies SummaryFixtureRow],
-      },
-    }),
+jest.mock('expo-router', () => {
+  const RN = require('react');
+  const Stack = ({ children }: { children: React.ReactNode }) =>
+    RN.createElement(RN.Fragment, null, children);
+  Stack.Screen = ({ name, options }: { name: string; options?: Record<string, unknown> }) => {
+    mockScreens.push({ name, options });
+    return null;
   };
+  return { __esModule: true, Stack, Redirect: () => null };
 });
 
-import PlayerDetail from '@/app/(home)/player/[id]';
-import type { Player, Club, ClubCode } from '@/types/fpl';
-import type { SummaryHistoryRow, SummaryFixtureRow } from '@/api/playerSummary';
+jest.mock('@/store/authStore', () => ({
+  __esModule: true,
+  useAuthStore: (selector: (s: unknown) => unknown) => selector({ session: { user: { id: 'u1' } } }),
+}));
+jest.mock('@/lib/useProfileGate', () => ({
+  __esModule: true,
+  useProfileGate: () => ({ status: 'complete' }),
+}));
+jest.mock('@/components/notifications/PushOrchestrator', () => ({
+  __esModule: true,
+  PushOrchestrator: () => null,
+}));
+
+import HomeStackLayout from '@/app/(home)/_layout';
 
 describe('player detail a11y', () => {
-  it('labels the back control', () => {
-    const { getByLabelText } = renderWithProviders(<PlayerDetail />);
-    expect(getByLabelText('Back')).toBeTruthy();
+  it('presents the detail as a dismissible native sheet', () => {
+    mockScreens.length = 0;
+    render(<HomeStackLayout />);
+    const player = mockScreens.find((s) => s.name === 'player/[id]');
+    expect(player?.options).toMatchObject({
+      presentation: 'formSheet',
+      sheetGrabberVisible: true,
+    });
   });
 });
