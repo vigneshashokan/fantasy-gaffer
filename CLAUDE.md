@@ -209,7 +209,7 @@ thing that breaks *silently* if the next person undoes it.
   line) rendered its fifth player completely off the pitch**, and had done since the row was
   written: a slot was `minWidth`, so a name pill that outgrew it widened the *card*, five widened
   cards summed past the pitch, and `overflow: hidden` ate the last one. Slots are a fixed `width`
-  now — and **the 2nd and 4th of such a row drop onto a lower plane** (`STAGGER`, 22pt) so the
+  now — and **the 2nd and 4th of such a row drop onto a lower plane** (`STAGGER`, 22pt then, 30 since #249) so the
   pills, which still overhang their slots, pass each other instead of colliding. **The stagger
   keys on ROW LENGTH, never position** — a 5-3-2 back line has to split exactly like a 3-5-2
   midfield, pinned in `apexPitchRow.test.tsx`.
@@ -240,6 +240,29 @@ thing that breaks *silently* if the next person undoes it.
   - **Every round of this was judged by rasterising headless**, the same `Brave --headless` trick
     the chip glyphs used, and every round the device still found something jest had signed off.
     Measuring the pills out of a screenshot in points is what finally identified the clamp.
+  - **Second pass — PR #249, where the definite-width trap bit for the third and fourth time.**
+    Exactly the bug above, now on `TransferPitch`: its names truncated to a jersey's width, and
+    **`£15.5m` wrapped onto two lines**, which pushed that one card's jersey out of line with its
+    row — a measurement bug that presents as a spacing bug. Both pill rows there carry their own
+    definite width now. **A staggered row drops the WHOLE card, price pill included**: dropping the
+    name alone kept the jerseys in one line but left the names looking mis-set, and gave the price
+    nothing to overhang into. `STAGGER` went 22 → 30 — 22 cleared a pill by 4pt, which reads as two
+    rows jammed together rather than two planes. And `TransferPitch`'s `SIDE_CHROME` had been wrong
+    since the file was written: it charged 16 for a `GUTTER` that has always been 8.
+  - **320pt — an iPhone in Display Zoom — is the width every pitch constraint actually binds at,
+    and it leaves NO slack.** A five-wide row spends the entire `SIDE_CHROME` budget there, so
+    `justifyContent` has nothing left to distribute and the row cannot be spread horizontally at
+    all: every point taken off `ROW_INSET` comes straight off the outer pill's cap, which at ~96pt
+    is already only ~2pt clear of `Calvert-Lewin` (~94). **Widen the planes (`STAGGER`), never the
+    row.** The caps are per-slot for the same reason — the outer two may hang into the row inset
+    and the pitch padding (`share + 2 * (ROW_INSET + PITCH_PAD)`), an inner slot on a staggered row
+    meets the pill two along (`share * 2`), an unstaggered row gets one `share`.
+  - **The centre circle is a TRUE circle, so its radius comes off the WIDTH alone.** Taking the
+    vertical radius from the height — which the real 9.15m/52.5m ratio invites, and which every
+    other marking here legitimately does — stretched it into a tall oval, because the drawn pitch is
+    far taller than a real half pitch (the squad needs the room). Real-world proportions transfer to
+    this pitch only where the shape is a rectangle. `transferPitchRow.test.tsx` now mirrors
+    `apexPitchRow.test.tsx`, so both pitches have their own does-a-full-row-fit guard.
 
 **Only the profile sheet has been seen on a device** — and the first look at it found a bug jest
 had no way to catch (the black-pencil fill, recorded under Architecture). Every other claim above
@@ -297,6 +320,23 @@ profile finding is the argument for doing it.
   one. The Top Picks tab keeps the plain default on purpose: while a gameweek is live it shows that
   gameweek, which is what its "will refresh once the current game week is done" subtitle promises
   (#181).
+
+- **A freshness line must name the MODEL's write time, never the client's fetch time (PR #252).**
+  Top Picks prints `xPts last updated at …` under its title, read from **`projections.computed_at`**
+  — when the nightly `fpl-project` cron wrote those rows. React Query's `dataUpdatedAt` is the
+  one-liner and is a **different claim**: a pull-to-refresh re-reading the same nightly batch would
+  present it as new xPts. It is **its own single-row query rather than a field on `useProjections`**,
+  whose `.data` is a `Map` serialised through `mapCodec` into the persisted cache — widening that
+  shape costs a persister `buster` bump and touches every consumer, so one extra one-row select is
+  the smaller change. `useTopPicks` returns it beside the gameweek it ranked on, the same **one
+  screen, one gameweek** reasoning as above. The line is **absent off-season and on a cold start**,
+  where the picks fall back to FPL's `ep_next` — not our number to timestamp. `TabHeader`'s
+  `subtitle` takes several lines now, so #181's live-gameweek notice keeps its own.
+  - **Test gotcha: `jest.requireActual('@/api/fixtures')` inside a screen suite defeats the very
+    mock that insulates it.** The real module imports `@/lib/supabase`, so the suite dies on
+    `RCTAsyncStorage` exactly as if `@/api/fixtures` had never been mocked — a new face on the
+    AsyncStorage-chain gotcha under Commands. Stub the helper in the mock
+    (`formatDeadline: (iso) => \`fmt(${iso})\``) and assert the wiring, not the formatting.
 
 - **Client state** — Zustand stores in `src/store/` (`auth`, `biometric`, `team`, `theme`), persisted via AsyncStorage. Keep them narrow: anything server-derived belongs in React Query, not a store.
 
