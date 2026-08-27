@@ -1,16 +1,48 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { ApexTokens } from '@/constants/apexTokens';
+import { useA11yAnnounce } from '@/lib/a11y';
 
 interface ReadFieldProps {
   label: string;
   value: string;
   tk: ApexTokens;
   showDivider?: boolean;
+  // Present = the row is editable in place: the padlock becomes a pencil and
+  // the value becomes an input. Absent = locked, as dob and email are.
+  onSave?: (value: string) => Promise<unknown>;
 }
 
-export function ReadField({ label, value, tk, showDivider }: ReadFieldProps) {
+export function ReadField({ label, value, tk, showDivider, onSave }: ReadFieldProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useA11yAnnounce(error);
+
+  // Blur is the ONLY commit path. A single-line TextInput blurs itself on
+  // Done, so the return key routes through here too, and there is no second
+  // save button whose press could race the blur that precedes it.
+  const commit = async () => {
+    const next = draft.trim();
+    setEditing(false);
+    if (!onSave || !next || next === value) {
+      setDraft(value);
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    try {
+      await onSave(next);
+    } catch (e) {
+      setDraft(value);
+      setError(e instanceof Error ? e.message : "Couldn't save — try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <View
       style={[
@@ -20,13 +52,57 @@ export function ReadField({ label, value, tk, showDivider }: ReadFieldProps) {
     >
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[styles.label, { color: tk.faint }]}>{label}</Text>
-        <Text style={[styles.value, { color: tk.text }]} numberOfLines={1}>
-          {value}
-        </Text>
+        {editing ? (
+          <TextInput
+            autoFocus
+            value={draft}
+            onChangeText={setDraft}
+            onBlur={commit}
+            maxLength={40}
+            autoCapitalize="words"
+            autoCorrect={false}
+            returnKeyType="done"
+            accessibilityLabel={label}
+            testID={`edit-${label.toLowerCase().replace(/ /g, '-')}`}
+            style={[styles.value, styles.input, { color: tk.text, borderBottomColor: tk.purple }]}
+          />
+        ) : (
+          <Text style={[styles.value, { color: tk.text }]} numberOfLines={1}>
+            {/* Keep the typed name on screen while the write is in flight —
+                falling back to `value` flashes the old name until the
+                invalidated profile query comes back. */}
+            {saving ? draft : value}
+          </Text>
+        )}
+        {error && (
+          <Text
+            style={[styles.error, { color: tk.pink }]}
+            accessibilityLiveRegion="polite"
+          >
+            {error}
+          </Text>
+        )}
       </View>
-      <View style={{ opacity: 0.6 }}>
-        <Icon name="lock" color={tk.faint} size={15} />
-      </View>
+      {onSave ? (
+        <Pressable
+          onPress={() => {
+            setDraft(value);
+            setError(null);
+            setEditing(true);
+          }}
+          disabled={editing || saving}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={`Edit ${label.toLowerCase()}`}
+          testID={`edit-${label.toLowerCase().replace(/ /g, '-')}-button`}
+        >
+          <Icon name="pencil" color={tk.purple} size={16} />
+        </Pressable>
+      ) : (
+        <View style={{ opacity: 0.6 }}>
+          <Icon name="lock" color={tk.faint} size={15} />
+        </View>
+      )}
     </View>
   );
 }
@@ -49,5 +125,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Archivo_600SemiBold',
     fontSize: 15.5,
     marginTop: 3,
+  },
+  input: {
+    paddingVertical: 0,
+    borderBottomWidth: 1.5,
+  },
+  error: {
+    fontFamily: 'Archivo_600SemiBold',
+    fontSize: 12,
+    marginTop: 4,
   },
 });

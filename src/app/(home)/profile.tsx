@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useThemeStore } from '@/store/themeStore';
 import { getTheme, GUTTER } from '@/constants/theme';
 import { apexTokens } from '@/constants/apexTokens';
-import { useProfile } from '@/api/profile';
+import { useProfile, useUpdateName } from '@/api/profile';
 import { useManager } from '@/api/manager';
 import { initialsOf } from '@/lib/name';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -25,6 +25,7 @@ export default function ProfileModal() {
 
   const { data: profile, isPending, isError, refetch } = useProfile();
   const { data: manager } = useManager();
+  const updateName = useUpdateName();
 
   // Error before pending — this screen had no error branch at all (#167).
   if (isError && !profile) {
@@ -85,8 +86,21 @@ export default function ProfileModal() {
       <View style={{ height: 18 }} />
 
       <SectionCard title="Personal details" tk={tk}>
-        <ReadField label="First name" value={profile.firstName} tk={tk} />
-        <ReadField label="Last name" value={profile.lastName} tk={tk} showDivider />
+        {/* Names are editable in place; dob and email stay locked — dob is
+            age-gated at signup and email is the auth identity. */}
+        <ReadField
+          label="First name"
+          value={profile.firstName}
+          tk={tk}
+          onSave={(v) => updateName.mutateAsync({ firstName: v })}
+        />
+        <ReadField
+          label="Last name"
+          value={profile.lastName}
+          tk={tk}
+          showDivider
+          onSave={(v) => updateName.mutateAsync({ lastName: v })}
+        />
         <ReadField label="Date of birth" value={profile.dob} tk={tk} showDivider />
         <ReadField label="Email address" value={profile.email} tk={tk} showDivider />
       </SectionCard>

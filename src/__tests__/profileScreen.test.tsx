@@ -62,8 +62,10 @@ const mockBaseProfile = {
   faceId: true,
   fplTeamId: null,
 };
+const mockUpdateName = jest.fn().mockResolvedValue(undefined);
 jest.mock('@/api/profile', () => ({
   useProfile: jest.fn().mockReturnValue({ data: mockBaseProfile, isPending: false }),
+  useUpdateName: () => ({ mutateAsync: mockUpdateName }),
 }));
 
 // ChangePassword (rendered by Profile) imports @/lib/auth/email, which pulls
@@ -144,5 +146,66 @@ describe('Profile screen — FPL team row', () => {
       pathname: '/(onboarding)/connect-team',
       params: {},
     });
+  });
+});
+
+// Names are editable in place; dob and email are not. Blur is the only commit
+// path (a single-line input blurs itself on Done), so these drive onBlur.
+describe('Profile screen — editable name', () => {
+  beforeEach(() => mockUpdateName.mockClear());
+
+  it('saves an edited first name', async () => {
+    const { getByLabelText, getByTestId } = render(<Profile />);
+    fireEvent.press(getByLabelText('Edit first name'));
+    fireEvent.changeText(getByTestId('edit-first-name'), '  Vignesh  ');
+    await act(async () => {
+      fireEvent(getByTestId('edit-first-name'), 'blur');
+    });
+    expect(mockUpdateName).toHaveBeenCalledWith({ firstName: 'Vignesh' });
+  });
+
+  it('saves an edited last name', async () => {
+    const { getByLabelText, getByTestId } = render(<Profile />);
+    fireEvent.press(getByLabelText('Edit last name'));
+    fireEvent.changeText(getByTestId('edit-last-name'), 'Ashokan');
+    await act(async () => {
+      fireEvent(getByTestId('edit-last-name'), 'blur');
+    });
+    expect(mockUpdateName).toHaveBeenCalledWith({ lastName: 'Ashokan' });
+  });
+
+  // An empty name would wipe the profile row; an unchanged one is a pointless
+  // write. Both just leave edit mode.
+  it('writes nothing for an empty or unchanged name', async () => {
+    const { getByLabelText, getByTestId } = render(<Profile />);
+    fireEvent.press(getByLabelText('Edit first name'));
+    fireEvent.changeText(getByTestId('edit-first-name'), '   ');
+    await act(async () => {
+      fireEvent(getByTestId('edit-first-name'), 'blur');
+    });
+
+    fireEvent.press(getByLabelText('Edit last name'));
+    await act(async () => {
+      fireEvent(getByTestId('edit-last-name'), 'blur');
+    });
+
+    expect(mockUpdateName).not.toHaveBeenCalled();
+  });
+
+  it('keeps dob and email locked', () => {
+    const { queryByLabelText } = render(<Profile />);
+    expect(queryByLabelText('Edit date of birth')).toBeNull();
+    expect(queryByLabelText('Edit email address')).toBeNull();
+  });
+
+  it('surfaces a failed save in the row', async () => {
+    mockUpdateName.mockRejectedValueOnce(new Error('Network request failed'));
+    const { getByLabelText, getByTestId, getByText } = render(<Profile />);
+    fireEvent.press(getByLabelText('Edit first name'));
+    fireEvent.changeText(getByTestId('edit-first-name'), 'Vignesh');
+    await act(async () => {
+      fireEvent(getByTestId('edit-first-name'), 'blur');
+    });
+    expect(getByText('Network request failed')).toBeTruthy();
   });
 });
