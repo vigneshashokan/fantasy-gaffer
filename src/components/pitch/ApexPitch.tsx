@@ -41,6 +41,12 @@ const PITCH_PAD = 6;
 const ROW_INSET = 16;
 // Page gutter, the pitch's padding and that inset. Slots are sized off this, so
 // it must account for every one of them or a full row runs past the pitch.
+//
+// A five-wide row spends this budget EXACTLY on a 320pt screen (Display Zoom),
+// so there is no free space for `justifyContent` to hand out and the row cannot
+// be spread horizontally at all: every point taken off the inset comes straight
+// off the outer pill's cap, which at 96pt is already only ~2pt clear of a real
+// name (`Calvert-Lewin` measures ~94). Widen the planes, not the row.
 const SIDE_CHROME = GUTTER * 2 + PITCH_PAD * 2 + ROW_INSET * 2;
 // Keep the floor low enough that a full 5-wide row still fits the narrowest
 // supported screen (~320pt → (320-44)/5 ≈ 55), so jerseys scale down with the
@@ -56,8 +62,10 @@ const WRAPPER_RATIO = 0.6;
 // has nowhere to hang. These rows split onto two planes instead — 1st/3rd/5th
 // high, 2nd/4th low — which is what buys the width back.
 const STAGGER_FROM = 5;
-// Enough to clear a pill (14pt disc plus its padding and border).
-const STAGGER = 22;
+// The gap between the two planes, and the whole of the zigzag's separation —
+// the row itself cannot spread sideways (see SIDE_CHROME). 22 cleared a pill by
+// 4pt, which read as two rows jammed together; 30 leaves a pill's worth of air.
+const STAGGER = 30;
 
 export function ApexPitch({
   rows,
@@ -205,14 +213,17 @@ const styles = StyleSheet.create({
     position: 'relative',
     borderRadius: 18,
     overflow: 'hidden',
-    paddingTop: 22,
-    paddingBottom: 26,
+    // Tight at both ends on purpose: the forwards belong at the top of the
+    // pitch and the keeper on his own goal line, so the room goes into the gaps
+    // between the rows rather than above and below the whole squad.
+    paddingTop: 12,
+    paddingBottom: 14,
     paddingHorizontal: PITCH_PAD,
   },
   rows: {
     position: 'relative',
     flexDirection: 'column',
-    gap: 18,
+    gap: 26,
   },
   row: {
     flexDirection: 'row',

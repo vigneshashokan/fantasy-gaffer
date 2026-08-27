@@ -37,7 +37,7 @@ describe('ApexPitch row layout', () => {
   });
 
   it('drops the 2nd and 4th of a five-wide row onto a lower plane', () => {
-    expect(slots(5).map((s) => s.marginTop ?? 0)).toEqual([0, 22, 0, 22, 0]);
+    expect(slots(5).map((s) => s.marginTop ?? 0)).toEqual([0, 30, 0, 30, 0]);
   });
 
   it('leaves a four-wide row on one plane', () => {
@@ -51,7 +51,7 @@ describe('ApexPitch row layout', () => {
     const drops = render(<ApexPitch rows={[row(5), row(3), row(2)]} />)
       .getAllByTestId('pitch-slot')
       .map((s) => StyleSheet.flatten(s.props.style).marginTop ?? 0);
-    expect(drops).toEqual([0, 22, 0, 22, 0, 0, 0, 0, 0, 0]);
+    expect(drops).toEqual([0, 30, 0, 30, 0, 0, 0, 0, 0, 0]);
   });
 });
 
