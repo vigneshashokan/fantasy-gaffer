@@ -21,7 +21,12 @@ export function PointPill({
   const hasBonus = !upcoming && played && (bonus ?? 0) >= 1;
   const numBg = played ? '#7B09E5' : 'rgba(255,255,255,0.22)';
   return (
-    <View style={[styles.container, { maxWidth }]}>
+    // Nothing occupies the left cap when the score is hidden, so the name takes
+    // the disc's inset itself rather than starting 1pt from the edge.
+    <View
+      testID="name-pill"
+      style={[styles.container, { maxWidth }, upcoming && styles.noDisc]}
+    >
       {!upcoming && (
         <View style={[styles.num, { backgroundColor: numBg }]}>
           {/* Gold ring + glow flags bonus while leaving the number readable. */}
@@ -47,10 +52,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgb(19,27,46)',
     borderRadius: 999,
     paddingVertical: 1,
+    // The disc hugs the rounded left cap; the name needs the same visual inset
+    // from the right one, which 3 did not give it — a name ending in a straight
+    // letter sat flush against the edge and read as clipped.
     paddingLeft: 1,
-    paddingRight: 3,
+    paddingRight: 9,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.10)',
+  },
+  noDisc: {
+    paddingLeft: 9,
   },
   num: {
     width: 14,
