@@ -68,7 +68,11 @@ let mockProfile: {
   data: ProfileData | undefined;
   isPending: boolean; isError: boolean; isRefetching: boolean; refetch: () => void;
 };
-jest.mock('@/api/profile', () => ({ __esModule: true, useProfile: () => mockProfile }));
+jest.mock('@/api/profile', () => ({
+  __esModule: true,
+  useProfile: () => mockProfile,
+  useUpdateName: () => ({ mutateAsync: jest.fn() }),
+}));
 
 jest.mock('@/api/clubs', () => ({ __esModule: true, useClubs: () => ({ data: {} }) }));
 jest.mock('@/api/fixtures', () => ({

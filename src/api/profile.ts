@@ -8,7 +8,7 @@
 // in AuthCacheClear (on SIGNED_IN/OUT/USER_UPDATED), this prevents any
 // cross-account data leak via TanStack's cache.
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useBiometricStore } from '@/store/biometricStore';
 import { useAuthStore } from '@/store/authStore';
@@ -60,5 +60,34 @@ export function useProfile() {
       return profileFromRow(data as ProfileRow, userEmail ?? '', faceIdEnabled);
     },
     staleTime: Infinity,
+  });
+}
+
+// Names are the only editable profile fields (dob and email are not — dob is
+// age-gated at signup, email is the auth identity). Mirrors useLinkTeam: one
+// UPDATE on the same row, then invalidate the user-scoped profile key so
+// useProfile refetches. mutateAsync rejects on failure, which is what the
+// field row surfaces inline.
+export function useUpdateName() {
+  const qc = useQueryClient();
+  const userId = useAuthStore((s) => s.session?.user.id);
+
+  return useMutation<void, Error, { firstName?: string; lastName?: string }>({
+    mutationFn: async ({ firstName, lastName }) => {
+      if (!userId) throw new Error('No authenticated user');
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          ...(firstName !== undefined ? { first_name: firstName } : {}),
+          ...(lastName !== undefined ? { last_name: lastName } : {}),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', userId);
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      if (!userId) return;
+      qc.invalidateQueries({ queryKey: queryKeys.profile(userId) });
+    },
   });
 }

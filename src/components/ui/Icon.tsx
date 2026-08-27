@@ -6,7 +6,7 @@ type IconName =
   | 'mail' | 'lock' | 'swap' | 'team'
   | 'fire' | 'google' | 'apple' | 'faceid'
   | 'person' | 'gear' | 'signOut'
-  | 'eye' | 'eyeOff'
+  | 'eye' | 'eyeOff' | 'pencil'
   | 'sun' | 'moon' | 'device';
 
 interface IconProps {
@@ -15,7 +15,17 @@ interface IconProps {
   size?: number;
 }
 
+// Keyed by name so swapping the icon in one slot (pencil <-> check on the
+// profile name rows, eye <-> eyeOff in the password field) REMOUNTS instead of
+// re-propping the native SVG views. react-native-svg does not re-apply the
+// <Svg> root's inherited fill/stroke to a reused <Path>, so any glyph whose
+// paths rely on that inheritance came back with SVG's default BLACK fill — the
+// profile pencil rendered as a solid black blob after a tick had stood there.
 export function Icon({ name, color = '#fff', size = 20 }: IconProps) {
+  return <Glyph key={name} name={name} color={color} size={size} />;
+}
+
+function Glyph({ name, color, size }: Required<IconProps>) {
   const s = size;
   switch (name) {
     case 'chevL':
@@ -70,6 +80,8 @@ export function Icon({ name, color = '#fff', size = 20 }: IconProps) {
       return <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><Path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><Circle cx="12" cy="12" r="3" /></Svg>;
     case 'eyeOff':
       return <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><Path d="M17.94 17.94A10 10 0 0112 20c-7 0-11-8-11-8a18 18 0 014.06-5.5" /><Path d="M9.9 4.24A10 10 0 0112 4c7 0 11 8 11 8a17 17 0 01-2.16 3.18" /><Path d="M1 1l22 22" /><Path d="M14.12 14.12a3 3 0 11-4.24-4.24" /></Svg>;
+    case 'pencil':
+      return <Svg width={s} height={s} viewBox="0 0 24 24"><Path d="M4 20h4l10-10a2.8 2.8 0 10-4-4L4 16v4z" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><Path d="M13.5 6.5l4 4" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" /></Svg>;
     default:
       return null;
   }
