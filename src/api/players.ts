@@ -106,7 +106,11 @@ export function rankTopPicks(
   return buckets;
 }
 
-export function useTopPicks() {
+// `anchorGw` overrides which gameweek the picks are scored on. The Top Picks
+// tab wants the default (it shows the gameweek in progress while one is live);
+// a screen picking a transfer target wants the gameweek that is still
+// actionable and passes it in — same explicit-anchor pattern as #168.
+export function useTopPicks(anchorGw?: number) {
   const players = usePlayers();
   const season = useSeasonState();
   const current = useCurrentGameweek();
@@ -115,7 +119,8 @@ export function useTopPicks() {
   // played, while the header pill names the upcoming one. Same anchor bug as
   // #168 on the Transfer tab. Both hooks read the one cached bootstrap query,
   // so this costs no extra request.
-  const gw = season.data?.kind === 'next' ? season.data.gw : current.data?.gw ?? 0;
+  const gw =
+    anchorGw ?? (season.data?.kind === 'next' ? season.data.gw : current.data?.gw ?? 0);
   const projections = useProjections(gw);
 
   const data = useMemo<Record<Position, TopPickPlayer[]> | undefined>(() => {
