@@ -10,6 +10,7 @@ import {
   useChips,
 } from '@/api/manager';
 import { makeTestQueryClient } from '../utils/renderWithProviders';
+import { CHIP_ICON } from '@/components/transfer/ChipsRow';
 
 jest.mock('@/api/fpl-client', () => ({ fplGet: jest.fn() }));
 jest.mock('@/api/profile', () => ({
@@ -83,6 +84,14 @@ describe('chipsFromHistory', () => {
     const fh = result.find((c) => c.id === 'fh');
     expect(bb).toEqual({ id: 'bb', name: 'Bench Boost',  sub: 'All 15 players score', available: false, playedGW: 12, icon: 'benchboost' });
     expect(fh).toEqual({ id: 'fh', name: 'Free Hit',     sub: 'One-week squad',       available: true, icon: 'freehit' });
+  });
+
+  // The tile map is keyed by DISPLAY NAME (the catalog's own `icon` field never
+  // reaches `TransferChip`), so renaming a chip here drops its glyph in silence.
+  it('names every chip the transfer tiles have an icon for', () => {
+    for (const c of chipsFromHistory(HISTORY_FIXTURE)) {
+      expect(CHIP_ICON[c.name]).toBeDefined();
+    }
   });
 });
 
