@@ -35,11 +35,12 @@ const SLOT_MAX = 72;
 const AVATAR_RATIO = 0.64;
 const PILL_MAX = 120;
 const STAGGER_FROM = 5;
-// Only the NAME drops, never the whole card. A card here carries a price pill
-// above its jersey, so staggering the card would land that pill and the jersey
-// alongside the neighbour's name; dropping the name alone keeps the jerseys in
-// one line and leaves the two name planes clear of everything else.
-const PILL_STAGGER = 22;
+// The gap between the two planes of a staggered row, matching ApexPitch. The
+// whole card drops, price pill included — dropping the name alone left the
+// jerseys in one line but the names looking mis-set, and it gave the price pill
+// nothing to overhang into, so a six-character price wrapped onto two lines and
+// pushed that one card's jersey out of the row.
+const STAGGER = 30;
 
 export function TransferPitch({
   rows,
@@ -125,7 +126,7 @@ interface TransferPlayerProps {
   slotW: number;
   avatarSize: number;
   pillMaxW: number;
-  /** Sits on the lower of the two name planes of a staggered row. */
+  /** Sits on the lower of the two planes of a staggered row. */
   dropped: boolean;
 }
 
@@ -142,24 +143,26 @@ function TransferPlayer({
       testID="transfer-slot"
       style={({ pressed }) => [
         styles.player,
-        { width: slotW },
+        // A FIXED width so the row can never sum past the pitch; the pills are
+        // free to be wider and overhang it.
+        { width: slotW, marginTop: dropped ? STAGGER : 0 },
         pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] },
       ]}
       onPress={onPress ? () => onPress(p) : undefined}
     >
-      <View style={styles.pricePill}>
-        <Text style={styles.priceText}>£{p.p.toFixed(1)}m</Text>
+      {/* Both of these carry a DEFINITE width, and that is the whole point of
+          them. A text measures itself against the nearest definite width above
+          it, which was the fixed slot — so a name truncated to a jersey's width
+          and `£15.5m` wrapped onto two lines, taking that card's jersey out of
+          line with the rest of the row. These boxes are the room the pills
+          actually have; the pills simply overhang the card. */}
+      <View testID="transfer-price-row" style={[styles.pillRow, { width: pillMaxW }]}>
+        <View style={styles.pricePill}>
+          <Text style={styles.priceText}>£{p.p.toFixed(1)}m</Text>
+        </View>
       </View>
       <AvatarDisc size={avatarSize} player={p} />
-      {/* A DEFINITE width, and that is the whole point of it. A name measures
-          itself against the nearest definite width above it, which was the
-          fixed slot — so every name was truncating to a jersey's width and the
-          cap below it could never widen one. This box is the room the pill
-          actually has; the pill simply overhangs the card. */}
-      <View
-        testID="transfer-pill-row"
-        style={[styles.pillRow, { width: pillMaxW }, dropped && { marginTop: PILL_STAGGER }]}
-      >
+      <View testID="transfer-pill-row" style={[styles.pillRow, { width: pillMaxW }]}>
         <PointPill name={p.name} upcoming maxWidth={pillMaxW} />
       </View>
     </Pressable>
@@ -181,9 +184,7 @@ const styles = StyleSheet.create({
   rows: {
     position: 'relative',
     flexDirection: 'column',
-    // Wider than the drop below, so a dropped name stays nearer its own jersey
-    // than the next row's price pill.
-    gap: 26,
+    gap: 20,
   },
   row: {
     flexDirection: 'row',
