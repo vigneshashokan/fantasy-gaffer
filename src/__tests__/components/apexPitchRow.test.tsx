@@ -37,7 +37,7 @@ describe('ApexPitch row layout', () => {
   });
 
   it('drops the 2nd and 4th of a five-wide row onto a lower plane', () => {
-    expect(slots(5).map((s) => s.marginTop ?? 0)).toEqual([0, 22, 0, 22, 0]);
+    expect(slots(5).map((s) => s.marginTop ?? 0)).toEqual([0, 30, 0, 30, 0]);
   });
 
   it('leaves a four-wide row on one plane', () => {
@@ -51,7 +51,7 @@ describe('ApexPitch row layout', () => {
     const drops = render(<ApexPitch rows={[row(5), row(3), row(2)]} />)
       .getAllByTestId('pitch-slot')
       .map((s) => StyleSheet.flatten(s.props.style).marginTop ?? 0);
-    expect(drops).toEqual([0, 22, 0, 22, 0, 0, 0, 0, 0, 0]);
+    expect(drops).toEqual([0, 30, 0, 30, 0, 0, 0, 0, 0, 0]);
   });
 });
 
@@ -96,6 +96,16 @@ describe('ApexPitchMarks', () => {
     const svg = render(<ApexPitchMarks width={340} height={420} />).toJSON() as any;
     expect(svg.props.bbWidth).toBe(340);
     expect(svg.props.bbHeight).toBe(420);
+  });
+
+  // The drawn pitch is far taller than a real half pitch, so a radius scaled
+  // off the height as well as the width came out a tall oval. Round means the
+  // radius answers to the width alone — pin that across two aspect ratios.
+  it('draws the centre circle round, whatever the pitch aspect ratio', () => {
+    const r = (h: number) =>
+      render(<ApexPitchMarks width={340} height={h} />).getByTestId('centre-circle').props;
+    expect(r(420).r).toBe(r(800).r);
+    expect(r(420).rx).toBeUndefined();
   });
 
   it('draws nothing before the pitch has been measured', () => {
