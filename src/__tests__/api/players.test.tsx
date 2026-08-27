@@ -10,6 +10,19 @@ jest.mock('@/lib/supabase', () => ({
 
 import { supabase } from '@/lib/supabase';
 
+let mockSeason: { data: { kind: string; gw?: number } | undefined } = { data: undefined };
+jest.mock('@/api/fixtures', () => ({
+  __esModule: true,
+  useSeasonState: () => mockSeason,
+  useCurrentGameweek: () => ({ data: { gw: 23 } }),
+}));
+jest.mock('@/api/projections', () => ({
+  __esModule: true,
+  useProjections: jest.fn(() => ({ data: new Map() })),
+}));
+
+import { useProjections } from '@/api/projections';
+
 const FIXTURE_ROWS: PlayerRow[] = [
   {
     id: 401, web_name: 'Haaland', team_id: 13,
@@ -97,5 +110,25 @@ describe('useTopPicks', () => {
     expect(result.current.data?.FWD).toHaveLength(8);
     expect(result.current.data?.FWD[0].name).toBe('Fwd0'); // ep_next=10
     expect(result.current.data?.FWD[7].name).toBe('Fwd7'); // ep_next=3
+  });
+
+  // `is_current` sits on a finished gameweek until the next deadline, so the
+  // picks have to follow the gameweek the header pill names, not that one
+  // (#168's anchor bug, other tab).
+  it.each([
+    ['live',  { kind: 'live',  gw: 23 }, 23],
+    ['next',  { kind: 'next',  gw: 24 }, 24],
+    ['complete', { kind: 'complete' },   23],
+  ])('ranks on the %s gameweek\'s projections', (_label, season, expected) => {
+    mockSeason = { data: season };
+    (supabase.from as jest.Mock).mockImplementation(() => ({
+      select: jest.fn().mockResolvedValue({ data: [], error: null }),
+    }));
+    const client = makeTestQueryClient();
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    renderHook(() => useTopPicks(), { wrapper });
+    expect(useProjections).toHaveBeenLastCalledWith(expected);
   });
 });

@@ -26,17 +26,19 @@ jest.mock('@/components/onboarding/SlideVisual', () => ({
 jest.mock('@/components/picks/PicksCard', () => ({ __esModule: true, PicksCard: () => null }));
 
 let mockSeason: { data: { kind: string; gw?: number } | undefined } = { data: undefined };
+const mockFixturesByGw = jest.fn((_gw: number) => ({ data: {} }));
 jest.mock('@/api/fixtures', () => ({
   __esModule: true,
   useSeasonState: () => mockSeason,
   useCurrentGameweek: () => ({ data: { gw: 23 } }),
-  useFixturesByGw: () => ({ data: {} }),
+  useFixturesByGw: (gw: number) => mockFixturesByGw(gw),
   currentSeasonLabel: () => '2025/26',
 }));
 jest.mock('@/api/players', () => ({
   __esModule: true,
   useTopPicks: () => ({
     data: { GKP: [], DEF: [], MID: [], FWD: [] } satisfies Record<Position, TopPickPlayer[]>,
+    gw: 24,
     isPending: false, isError: false, isRefetching: false, refetch: jest.fn(),
   }),
 }));
@@ -83,7 +85,13 @@ describe('Top Picks staleness notice (#181)', () => {
 
   it('hides it between gameweeks, when the picks are actually fresh', () => {
     mockSeason = { data: { kind: 'next', gw: 24 } };
-    expect(render(<TopPicksTab />).queryByText(STALE_NOTICE)).toBeNull();
+    const { queryByText, getByText } = render(<TopPicksTab />);
+    expect(queryByText(STALE_NOTICE)).toBeNull();
+    // The pill carries the same claim the missing subtitle implies.
+    getByText('GW24 picks updated');
+    // And the opponent strip under each name reads that same gameweek, not the
+    // finished one `is_current` still points at.
+    expect(mockFixturesByGw).toHaveBeenLastCalledWith(24);
   });
 
   it('hides it once the season is complete', () => {

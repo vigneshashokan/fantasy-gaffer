@@ -7,7 +7,7 @@ import { apexTokens } from '@/constants/apexTokens';
 import { useTopPicks } from '@/api/players';
 import { useSquad } from '@/api/squad';
 import { useClubs } from '@/api/clubs';
-import { useCurrentGameweek, useFixturesByGw } from '@/api/fixtures';
+import { useFixturesByGw, useNextDeadline } from '@/api/fixtures';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { PicksCard } from '@/components/picks/PicksCard';
@@ -26,16 +26,19 @@ export default function TransferTargetsScreen() {
     data: squad, isPending: squadPending, isError: squadError,
     isRefetching: squadRefetching, refetch: refetchSquad,
   } = useSquad();
+  // The gameweek you can still transfer for — the first whose deadline has not
+  // passed. `is_current + 1` was right most of the week and wrong pre-season,
+  // and it left the ranking on a different gameweek than the header claimed
+  // (#168, same reasoning as the Transfer tab).
+  const { data: deadline } = useNextDeadline();
   const {
     data: topPicks, isPending: picksPending, isError: picksError,
-    isRefetching: picksRefetching, refetch: refetchPicks,
-  } = useTopPicks();
+    isRefetching: picksRefetching, refetch: refetchPicks, gw: nextGw,
+  } = useTopPicks(deadline?.gw);
   const refetch = async () => {
     await Promise.all([refetchSquad(), refetchPicks()]);
   };
   const { data: clubs } = useClubs();
-  const { data: currentGw } = useCurrentGameweek();
-  const nextGw = Math.min(38, (currentGw?.gw ?? 0) + 1);
   const { data: fixtures } = useFixturesByGw(nextGw);
 
   const [selectedInId, setSelectedInId] = useState<string | null>(null);

@@ -19,7 +19,6 @@ import { apexTokens } from '@/constants/apexTokens';
 import type { Position } from '@/types/fpl';
 import { useTopPicks } from '@/api/players';
 import {
-  useCurrentGameweek,
   useFixturesByGw,
   useSeasonState,
   currentSeasonLabel,
@@ -50,8 +49,6 @@ export default function TopPicksTab() {
   const progress = useSharedValue(0);
   const reduced = useReducedMotion();
 
-  const { data: currentGw }                         = useCurrentGameweek();
-  const gw = currentGw?.gw;
   const { data: seasonState }                       = useSeasonState();
   const seasonLabel = currentSeasonLabel();
   const seasonOver = seasonState?.kind === 'complete';
@@ -60,9 +57,13 @@ export default function TopPicksTab() {
     isPending: picksPending,
     isError: picksError,
     refetch,
+    gw,
   } = useTopPicks();
   const pull = usePullRefresh(refetch);
-  const { data: fixtures }                          = useFixturesByGw(gw ?? 0);
+  // Same gameweek the picks were ranked on, never `is_current` — that sits on
+  // the finished gameweek until the next deadline, so the opponent under each
+  // player was last week's.
+  const { data: fixtures }                          = useFixturesByGw(gw);
   const { data: squad }                             = useSquad();
 
   const squadNames = new Set<string>(
@@ -203,7 +204,7 @@ function StatusPill({
   }
   return (
     <View style={[styles.livePill, { backgroundColor: tk.headStrip }]}>
-      <Text style={[styles.liveText, { color: tk.variant }]}>GW{state.gw} Next</Text>
+      <Text style={[styles.liveText, { color: tk.variant }]}>GW{state.gw} picks updated</Text>
     </View>
   );
 }
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 8,
+    paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 999,
   },
@@ -228,8 +229,8 @@ const styles = StyleSheet.create({
   },
   liveText: {
     fontFamily: 'Archivo_700Bold',
-    fontSize: 10,
-    letterSpacing: 0.7,
+    fontSize: 11.5,
+    letterSpacing: 0.69,
   },
   controlWrap: {
     paddingHorizontal: GUTTER,

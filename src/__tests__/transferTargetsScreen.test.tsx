@@ -34,18 +34,25 @@ jest.mock('@/api/squad', () => ({
   __esModule: true,
   useSquad: () => ({ data: { starters: [HAALAND], bench: [] } satisfies { starters: SquadPlayer[]; bench: SquadPlayer[] }, isPending: false }),
 }));
+const mockTopPicks = jest.fn((gw?: number) => ({
+  data: { GKP: [], DEF: [], MID: [], FWD: [HAALAND, WOOD] } satisfies Record<Position, TopPickPlayer[]>,
+  gw: gw ?? 0,
+  isPending: false,
+}));
 jest.mock('@/api/players', () => ({
   __esModule: true,
-  useTopPicks: () => ({ data: { GKP: [], DEF: [], MID: [], FWD: [HAALAND, WOOD] } satisfies Record<Position, TopPickPlayer[]>, isPending: false }),
+  useTopPicks: (gw?: number) => mockTopPicks(gw),
 }));
 jest.mock('@/api/clubs', () => ({
   __esModule: true,
   useClubs: () => ({ data: { MCI: { name: 'Man City' }, NEW: { name: 'Newcastle' } } }),
 }));
+const mockFixturesByGw = jest.fn((_gw: number) => ({ data: {} }));
 jest.mock('@/api/fixtures', () => ({
   __esModule: true,
-  useCurrentGameweek: () => ({ data: { gw: 23 } }),
-  useFixturesByGw: () => ({ data: {} }),
+  // GW23 is in progress; GW24 is the one you can still transfer for.
+  useNextDeadline: () => ({ data: { gw: 24, iso: '2026-02-14T11:00:00Z' } }),
+  useFixturesByGw: (gw: number) => mockFixturesByGw(gw),
 }));
 
 import TransferTargetsScreen from '@/app/(home)/transfer-targets/[id]';
@@ -62,6 +69,15 @@ describe('TransferTargetsScreen', () => {
     getByText('OUT');
     getByText('Wood');
     expect(getAllByText('Haaland').length).toBeGreaterThan(0);
+  });
+
+  // Header copy, ranking and fixture strip all have to name one gameweek: the
+  // next deadline. Ranking on the live gameweek under a "GW24" header sold
+  // targets scored for a gameweek already under way (#168).
+  it('anchors ranking and fixtures on the gameweek the header claims', () => {
+    render(<TransferTargetsScreen />);
+    expect(mockTopPicks).toHaveBeenLastCalledWith(24);
+    expect(mockFixturesByGw).toHaveBeenLastCalledWith(24);
   });
 
   it('does not show the Confirm bar until a target row is selected', () => {

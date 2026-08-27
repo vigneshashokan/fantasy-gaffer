@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from './queryKeys';
 import type { Player, Position, TopPickPlayer, ClubCode, PlayerStatus } from '@/types/fpl';
-import { useCurrentGameweek } from './fixtures';
+import { useCurrentGameweek, useSeasonState } from './fixtures';
 import { useProjections, type ProjectionStat } from './projections';
 
 export interface PlayerRow {
@@ -106,15 +106,30 @@ export function rankTopPicks(
   return buckets;
 }
 
-export function useTopPicks() {
+// `anchorGw` overrides which gameweek the picks are scored on. The Top Picks
+// tab wants the default (it shows the gameweek in progress while one is live);
+// a screen picking a transfer target wants the gameweek that is still
+// actionable and passes it in — same explicit-anchor pattern as #168.
+export function useTopPicks(anchorGw?: number) {
   const players = usePlayers();
-  const gw = useCurrentGameweek();
-  const projections = useProjections(gw.data?.gw ?? 0);
+  const season = useSeasonState();
+  const current = useCurrentGameweek();
+  // Once a gameweek finishes, `is_current` stays on it until the next deadline
+  // passes — so ranking on it scores the picks against a gameweek already
+  // played, while the header pill names the upcoming one. Same anchor bug as
+  // #168 on the Transfer tab. Both hooks read the one cached bootstrap query,
+  // so this costs no extra request.
+  const gw =
+    anchorGw ?? (season.data?.kind === 'next' ? season.data.gw : current.data?.gw ?? 0);
+  const projections = useProjections(gw);
 
   const data = useMemo<Record<Position, TopPickPlayer[]> | undefined>(() => {
     if (!players.data) return undefined;
     return rankTopPicks(players.data, projections.data ?? new Map());
   }, [players.data, projections.data]);
 
-  return { ...players, data };
+  // The gameweek the ranking was scored on — the screen's fixture strip has to
+  // read the same one, or the opponent under each name belongs to a different
+  // gameweek than the xPts beside it.
+  return { ...players, data, gw };
 }
