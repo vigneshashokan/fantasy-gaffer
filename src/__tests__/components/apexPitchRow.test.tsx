@@ -41,6 +41,16 @@ describe('ApexPitch row layout', () => {
   it('leaves a four-wide row on one plane', () => {
     expect(slots(4).every((s) => !s.marginTop)).toBe(true);
   });
+
+  // The pitch knows nothing about position — it staggers by row length — so a
+  // 5-3-2's back line splits the same way a 3-5-2's midfield does, and only
+  // the row that needs it does.
+  it('staggers a five-DEF back line and leaves the rest of a 5-3-2 alone', () => {
+    const drops = render(<ApexPitch rows={[row(5), row(3), row(2)]} />)
+      .getAllByTestId('pitch-slot')
+      .map((s) => StyleSheet.flatten(s.props.style).marginTop ?? 0);
+    expect(drops).toEqual([0, 22, 0, 22, 0, 0, 0, 0, 0, 0]);
+  });
 });
 
 describe('ApexPitch name pills', () => {
