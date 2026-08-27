@@ -172,6 +172,26 @@ thing that breaks *silently* if the next person undoes it.
   to jest unless something asserts it**. The eight onboarding screens and `LockScreen` deliberately
   keep `t.bg` — pre-auth surfaces, not yet ported off the mock.
 
+- **Chip tiles + two smaller polish items — PR #246.** The four chip tiles gained an icon
+  (`wildcard`/`bolt`/`benchBoost`/`captain` in `Icon.tsx`) and lost their slack (`124/20x15` →
+  `94/9x9`, three across a 390pt screen instead of two and a bit). **The mock draws these tiles
+  bare — the icons are ours**, so there is nothing to "restore" them to. **`CHIP_ICON` is keyed by
+  the chip's DISPLAY NAME**, exactly like `attachChipTips`, and that looks like an oversight
+  because `CHIP_CATALOG` carries its own `icon` field two files away — but that field has never
+  reached `TransferChip` and threading it through would make every typed chip fixture in the suite
+  require it. An unknown name draws no icon rather than crashing, and a guard in
+  `manager.test.tsx` fails if a catalog rename drops a glyph. `ChipsRow`'s local `BoltIcon` is
+  gone; the tip header takes the shared stroked `bolt`. Two riders in the same PR: the upcoming
+  points card now **centres the season total in the space the bars leave** (the mock left-pins it,
+  which only balanced against the small pill the bar chart replaced in #233), and
+  **`formatDeadline` states AM/PM** — one formatter behind both the Team and Transfer banners, so
+  a bare `18:30` was ambiguous in every timezone at once.
+  - **How the glyphs were judged, since jest and tsc see nothing of an SVG:** the candidates were
+    rasterised headless (`Brave Browser --headless --screenshot` over a scratch HTML page) at 16/18/22pt
+    and looked at. Two of six first attempts were wrong in ways no test could report — an arc with the
+    sweep flag flipped drew a broken ring instead of a captain's `C`, and an armband glyph read as a
+    toggle switch. Worth repeating before committing to hand-written path data.
+
 **Only the profile sheet has been seen on a device** — and the first look at it found a bug jest
 had no way to catch (the black-pencil fill, recorded under Architecture). Every other claim above
 is pinned in jest only, and jest can see neither a colour, nor a gradient, nor a sheet detent, nor
