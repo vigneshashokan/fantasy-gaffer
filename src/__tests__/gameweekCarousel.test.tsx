@@ -1,4 +1,6 @@
 import React from 'react';
+import { fireEvent } from '@testing-library/react-native';
+import { Dimensions } from 'react-native';
 import { renderWithProviders } from './utils/renderWithProviders';
 
 jest.mock('expo-router', () => ({
@@ -9,10 +11,17 @@ jest.mock('@/store/themeStore', () => ({
   __esModule: true,
   useThemeStore: () => ({ paletteKey: 'classic', dark: true, pitchStyle: 'classic' }),
 }));
-// Stand in for the page so we assert shell wiring, not page internals.
+// Stand in for the page so we assert shell wiring, not page internals. It
+// prints its own `active` flag, which is what tells a page to snap its scroll
+// back to the top.
 jest.mock('@/components/team/GameweekScreen', () => {
   const { Text } = jest.requireActual('react-native');
-  return { __esModule: true, GameweekScreen: ({ gw }: { gw: number }) => <Text>Page {gw}</Text> };
+  return {
+    __esModule: true,
+    GameweekScreen: ({ gw, active }: { gw: number; active: boolean }) => (
+      <Text>{`Page ${gw}${active ? ' active' : ''}`}</Text>
+    ),
+  };
 });
 jest.mock('@/components/team/LinkTeamCta', () => {
   const { Text } = jest.requireActual('react-native');
@@ -83,7 +92,41 @@ describe('TeamTab carousel shell', () => {
     mockTeam = liveTeam(30);
     const { getByTestId, getAllByText } = renderWithProviders(<TeamTab />);
     expect(getByTestId('gw-carousel')).toBeTruthy();
-    expect(getAllByText(/^Page \d+$/).length).toBeGreaterThan(0);
+    expect(getAllByText(/^Page \d+( active)?$/).length).toBeGreaterThan(0);
+  });
+
+  // Pages keep their scroll position while they stay mounted, so each one is
+  // told when it stops being the page in view and resets itself. That flag must
+  // only move once a page is SQUARELY in view: the label flips at the halfway
+  // point, and a page reset while still half on screen jumps visibly.
+  it('marks a page active only once the scroll settles on a boundary', () => {
+    mockTeam = liveTeam(30);
+    const { getByTestId, getByText, queryByText } = renderWithProviders(<TeamTab />);
+    const W = Dimensions.get('window').width;
+    const carousel = getByTestId('gw-carousel');
+    const scrollTo = (x: number) =>
+      fireEvent.scroll(carousel, {
+        nativeEvent: {
+          contentOffset: { x, y: 0 },
+          contentSize: { width: W * 31, height: 640 },
+          layoutMeasurement: { width: W, height: 640 },
+        },
+      });
+
+    expect(getByText('Page 30 active')).toBeTruthy();
+
+    // Past halfway towards GW31 — the label has flipped, but nothing has
+    // settled, so GW30 is still the page holding its scroll position.
+    scrollTo(W * 29.5);
+    expect(getByText('Gameweek 31')).toBeTruthy();
+    expect(getByText('Page 30 active')).toBeTruthy();
+    expect(queryByText('Page 31 active')).toBeNull();
+
+    // Landed on GW31: GW30 is now off screen and free to reset. (Only the one
+    // page mounts under jest, so GW30 losing the flag is the whole assertion.)
+    scrollTo(W * 30);
+    expect(getByText('Page 30')).toBeTruthy();
+    expect(queryByText('Page 30 active')).toBeNull();
   });
 
   it('shows the team name as the header', () => {
