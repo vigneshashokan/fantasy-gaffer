@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import Svg, { Rect, Path, Circle, Ellipse, Line } from 'react-native-svg';
+import Svg, { Rect, Path, Circle, Line } from 'react-native-svg';
 
 interface ApexPitchMarksProps {
   width: number;
@@ -12,14 +12,13 @@ interface ApexPitchMarksProps {
 // circle-radius down the card and the crown of the circle takes the top inset
 // that every other edge gets. Everything else is a fraction of the rectangle,
 // so it all scales with whatever onLayout reports.
-//   centre circle r = 9.15m       → 14.5% of pitch width, 16% of its height
+//   centre circle r = 9.15m       → 14.5% of pitch WIDTH, and round (see below)
 //   penalty area  40.32m × 16.5m  → 54% × 27%
 //   goal area     18.32m × 5.5m   → 28% × 11%
 //   penalty spot  11m from goal   → 20% of pitch height
 //   D arc         r = 9.15m       → 30% of pitch width
 //   goal mouth    7.32m           → 11.4% of pitch width
-const CIRCLE_RX = 0.145;
-const CIRCLE_RY = 0.16;
+const CIRCLE_R = 0.145;
 
 export function ApexPitchMarks({ width: W, height: H }: ApexPitchMarksProps) {
   if (W <= 0 || H <= 0) return null;
@@ -33,13 +32,16 @@ export function ApexPitchMarks({ width: W, height: H }: ApexPitchMarksProps) {
 
   const inset = Math.min(W, H) * 0.025;
   const iw = W - inset * 2;
-  // The half above the halfway line has to fit inside the same inset, and it is
-  // itself a fraction of the height being solved for — hence the divisor.
-  const ih = (H - inset * 2) / (1 + CIRCLE_RY);
+  // A TRUE circle, so the radius is a fraction of the WIDTH alone. The drawn
+  // pitch is far taller than a real half pitch — the squad needs the room — so
+  // taking the vertical radius off the height, as the real-world 9.15m/52.5m
+  // ratio invites, stretched the centre circle into a tall oval.
+  const circleR = iw * CIRCLE_R;
+  // The rectangle's top edge is the halfway line and the circle straddles it,
+  // so the circle's upper half takes the top inset and the rectangle gets what
+  // is left. Floored so an extreme aspect ratio can't hand <Rect> a negative.
+  const ih = Math.max(1, H - inset * 2 - circleR);
   const top = H - inset - ih;
-
-  const circleRx = iw * CIRCLE_RX;
-  const circleRy = ih * CIRCLE_RY;
 
   const penaltyW = iw * 0.54;
   const penaltyH = ih * 0.27;
@@ -79,7 +81,7 @@ export function ApexPitchMarks({ width: W, height: H }: ApexPitchMarksProps) {
       <Rect x={inset} y={top} width={iw} height={ih} {...stroke} />
 
       {/* centre circle, half of it in the opponent's half we don't draw */}
-      <Ellipse cx={W / 2} cy={top} rx={circleRx} ry={circleRy} {...stroke} />
+      <Circle testID="centre-circle" cx={W / 2} cy={top} r={circleR} {...stroke} />
       <Circle cx={W / 2} cy={top} r={spotR} fill="#fff" fillOpacity={0.5} stroke="none" />
 
       {/* penalty area */}

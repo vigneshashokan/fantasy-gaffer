@@ -98,6 +98,16 @@ describe('ApexPitchMarks', () => {
     expect(svg.props.bbHeight).toBe(420);
   });
 
+  // The drawn pitch is far taller than a real half pitch, so a radius scaled
+  // off the height as well as the width came out a tall oval. Round means the
+  // radius answers to the width alone — pin that across two aspect ratios.
+  it('draws the centre circle round, whatever the pitch aspect ratio', () => {
+    const r = (h: number) =>
+      render(<ApexPitchMarks width={340} height={h} />).getByTestId('centre-circle').props;
+    expect(r(420).r).toBe(r(800).r);
+    expect(r(420).rx).toBeUndefined();
+  });
+
   it('draws nothing before the pitch has been measured', () => {
     expect(render(<ApexPitchMarks width={0} height={0} />).toJSON()).toBeNull();
   });
