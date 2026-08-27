@@ -2,6 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { ApexPitch } from '@/components/pitch/ApexPitch';
+import { ApexPitchMarks } from '@/components/pitch/ApexPitchMarks';
 import type { PitchPlayer } from '@/types/fpl';
 
 // jest's default window is far wider than any phone, and every pill cap would
@@ -63,5 +64,21 @@ describe('ApexPitch name pills', () => {
       .map((p) => StyleSheet.flatten(p.props.style).maxWidth as number);
     expect(caps[2]).toBeGreaterThan(caps[0]);
     expect(caps[0]).toEqual(caps[4]);
+  });
+});
+
+describe('ApexPitchMarks', () => {
+  // Without an explicit size the SVG viewport is the pitch's content box while
+  // its origin is the border box, so every marking drifts up and left by the
+  // padding. Nothing in the markings themselves looks wrong when that happens,
+  // which is why it stood for so long — pin the viewport instead.
+  it('sizes its viewport to the whole pitch, padding included', () => {
+    const svg = render(<ApexPitchMarks width={340} height={420} />).toJSON() as any;
+    expect(svg.props.bbWidth).toBe(340);
+    expect(svg.props.bbHeight).toBe(420);
+  });
+
+  it('draws nothing before the pitch has been measured', () => {
+    expect(render(<ApexPitchMarks width={0} height={0} />).toJSON()).toBeNull();
   });
 });

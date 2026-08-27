@@ -52,7 +52,15 @@ export function ApexPitchMarks({ width: W, height: H }: ApexPitchMarksProps) {
   const goalLineY = inset + ih;
 
   return (
+    // width/height are load-bearing, not redundant with absoluteFill. Left off,
+    // react-native-svg defaults them to '100%', which Yoga resolves against the
+    // pitch's CONTENT box while `position: absolute` anchors the view to its
+    // border box — so the overlay came up short by exactly the pitch's padding
+    // (12pt of it on the right, 48 at the bottom) and every marking drifted up
+    // and left, leaving the keeper standing outside his own goal line.
     <Svg
+      width={W}
+      height={H}
       viewBox={`0 0 ${W} ${H}`}
       preserveAspectRatio="none"
       style={StyleSheet.absoluteFill}
