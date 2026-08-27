@@ -192,6 +192,43 @@ thing that breaks *silently* if the next person undoes it.
     sweep flag flipped drew a broken ring instead of a captain's `C`, and an armband glyph read as a
     toggle switch. Worth repeating before committing to hand-written path data.
 
+- **The pitch — PR #248, and the first port slice a device actually judged.** Two bugs and a
+  redraw, all three invisible to jest and tsc. **A five-wide row (3-5-2's midfield, 5-3-2's back
+  line) rendered its fifth player completely off the pitch**, and had done since the row was
+  written: a slot was `minWidth`, so a name pill that outgrew it widened the *card*, five widened
+  cards summed past the pitch, and `overflow: hidden` ate the last one. Slots are a fixed `width`
+  now — and **the 2nd and 4th of such a row drop onto a lower plane** (`STAGGER`, 22pt) so the
+  pills, which still overhang their slots, pass each other instead of colliding. **The stagger
+  keys on ROW LENGTH, never position** — a 5-3-2 back line has to split exactly like a 3-5-2
+  midfield, pinned in `apexPitchRow.test.tsx`.
+  - **The trap the fix walked straight into, twice: a name is measured against the nearest
+    DEFINITE width above it.** Pinning the slot made that width the slot, so every pill in the
+    squad came out at exactly `slot + disc + padding` and any longer name silently ellipsized —
+    which looked like a *padding* bug on the two worst names and nothing at all on the rest.
+    `pillRow` therefore carries its own definite width (the room that slot actually has) and the
+    pill overhangs the card. **`maxWidth` on the pill cannot help and never could — it sits below
+    the constraint, not above it**, which is why an inert cap read as a working one for two rounds.
+  - **`space-around` fixes the outer slot's centre at half a share whatever the slot width**, so
+    shrinking slots does NOT move them off the pitch edge — only padding the row does. `ROW_INSET`
+    is that padding, and `SIDE_CHROME` must carry it (plus `GUTTER` and the pitch's own padding) or
+    a full row runs over. The two are one number in two places; a test asserts the row still fits.
+  - **The markings were drifting up and left, and the geometry was never wrong.** `<Svg>` carried
+    no `width`/`height`, so react-native-svg defaults both to `'100%'` — which Yoga resolves
+    against the parent's CONTENT box while `position: absolute` anchors the view to its BORDER box.
+    The overlay was short by exactly the pitch's padding (12pt right, 48 bottom) and everything
+    scaled with it, putting the keeper outside his own goal line. Explicit `width={W} height={H}`;
+    the test pins `bbWidth`/`bbHeight`, which returned the literal `"100%"` before the fix.
+  - Markings redrawn to a true half pitch on the user's sketch: the rectangle's top edge **is** the
+    halfway line with the full centre circle straddling it, and the penalty area pulled back to 54%
+    × 27% (from 63% × 33%) so the defence is not standing inside it. The rectangle's height falls
+    out of the circle radius — the half above the line must fit the same inset as every other edge,
+    and that radius is a fraction of the height, hence the divisor.
+  - **`TransferPitch` shares `ApexPitchMarks`**, so it took the viewport fix and the redraw for
+    free — but it has its own slots, pills and `SIDE_CHROME`, and none of the row work above.
+  - **Every round of this was judged by rasterising headless**, the same `Brave --headless` trick
+    the chip glyphs used, and every round the device still found something jest had signed off.
+    Measuring the pills out of a screenshot in points is what finally identified the clamp.
+
 **Only the profile sheet has been seen on a device** — and the first look at it found a bug jest
 had no way to catch (the black-pencil fill, recorded under Architecture). Every other claim above
 is pinned in jest only, and jest can see neither a colour, nor a gradient, nor a sheet detent, nor
