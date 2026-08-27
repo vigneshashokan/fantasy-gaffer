@@ -14,7 +14,8 @@ interface TabHeaderProps {
   title: string;
   tk: ApexTokens;
   trailing?: React.ReactNode;
-  subtitle?: string;
+  /** One muted line under the title, or several. */
+  subtitle?: string | string[];
 }
 
 export function TabHeader({ title, tk, trailing, subtitle }: TabHeaderProps) {
@@ -26,9 +27,11 @@ export function TabHeader({ title, tk, trailing, subtitle }: TabHeaderProps) {
         </Text>
         {trailing}
       </View>
-      {subtitle ? (
-        <Text style={[styles.subtitle, { color: tk.variant }]}>{subtitle}</Text>
-      ) : null}
+      {[subtitle ?? []].flat().map((line) => (
+        <Text key={line} style={[styles.subtitle, { color: tk.variant }]}>
+          {line}
+        </Text>
+      ))}
     </View>
   );
 }

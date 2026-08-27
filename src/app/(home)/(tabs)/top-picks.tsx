@@ -22,6 +22,7 @@ import {
   useFixturesByGw,
   useSeasonState,
   currentSeasonLabel,
+  formatDeadline,
   type SeasonPhase,
 } from '@/api/fixtures';
 import { useSquad } from '@/api/squad';
@@ -58,6 +59,7 @@ export default function TopPicksTab() {
     isError: picksError,
     refetch,
     gw,
+    updatedAt,
   } = useTopPicks();
   const pull = usePullRefresh(refetch);
   // Same gameweek the picks were ranked on, never `is_current` — that sits on
@@ -117,11 +119,15 @@ export default function TopPicksTab() {
         // Only true while a gameweek is actually in progress — between
         // gameweeks the picks ARE fresh, so the old always-on subtitle was
         // telling users their data was stale when it wasn't (#181).
-        subtitle={
-          seasonState?.kind === 'live'
-            ? 'Top Picks will refresh once the current game week is done.'
-            : undefined
-        }
+        subtitle={[
+          ...(seasonState?.kind === 'live'
+            ? ['Top Picks will refresh once the current game week is done.']
+            : []),
+          // Absent off-season and on a cold start, when there is no projection
+          // row to date — the picks then rank on ep_next, which is FPL's number
+          // and not ours to timestamp.
+          ...(updatedAt ? [`xPts last updated at ${formatDeadline(updatedAt)}`] : []),
+        ]}
       />
 
       {seasonOver && (

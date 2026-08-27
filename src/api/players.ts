@@ -11,7 +11,7 @@ import { supabase } from '@/lib/supabase';
 import { queryKeys } from './queryKeys';
 import type { Player, Position, TopPickPlayer, ClubCode, PlayerStatus } from '@/types/fpl';
 import { useCurrentGameweek, useSeasonState } from './fixtures';
-import { useProjections, type ProjectionStat } from './projections';
+import { useProjections, useProjectionsUpdatedAt, type ProjectionStat } from './projections';
 
 export interface PlayerRow {
   id: number;
@@ -122,6 +122,7 @@ export function useTopPicks(anchorGw?: number) {
   const gw =
     anchorGw ?? (season.data?.kind === 'next' ? season.data.gw : current.data?.gw ?? 0);
   const projections = useProjections(gw);
+  const updated = useProjectionsUpdatedAt(gw);
 
   const data = useMemo<Record<Position, TopPickPlayer[]> | undefined>(() => {
     if (!players.data) return undefined;
@@ -131,5 +132,7 @@ export function useTopPicks(anchorGw?: number) {
   // The gameweek the ranking was scored on — the screen's fixture strip has to
   // read the same one, or the opponent under each name belongs to a different
   // gameweek than the xPts beside it.
-  return { ...players, data, gw };
+  // ...and when the model last wrote them, for the same reason: the screen
+  // must name the freshness of the numbers it is showing, not of its fetch.
+  return { ...players, data, gw, updatedAt: updated.data ?? undefined };
 }

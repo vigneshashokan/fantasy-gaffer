@@ -45,3 +45,28 @@ export function useProjections(gw: number) {
     enabled: Number.isFinite(gw) && gw > 0,
   });
 }
+
+// When the model last wrote this gameweek's projections. Its own query rather
+// than a field on `useProjections`: that one's data is a `Map`, which the
+// persisted cache serialises through `mapCodec`, so widening its shape costs a
+// buster bump and touches every consumer. Newest row wins — the cron upserts
+// them in one batch. Null (never undefined — TanStack rejects that) when the
+// table has no row for the gameweek, which is the off-season/cold-start case.
+export function useProjectionsUpdatedAt(gw: number) {
+  return useQuery({
+    queryKey: queryKeys.projectionsUpdated(gw),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('projections')
+        .select('computed_at')
+        .eq('gw', gw)
+        .order('computed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.computed_at as string | undefined) ?? null;
+    },
+    staleTime: 10 * 60 * 1000,
+    enabled: Number.isFinite(gw) && gw > 0,
+  });
+}
