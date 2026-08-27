@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { track } from '@/lib/analytics';
 import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -26,6 +26,8 @@ interface GameweekScreenProps {
   gw: number;
   width: number;
   height: number;
+  /** True only for the page currently in view — see the reset below. */
+  active: boolean;
   savedCaptain: string;
   pendingCaptain: string;
   pendingSuggestions: Record<string, boolean>;
@@ -41,6 +43,7 @@ export function GameweekScreen({
   gw,
   width,
   height,
+  active,
   savedCaptain,
   pendingCaptain,
   pendingSuggestions,
@@ -57,6 +60,15 @@ export function GameweekScreen({
 
   const { data: at, isPending, isError, noSquad, refetch } = useApexTeam(gw);
   const pull = usePullRefresh(refetch);
+
+  // The carousel keeps its neighbours mounted, so a page holds its scroll
+  // position the whole time it is off screen — leave one halfway down and it
+  // was still halfway down when you swiped back to it. Reset it as soon as it
+  // stops being the page in view, so every gameweek opens at the top.
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  useEffect(() => {
+    if (!active) scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }, [active]);
 
   // Decision surfaces are only actionable on the upcoming GW (editable). Fire
   // one decision_viewed per surface when that page's data is ready. (Carousel
@@ -118,6 +130,7 @@ export function GameweekScreen({
     <View testID="gw-page" style={{ width, height, backgroundColor: tk.bg }}>
       <ScrollView
         testID="gw-scroll"
+        ref={scrollRef}
         style={{ flex: 1 }}
         contentContainerStyle={[
           styles.scroll,

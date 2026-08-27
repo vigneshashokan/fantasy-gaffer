@@ -44,7 +44,7 @@ import type { ApexTeamData } from '@/api/squad';
 import { apexTokens } from '@/constants/apexTokens';
 
 const baseProps = {
-  width: 320, height: 640,
+  width: 320, height: 640, active: true,
   savedCaptain: '', pendingCaptain: '', pendingSuggestions: {},
   onPickCaptain: jest.fn(), onToggleSuggestion: jest.fn(), onToggleAllSuggestions: jest.fn(),
   onUndo: jest.fn(), onConfirm: jest.fn(), onOpenPlayer: jest.fn(),

@@ -32,6 +32,8 @@ export default function TeamTab() {
   // The gameweek currently in view; drives the selector's label, state and
   // paging targets. Null until the first scroll — falls back to the live gw.
   const [activeGw, setActiveGw] = useState<number | null>(null);
+  // The page squarely in view, which is a different thing: see onSwipe.
+  const [settledGw, setSettledGw] = useState<number | null>(null);
   const listRef = useRef<FlatList<number>>(null);
 
   // Live team — drives the gating states and the page-list bounds.
@@ -115,8 +117,17 @@ export default function TeamTab() {
   // the page passes the halfway point instead of lagging behind the swipe.
   const onSwipe = (offsetX: number) => {
     if (!width) return;
-    const landed = gwList[Math.round(offsetX / width)];
-    if (landed != null) setActiveGw(landed);
+    const index = Math.round(offsetX / width);
+    const landed = gwList[index];
+    if (landed == null) return;
+    setActiveGw(landed);
+    // Pages stay mounted either side of this one and keep their scroll
+    // position, so `settledGw` tells the rest to snap back to the top. It moves
+    // only once a page is squarely in view: `activeGw` flips at the halfway
+    // point, and resetting a page that is still half on screen would be visible
+    // as a jump. Every settle — a swipe, an arrow, a reduced-motion jump — ends
+    // with a scroll event exactly on the boundary.
+    if (Math.abs(offsetX - index * width) < 1) setSettledGw(landed);
   };
 
   const toggleSuggestion = (id: string) =>
@@ -194,6 +205,7 @@ export default function TeamTab() {
           renderItem={({ item }) => (
             <GameweekScreen
               gw={item}
+              active={item === (settledGw ?? liveGw)}
               width={width}
               height={pageH}
               savedCaptain={savedCaptain}
