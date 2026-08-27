@@ -131,6 +131,18 @@ thing that breaks *silently* if the next person undoes it.
   didn't float over the pitch; grouping them into the capsule deleted that machinery outright
   (per-gameweek scroll ledger, two `Animated.Value`s, the `onVerticalScroll` prop). Don't
   reintroduce it.
+  - **Every page must open at the top, and that costs a SECOND piece of state — PR #250.** The
+    carousel keeps its neighbours mounted (`windowSize={3}`), so a page holds its scroll offset
+    the whole time it is off screen: leave one halfway down and it was still halfway down when
+    you swiped back. Each page resets itself off an `active` prop, driven by **`settledGw`, which
+    is deliberately NOT `activeGw`** — that one flips as the swipe passes halfway (see the label
+    above), and resetting a page still half on screen is a visible jump. `settledGw` moves only
+    on a scroll event landing squarely on a page boundary. **`onMomentumScrollEnd` is the obvious
+    signal and is wrong**: reduced motion pages with `animated: false`, which fires no momentum
+    end, so the arrows would silently stop resetting anything for exactly the users least able to
+    tolerate a surprise scroll position. The boundary event covers all three paths (swipe, arrow,
+    reduced-motion jump). Only the flag's timing is visible to jest — the scroll call itself is
+    not — so `gameweekCarousel.test.tsx` pins the halfway/boundary split.
 - **Points card — PR #232.** Two variants, and the second is the one that was missing: **before
   kickoff every per-gameweek number is zero**, so the card leads on the season total plus a
   "Yet to play" pill rather than a 58pt `0` over three em-dashes. That is the state the Team tab

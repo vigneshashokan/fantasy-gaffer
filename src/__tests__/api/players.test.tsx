@@ -19,6 +19,7 @@ jest.mock('@/api/fixtures', () => ({
 jest.mock('@/api/projections', () => ({
   __esModule: true,
   useProjections: jest.fn(() => ({ data: new Map() })),
+  useProjectionsUpdatedAt: jest.fn(() => ({ data: null })),
 }));
 
 import { useProjections } from '@/api/projections';

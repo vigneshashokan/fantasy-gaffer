@@ -33,12 +33,18 @@ jest.mock('@/api/fixtures', () => ({
   useCurrentGameweek: () => ({ data: { gw: 23 } }),
   useFixturesByGw: (gw: number) => mockFixturesByGw(gw),
   currentSeasonLabel: () => '2025/26',
+  // Stubbed, not the real one: requireActual on this module drags in
+  // supabase (AsyncStorage) and kills the suite. What matters here is that
+  // the screen routes the timestamp through the shared formatter.
+  formatDeadline: (iso: string) => `fmt(${iso})`,
 }));
+let mockUpdatedAt: string | undefined;
 jest.mock('@/api/players', () => ({
   __esModule: true,
   useTopPicks: () => ({
     data: { GKP: [], DEF: [], MID: [], FWD: [] } satisfies Record<Position, TopPickPlayer[]>,
     gw: 24,
+    updatedAt: mockUpdatedAt,
     isPending: false, isError: false, isRefetching: false, refetch: jest.fn(),
   }),
 }));
@@ -97,5 +103,27 @@ describe('Top Picks staleness notice (#181)', () => {
   it('hides it once the season is complete', () => {
     mockSeason = { data: { kind: 'complete' } };
     expect(render(<TopPicksTab />).queryByText(STALE_NOTICE)).toBeNull();
+  });
+});
+
+// The header names how fresh the numbers under it are. It reads the model's own
+// write time (`projections.computed_at`, carried by useTopPicks), never the
+// fetch time — a pull-to-refresh that re-reads the same nightly batch must not
+// look like new xPts.
+describe('Top Picks xPts freshness line', () => {
+  afterEach(() => { mockUpdatedAt = undefined; });
+
+  it('states when the projections were last computed', () => {
+    mockSeason = { data: { kind: 'next', gw: 24 } };
+    mockUpdatedAt = '2026-08-26T04:30:00Z';
+    render(<TopPicksTab />).getByText('xPts last updated at fmt(2026-08-26T04:30:00Z)');
+  });
+
+  it('says nothing when no projection row exists yet (off-season, cold start)', () => {
+    mockSeason = { data: { kind: 'live', gw: 23 } };
+    const { queryByText, getByText } = render(<TopPicksTab />);
+    expect(queryByText(/xPts last updated/)).toBeNull();
+    // The other subtitle line is untouched — both show together when both apply.
+    getByText(STALE_NOTICE);
   });
 });
