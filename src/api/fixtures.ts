@@ -103,13 +103,20 @@ export function nextDeadlineFromEvents(
 
 // Rendered in the reader's OWN timezone: FPL publishes deadlines in UTC, but a
 // deadline is only actionable in local time. No timeZone option, so the device
-// decides — e.g. 2026-08-21T17:30:00Z reads "Fri 21 Aug, 18:30" in London and
-// "Fri 21 Aug, 10:30" in Los Angeles.
+// decides — e.g. 2026-08-21T17:30:00Z reads "Fri 21 Aug, 6:30 PM" in London
+// and "Fri 21 Aug, 10:30 AM" in Los Angeles.
 export function formatDeadline(iso: string): string {
-  return new Date(iso).toLocaleString('en-GB', {
-    weekday: 'short', day: 'numeric', month: 'short',
-    hour: '2-digit', minute: '2-digit',
-  });
+  return (
+    new Date(iso)
+      .toLocaleString('en-GB', {
+        weekday: 'short', day: 'numeric', month: 'short',
+        hour: 'numeric', minute: '2-digit', hour12: true,
+      })
+      // en-GB renders the day period lowercase ("6:30 pm"); the mock's banner
+      // reads "Sat 11:00 AM". No month or weekday abbreviation contains "am"
+      // or "pm", so the word-boundary match can only hit the day period.
+      .replace(/\b(am|pm)\b/i, (m) => m.toUpperCase())
+  );
 }
 
 // PL seasons span Aug–May, so before August the "current" season started the

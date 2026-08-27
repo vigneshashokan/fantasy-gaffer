@@ -1,8 +1,18 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import type { TransferChip } from '@/types/fpl';
 import { ApexTokens } from '@/constants/apexTokens';
+import { Icon, type IconName } from '@/components/ui/Icon';
+
+// Keyed by the display name, like `attachChipTips` — `Chip.icon` exists on the
+// catalog but never reached `TransferChip`. An unknown name simply draws no
+// icon, so a renamed chip degrades to the mock's bare tile rather than crashing.
+export const CHIP_ICON: Record<string, IconName> = {
+  Wildcard: 'wildcard',
+  'Free Hit': 'bolt',
+  'Bench Boost': 'benchBoost',
+  'Triple Captain': 'captain',
+};
 
 interface ChipsRowProps {
   chips: TransferChip[];
@@ -43,7 +53,7 @@ export function ChipsRow({ chips, tk, onExpand }: ChipsRowProps) {
         <View style={styles.tipWrap}>
           <View style={[styles.tip, { backgroundColor: tk.chipFill }]}>
             <View style={styles.tipHeader}>
-              <BoltIcon />
+              <Icon name="bolt" color="#FFC53D" size={16} />
               <Text style={styles.tipTitle}>{tip.title}</Text>
             </View>
             <View style={{ gap: 7 }}>
@@ -71,12 +81,15 @@ interface ChipTileProps {
 function ChipTile({ chip, tk, selected, onToggle }: ChipTileProps) {
   const used = chip.state === 'used';
   const sel = selected && !used;
+  const fg = sel ? '#fff' : used ? tk.faint : tk.text;
 
+  // The name is the widest thing in here, so the tile is barely wider than its
+  // own content — the mock's 118/14x18 left the shorter names marooned.
   const containerStyle = {
-    minWidth: 124,
+    minWidth: 94,
     borderRadius: 14,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+    paddingHorizontal: 9,
+    paddingVertical: 9,
     backgroundColor: sel ? tk.chipFill : tk.card,
     borderWidth: sel ? 0 : 1.5,
     borderColor: tk.cardBorder,
@@ -91,13 +104,15 @@ function ChipTile({ chip, tk, selected, onToggle }: ChipTileProps) {
       accessibilityState={{ expanded: sel, disabled: used }}
       style={containerStyle}
     >
+      {CHIP_ICON[chip.name] && (
+        <View style={styles.icon}>
+          <Icon name={CHIP_ICON[chip.name]} color={fg} size={18} />
+        </View>
+      )}
       <Text
         style={[
           styles.name,
-          {
-            color: sel ? '#fff' : used ? tk.faint : tk.text,
-            textDecorationLine: used ? 'line-through' : 'none',
-          },
+          { color: fg, textDecorationLine: used ? 'line-through' : 'none' },
         ]}
       >
         {chip.name}
@@ -137,23 +152,16 @@ function ChipTile({ chip, tk, selected, onToggle }: ChipTileProps) {
   );
 }
 
-function BoltIcon() {
-  return (
-    <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13l0-8z"
-        fill="#FFC53D"
-      />
-    </Svg>
-  );
-}
-
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     gap: 10,
     paddingHorizontal: 16,
     paddingBottom: 2,
+  },
+  icon: {
+    alignItems: 'center',
+    marginBottom: 3,
   },
   name: {
     fontFamily: 'Archivo_800ExtraBold',

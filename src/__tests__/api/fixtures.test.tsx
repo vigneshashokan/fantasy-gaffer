@@ -332,6 +332,12 @@ describe('formatDeadline', () => {
     expect(out).not.toContain('T17:30');
   });
 
+  // 17:30Z is AM somewhere and PM elsewhere, so only the presence of an
+  // uppercase day period is timezone-independent.
+  it('states AM or PM, so an 11:00 deadline is not ambiguous', () => {
+    expect(formatDeadline('2026-08-21T17:30:00Z')).toMatch(/\d:\d{2} (AM|PM)$/);
+  });
+
   it('does not produce "Invalid Date" for a well-formed deadline', () => {
     expect(formatDeadline('2026-08-21T17:30:00Z')).not.toMatch(/Invalid/);
   });

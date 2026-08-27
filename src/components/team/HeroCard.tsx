@@ -218,7 +218,6 @@ const styles = StyleSheet.create({
   upcomingInner: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    justifyContent: 'space-between',
     gap: 18,
     paddingHorizontal: 22,
     paddingTop: 20,
@@ -228,6 +227,11 @@ const styles = StyleSheet.create({
     // The row bottom-aligns so the form bars sit on one baseline; the total
     // opts out and centres against the full height of that column instead.
     alignSelf: 'center',
+    // Takes the space the bars leave and centres in it, like the played
+    // variant's GW block. The mock pins this to the left edge, which left the
+    // number stranded against a wide gap once the bars replaced the pill.
+    flex: 1,
+    alignItems: 'center',
   },
   playedInner: {
     flexDirection: 'row',

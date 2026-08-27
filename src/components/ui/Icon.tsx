@@ -1,13 +1,14 @@
 import React from 'react';
 import Svg, { Path, Rect, Circle, G } from 'react-native-svg';
 
-type IconName =
+export type IconName =
   | 'chevL' | 'chevR' | 'arrowR' | 'arrowUp' | 'arrowDown' | 'check'
   | 'mail' | 'lock' | 'swap' | 'team'
   | 'fire' | 'google' | 'apple' | 'faceid'
   | 'person' | 'gear' | 'signOut'
   | 'eye' | 'eyeOff' | 'pencil'
-  | 'sun' | 'moon' | 'device';
+  | 'sun' | 'moon' | 'device'
+  | 'wildcard' | 'bolt' | 'benchBoost' | 'captain';
 
 interface IconProps {
   name: IconName;
@@ -82,6 +83,17 @@ function Glyph({ name, color, size }: Required<IconProps>) {
       return <Svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><Path d="M17.94 17.94A10 10 0 0112 20c-7 0-11-8-11-8a18 18 0 014.06-5.5" /><Path d="M9.9 4.24A10 10 0 0112 4c7 0 11 8 11 8a17 17 0 01-2.16 3.18" /><Path d="M1 1l22 22" /><Path d="M14.12 14.12a3 3 0 11-4.24-4.24" /></Svg>;
     case 'pencil':
       return <Svg width={s} height={s} viewBox="0 0 24 24"><Path d="M4 20h4l10-10a2.8 2.8 0 10-4-4L4 16v4z" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><Path d="M13.5 6.5l4 4" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" /></Svg>;
+    // The four chip glyphs: rebuild the squad (wildcard), a one-week strike
+    // (free hit), lifted off the bench (bench boost), the captain's armband
+    // (triple captain). Not in the mock, which draws the chip tiles bare.
+    case 'wildcard':
+      return <Svg width={s} height={s} viewBox="0 0 24 24"><Path d="M20 12a8 8 0 11-2.6-5.9" stroke={color} strokeWidth="2.2" strokeLinecap="round" fill="none" /><Path d="M20 3.5v4.2h-4.2" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" /></Svg>;
+    case 'bolt':
+      return <Svg width={s} height={s} viewBox="0 0 24 24"><Path d="M13 2.5L4.8 13.6h6.3l-1 7.9 9-11.2H13z" stroke={color} strokeWidth="2" strokeLinejoin="round" fill="none" /></Svg>;
+    case 'benchBoost':
+      return <Svg width={s} height={s} viewBox="0 0 24 24"><Path d="M4 20.5h16" stroke={color} strokeWidth="2.2" strokeLinecap="round" fill="none" /><Path d="M12 17V5.5M6.8 10.7L12 5.5l5.2 5.2" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" fill="none" /></Svg>;
+    case 'captain':
+      return <Svg width={s} height={s} viewBox="0 0 24 24"><Circle cx="12" cy="12" r="8.6" stroke={color} strokeWidth="2" fill="none" /><Path d="M15 9.2a4.2 4.2 0 100 5.6" stroke={color} strokeWidth="2" strokeLinecap="round" fill="none" /></Svg>;
     default:
       return null;
   }
