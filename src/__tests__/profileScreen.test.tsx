@@ -192,6 +192,34 @@ describe('Profile screen — editable name', () => {
     expect(mockUpdateName).not.toHaveBeenCalled();
   });
 
+  // The pencil never says "not saved yet", so an edit in flight looked
+  // identical to one already written.
+  it('turns the pencil into a save tick once the name changes', async () => {
+    const { getByLabelText, getByTestId, queryByLabelText } = render(<Profile />);
+    fireEvent.press(getByLabelText('Edit first name'));
+    expect(queryByLabelText('Save first name')).toBeNull();
+
+    fireEvent.changeText(getByTestId('edit-first-name'), 'Vignesh');
+    await act(async () => {
+      fireEvent.press(getByLabelText('Save first name'));
+    });
+    expect(mockUpdateName).toHaveBeenCalledWith({ firstName: 'Vignesh' });
+  });
+
+  // Pressing the tick blurs the input first, so one gesture reaches commit
+  // twice — it must still write once.
+  it('writes once when the tick press follows its own blur', async () => {
+    const { getByLabelText, getByTestId } = render(<Profile />);
+    fireEvent.press(getByLabelText('Edit first name'));
+    fireEvent.changeText(getByTestId('edit-first-name'), 'Vignesh');
+    const tick = getByLabelText('Save first name');
+    await act(async () => {
+      fireEvent(getByTestId('edit-first-name'), 'blur');
+      fireEvent.press(tick);
+    });
+    expect(mockUpdateName).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps dob and email locked', () => {
     const { queryByLabelText } = render(<Profile />);
     expect(queryByLabelText('Edit date of birth')).toBeNull();

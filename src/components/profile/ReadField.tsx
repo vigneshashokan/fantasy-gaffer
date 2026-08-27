@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet } from 'react-native';
 import { Icon } from '@/components/ui/Icon';
 import { ApexTokens } from '@/constants/apexTokens';
@@ -21,14 +21,21 @@ export function ReadField({ label, value, tk, showDivider, onSave }: ReadFieldPr
   const [error, setError] = useState<string | null>(null);
   useA11yAnnounce(error);
 
-  // Blur is the ONLY commit path. A single-line TextInput blurs itself on
-  // Done, so the return key routes through here too, and there is no second
-  // save button whose press could race the blur that precedes it.
+  const next = draft.trim();
+  const dirty = editing && next !== '' && next !== value;
+
+  // Tapping the save tick blurs the input first, so commit runs twice for one
+  // gesture. A ref rather than `editing` because the press handler that fires
+  // was bound before the blur's re-render — its `editing` is stale.
+  const committing = useRef(false);
+
   const commit = async () => {
-    const next = draft.trim();
+    if (committing.current) return;
+    committing.current = true;
     setEditing(false);
     if (!onSave || !next || next === value) {
       setDraft(value);
+      committing.current = false;
       return;
     }
     setSaving(true);
@@ -40,6 +47,7 @@ export function ReadField({ label, value, tk, showDivider, onSave }: ReadFieldPr
       setError(e instanceof Error ? e.message : "Couldn't save — try again.");
     } finally {
       setSaving(false);
+      committing.current = false;
     }
   };
 
@@ -84,19 +92,26 @@ export function ReadField({ label, value, tk, showDivider, onSave }: ReadFieldPr
         )}
       </View>
       {onSave ? (
+        // The tick is the affordance saying the typed name is not saved yet;
+        // the pencil never claims that, so an edit in flight looked identical
+        // to one already written.
         <Pressable
-          onPress={() => {
+          onPress={dirty ? commit : () => {
             setDraft(value);
             setError(null);
             setEditing(true);
           }}
-          disabled={editing || saving}
+          disabled={saving || (editing && !dirty)}
           hitSlop={10}
           accessibilityRole="button"
-          accessibilityLabel={`Edit ${label.toLowerCase()}`}
+          accessibilityLabel={`${dirty ? 'Save' : 'Edit'} ${label.toLowerCase()}`}
           testID={`edit-${label.toLowerCase().replace(/ /g, '-')}-button`}
         >
-          <Icon name="pencil" color={tk.purple} size={16} />
+          <Icon
+            name={dirty ? 'check' : 'pencil'}
+            color={dirty ? tk.green : tk.purple}
+            size={dirty ? 18 : 16}
+          />
         </Pressable>
       ) : (
         <View style={{ opacity: 0.6 }}>
