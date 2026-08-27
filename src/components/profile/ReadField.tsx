@@ -96,12 +96,17 @@ export function ReadField({ label, value, tk, showDivider, onSave }: ReadFieldPr
         // the pencil never claims that, so an edit in flight looked identical
         // to one already written.
         <Pressable
-          onPress={dirty ? commit : () => {
+          onPress={editing ? commit : () => {
             setDraft(value);
             setError(null);
             setEditing(true);
           }}
-          disabled={saving || (editing && !dirty)}
+          // Editing with nothing changed is NOT a disabled pencil: `disabled`
+          // is a visible state on iOS, so typing a name back to the original
+          // greyed the pencil out as if the row had broken. The press just
+          // closes the edit — commit no-ops on an unchanged draft. Only an
+          // in-flight write takes the control away.
+          disabled={saving}
           hitSlop={10}
           accessibilityRole="button"
           accessibilityLabel={`${dirty ? 'Save' : 'Edit'} ${label.toLowerCase()}`}

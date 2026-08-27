@@ -220,6 +220,21 @@ describe('Profile screen — editable name', () => {
     expect(mockUpdateName).toHaveBeenCalledTimes(1);
   });
 
+  // Typing a name back to the original greyed the pencil out as though the
+  // row had broken — `disabled` is a visible state on iOS.
+  it('leaves the pencil untouched when the draft is typed back to the original', () => {
+    const { getByLabelText, getByTestId } = render(<Profile />);
+    const resting = getByTestId('edit-first-name-button').props.accessibilityState;
+
+    fireEvent.press(getByLabelText('Edit first name'));
+    fireEvent.changeText(getByTestId('edit-first-name'), 'Vignesh');
+    fireEvent.changeText(getByTestId('edit-first-name'), BASE_PROFILE.firstName);
+
+    expect(getByLabelText('Edit first name')).toBeTruthy();
+    expect(getByTestId('edit-first-name-button').props.accessibilityState)
+      .toEqual(resting);
+  });
+
   it('keeps dob and email locked', () => {
     const { queryByLabelText } = render(<Profile />);
     expect(queryByLabelText('Edit date of birth')).toBeNull();
