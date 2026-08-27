@@ -209,6 +209,26 @@ profile finding is the argument for doing it.
   #214 was filed for. `squadFromPicks` reads only the `picks` array, never `active_chip` /
   `automatic_subs`, which is why the carry is clean.
 
+- **`is_current` is NOT "the gameweek the user cares about", and getting that wrong is now a
+  four-instance bug class (#168, PR #245).** FPL leaves `is_current` on a gameweek from its deadline
+  until the NEXT one's deadline — so for the two or three days after the last whistle it names a
+  gameweek already played, which is exactly the window in which every screen is about the *upcoming*
+  one. It broke the Transfer tab's 3-GW window (#168), then Top Picks twice over — the ranking
+  scored on the finished gameweek's projections, and `useFixturesByGw(is_current)` printed last
+  week's opponent under this week's xPts — and transfer-targets hand-rolled `is_current + 1` to dodge
+  it, which is right mid-season and **off by one pre-season** (nothing is `is_current`, so
+  `currentGwFromEvents` already falls back to `is_next` = GW1 and `+1` promises GW2). **Every
+  instance was silent**: an absent projection and an absent fixture are both legitimate states, so
+  the screen renders a plausible wrong number instead of erroring. The seams that hold it:
+  **`useNextDeadline()`** is the actionable gameweek (first deadline not yet passed — no flag
+  archaeology, correct pre-season), **`useTopPicks(anchorGw?)`** takes it as an explicit override
+  the way `useApexTeam` does, and **`useTopPicks` RETURNS the gameweek it ranked on** so a screen's
+  fixture strip and header copy read that rather than deriving their own. **One screen, one
+  gameweek** — if a surface names a gameweek in copy, it must rank and fetch fixtures on the same
+  one. The Top Picks tab keeps the plain default on purpose: while a gameweek is live it shows that
+  gameweek, which is what its "will refresh once the current game week is done" subtitle promises
+  (#181).
+
 - **Client state** — Zustand stores in `src/store/` (`auth`, `biometric`, `team`, `theme`), persisted via AsyncStorage. Keep them narrow: anything server-derived belongs in React Query, not a store.
 
 - **Theming** — there is **no Tailwind/NativeWind** here (the lone `src/global.css` only declares web font variables). Styling runs off a custom token system: `src/constants/theme.ts` defines a `Theme` shape and three palettes (`classic | pitch | electric`), selected via `themeStore`. Companion tokens in `constants/apexTokens.ts`, `clubColors.ts`, `jerseys.ts`. Fonts are Archivo (display) + JetBrains Mono, loaded at the root layout. **`apexTokens` gotcha:** keys like `purpleD`/`purpleL`/`glowD`/`moneyD`/`active` live on the per-palette **base** objects, **not** on the resolved `ApexTokens` type returned by `apexTokens(dark, paletteKey)`. The resolver maps them (e.g. `purple: B.purpleD`/`B.purpleL`; `activeFill: B.active` — the solid brand accent, same in light/dark, white-text-safe). Grepping the file shows `purpleD`, so it's easy to write `tk.purpleD` — which is `undefined` at runtime (tests pass, `tsc` fails). Use `tk.purple` for accent text/icons and `tk.activeFill` for a dark brand-accent fill; only use keys that exist on the `ApexTokens` interface. **Text tokens are WCAG AA-tuned and guarded** — before changing any `text`/`faint`/`variant`/accent colour, see the **Accessibility** bullet (the contrast guard test breaks if a text token drops below 4.5:1).
