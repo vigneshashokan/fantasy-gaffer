@@ -37,10 +37,8 @@ const PITCH_PAD = 6;
 // How far the outer slots are held off the pitch edge. `space-around` fixes the
 // first slot's centre at half a share whatever the slot width, so shrinking the
 // slot does NOT move it inward — only padding the row does, and the outer pills
-// need that room to hang into or they meet `overflow: hidden` mid-name. Sized
-// off the longest pill the league produces (~115pt: a 12-character web_name
-// beside the score disc), which needs its centre 58pt clear of the card edge.
-const ROW_INSET = 24;
+// need that room to hang into or they meet `overflow: hidden` mid-name.
+const ROW_INSET = 16;
 // Page gutter, the pitch's padding and that inset. Slots are sized off this, so
 // it must account for every one of them or a full row runs past the pitch.
 const SIDE_CHROME = GUTTER * 2 + PITCH_PAD * 2 + ROW_INSET * 2;
@@ -93,16 +91,16 @@ export function ApexPitch({
           // one. A staggered row's neighbours are on the other plane, so only
           // the pitch edge binds and the pill may use the padding too.
           const share = (screenW - SIDE_CHROME) / row.length;
-          // What stops a pill outgrowing its slot differs by slot. The outer
-          // two meet the pitch edge, and may hang into its padding; the rest
-          // meet the next pill along — one slot away normally, two on a
-          // staggered row, since the one between is on the other plane.
+          // How far a pill may outgrow its slot, which differs by slot: the
+          // outer two meet the pitch edge (and may hang into the row inset and
+          // the pitch padding), the rest meet the pill two slots along. This is
+          // the width the NAME is measured against — see `pillRow` below.
           const cap = (j: number) =>
             Math.min(
               PILL_MAX,
               j === 0 || j === row.length - 1
                 ? share + 2 * (ROW_INSET + PITCH_PAD)
-                : share * (stagger ? 2 : 1),
+                : share * 2,
             );
           return (
             <View key={i} testID="pitch-row" style={styles.row}>
@@ -159,7 +157,14 @@ function ApexPitchPlayerCard({
         {!upcoming && p.sub != null && <SubPill min={p.sub} />}
         {!upcoming && p.subIn != null && <SubInPill min={p.subIn} />}
       </View>
-      <View style={styles.pillRow}>
+      {/* A DEFINITE width, and that is the whole point of it. The card is
+          fixed to its slot so the row cannot overflow, and a name measures
+          itself against the nearest definite width above it — which was that
+          slot, so every name was truncating to a jersey's width. This box is
+          the room the pill actually has, so the name is measured against that
+          and simply overhangs the card, which is what the staggered planes and
+          the row inset exist to make safe. */}
+      <View testID="pill-row" style={[styles.pillRow, { width: pillMaxW }]}>
         <CaptViceBadge capt={p.capt} vice={p.vice} />
         <PointPill
           pts={upcoming ? undefined : p.pts}
@@ -226,6 +231,7 @@ const styles = StyleSheet.create({
   pillRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 4,
   },
 });

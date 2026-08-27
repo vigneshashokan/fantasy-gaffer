@@ -60,6 +60,18 @@ describe('ApexPitch row geometry', () => {
   // centre at half a share whatever the slot width, so the only thing holding
   // an outer pill off the pitch edge is the row's own padding — and the slots
   // have to be sized for what that padding leaves, or a full row runs over.
+  // A name measures itself against the nearest definite width above it. The
+  // card is one (it has to be, or the row overflows), so unless the pill row
+  // carries its own the whole squad truncates to a jersey's width.
+  it('measures the name against the pill row, not the slot it sits in', () => {
+    const r = render(<ApexPitch rows={[row(5)]} />);
+    const slot = StyleSheet.flatten(r.getAllByTestId('pitch-slot')[2].props.style)
+      .width as number;
+    const box = StyleSheet.flatten(r.getAllByTestId('pill-row')[2].props.style)
+      .width as number;
+    expect(box).toBeGreaterThan(slot);
+  });
+
   it('fits a full row inside the pitch alongside its edge padding', () => {
     const r = render(<ApexPitch rows={[row(5)]} />);
     const pitchPad = StyleSheet.flatten((r.toJSON() as any).props.style)
