@@ -123,5 +123,8 @@ export function useTopPicks() {
     return rankTopPicks(players.data, projections.data ?? new Map());
   }, [players.data, projections.data]);
 
-  return { ...players, data };
+  // The gameweek the ranking was scored on — the screen's fixture strip has to
+  // read the same one, or the opponent under each name belongs to a different
+  // gameweek than the xPts beside it.
+  return { ...players, data, gw };
 }

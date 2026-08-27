@@ -19,7 +19,6 @@ import { apexTokens } from '@/constants/apexTokens';
 import type { Position } from '@/types/fpl';
 import { useTopPicks } from '@/api/players';
 import {
-  useCurrentGameweek,
   useFixturesByGw,
   useSeasonState,
   currentSeasonLabel,
@@ -50,8 +49,6 @@ export default function TopPicksTab() {
   const progress = useSharedValue(0);
   const reduced = useReducedMotion();
 
-  const { data: currentGw }                         = useCurrentGameweek();
-  const gw = currentGw?.gw;
   const { data: seasonState }                       = useSeasonState();
   const seasonLabel = currentSeasonLabel();
   const seasonOver = seasonState?.kind === 'complete';
@@ -60,9 +57,13 @@ export default function TopPicksTab() {
     isPending: picksPending,
     isError: picksError,
     refetch,
+    gw,
   } = useTopPicks();
   const pull = usePullRefresh(refetch);
-  const { data: fixtures }                          = useFixturesByGw(gw ?? 0);
+  // Same gameweek the picks were ranked on, never `is_current` — that sits on
+  // the finished gameweek until the next deadline, so the opponent under each
+  // player was last week's.
+  const { data: fixtures }                          = useFixturesByGw(gw);
   const { data: squad }                             = useSquad();
 
   const squadNames = new Set<string>(
