@@ -110,6 +110,19 @@ thing that breaks *silently* if the next person undoes it.
   into a Cancel that goes *back* rather than replacing the stack with the Team tab.
   **It must `router.back()` BEFORE `router.push()`** — a root-level route pushed from a
   native modal renders behind it on iOS, the same trap the legal screens hit.
+  **First and last name are editable in place (PR #243); dob and email are not** — dob is
+  age-gated at signup and email is the auth identity. One optional `onSave` on `ReadField`
+  turns the padlock into a pencil and the value into an input; without it the row is what it
+  always was, which is why the two locked rows needed no thought. **Blur is the only commit
+  path** — a single-line `TextInput` blurs itself on Done, so the return key routes through
+  the same handler and no second control can race it. Once the draft differs the pencil
+  becomes a green tick, and **pressing that tick blurs the input first, so one gesture reaches
+  `commit` twice**: a `useRef` guards the re-entry, deliberately not `editing`, whose value in
+  the press handler is the one bound before the blur's re-render. Editing with nothing changed
+  must NOT disable the control — `disabled` is a *visible* state, so typing a name back to the
+  original greyed the pencil out as if the row had broken. `useUpdateName` mirrors `useLinkTeam`
+  (one UPDATE, then invalidate the **user-scoped** profile key). Both screen suites that render
+  `/profile` mock `@/api/profile` wholesale, so they must mock `useUpdateName` too.
 - **Gameweek control — PR #231.** `[<] [Gameweek N] [>]` is **one capsule**, and it lives in the
   shell (`team.tsx`) above the carousel — never inside a `GameweekScreen` page. A page drawing
   its own gives you two of them, scrolling out of step. Paging reads `onScroll`, not
@@ -159,9 +172,11 @@ thing that breaks *silently* if the next person undoes it.
   to jest unless something asserts it**. The eight onboarding screens and `LockScreen` deliberately
   keep `t.bg` — pre-auth surfaces, not yet ported off the mock.
 
-**None of the seven has been seen on a device or simulator.** Every claim above is pinned in jest
-only, and jest can see neither a colour, nor a gradient, nor a sheet detent, nor motion — and now
-neither a bar height nor a count-up. A pass over all seven together is outstanding.
+**Only the profile sheet has been seen on a device** — and the first look at it found a bug jest
+had no way to catch (the black-pencil fill, recorded under Architecture). Every other claim above
+is pinned in jest only, and jest can see neither a colour, nor a gradient, nor a sheet detent, nor
+motion — and now neither a bar height nor a count-up. A pass over the rest is outstanding, and the
+profile finding is the argument for doing it.
 
 ## Architecture (the parts that span files)
 
@@ -235,6 +250,17 @@ neither a bar height nor a count-up. A pass over all seven together is outstandi
     used to be the `Modal`'s `onRequestClose`.
   - The three tab icons needed no work: `Icon`'s `fire`/`team`/`swap` paths are already
     byte-identical to the mock's SVGs.
+
+- **A swapped `Icon` used to come back FILLED BLACK, and the fix is a `key` (PR #243).**
+  `react-native-svg` reuses the native `<Path>` view when a glyph is swapped in one slot
+  (pencil ↔ check on the profile name rows, eye ↔ eyeOff in the password field) and **does not
+  re-apply the `<Svg>` root's inherited `fill`/`stroke` to it** — so any glyph whose paths rely
+  on that inheritance falls back to SVG's default **black fill**. The profile pencil rendered as
+  a solid black blob, but only in the row where a tick had previously stood; the identical row
+  next to it was fine, which is what made it look like a theming bug. `Icon` is now **keyed by
+  `name`** so a swap remounts rather than re-props, and new glyphs should carry `fill`/`stroke`
+  on each `<Path>` rather than on the `<Svg>` root (most of the file already does).
+  **Invisible to jest and tsc** — neither can see a fill — so this one is device-only.
 
 - **`ClubCode` is compile-time only, and the Premier League changes every August (#218, PR #220).**
   Club codes reach the app as **plain strings from Supabase**, so the `ClubCode` union in
