@@ -10,7 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { queryKeys } from './queryKeys';
 import type { Player, Position, TopPickPlayer, ClubCode, PlayerStatus } from '@/types/fpl';
-import { useCurrentGameweek } from './fixtures';
+import { useCurrentGameweek, useSeasonState } from './fixtures';
 import { useProjections, type ProjectionStat } from './projections';
 
 export interface PlayerRow {
@@ -108,8 +108,15 @@ export function rankTopPicks(
 
 export function useTopPicks() {
   const players = usePlayers();
-  const gw = useCurrentGameweek();
-  const projections = useProjections(gw.data?.gw ?? 0);
+  const season = useSeasonState();
+  const current = useCurrentGameweek();
+  // Once a gameweek finishes, `is_current` stays on it until the next deadline
+  // passes — so ranking on it scores the picks against a gameweek already
+  // played, while the header pill names the upcoming one. Same anchor bug as
+  // #168 on the Transfer tab. Both hooks read the one cached bootstrap query,
+  // so this costs no extra request.
+  const gw = season.data?.kind === 'next' ? season.data.gw : current.data?.gw ?? 0;
+  const projections = useProjections(gw);
 
   const data = useMemo<Record<Position, TopPickPlayer[]> | undefined>(() => {
     if (!players.data) return undefined;

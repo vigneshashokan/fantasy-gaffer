@@ -83,7 +83,10 @@ describe('Top Picks staleness notice (#181)', () => {
 
   it('hides it between gameweeks, when the picks are actually fresh', () => {
     mockSeason = { data: { kind: 'next', gw: 24 } };
-    expect(render(<TopPicksTab />).queryByText(STALE_NOTICE)).toBeNull();
+    const { queryByText, getByText } = render(<TopPicksTab />);
+    expect(queryByText(STALE_NOTICE)).toBeNull();
+    // The pill carries the same claim the missing subtitle implies.
+    getByText('GW24 picks updated');
   });
 
   it('hides it once the season is complete', () => {

@@ -203,7 +203,7 @@ function StatusPill({
   }
   return (
     <View style={[styles.livePill, { backgroundColor: tk.headStrip }]}>
-      <Text style={[styles.liveText, { color: tk.variant }]}>GW{state.gw} Next</Text>
+      <Text style={[styles.liveText, { color: tk.variant }]}>GW{state.gw} picks updated</Text>
     </View>
   );
 }
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 8,
+    paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 999,
   },
@@ -228,8 +228,8 @@ const styles = StyleSheet.create({
   },
   liveText: {
     fontFamily: 'Archivo_700Bold',
-    fontSize: 10,
-    letterSpacing: 0.7,
+    fontSize: 11.5,
+    letterSpacing: 0.69,
   },
   controlWrap: {
     paddingHorizontal: GUTTER,
