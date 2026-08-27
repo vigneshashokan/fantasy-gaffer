@@ -21,7 +21,7 @@ export function PointPill({
   const hasBonus = !upcoming && played && (bonus ?? 0) >= 1;
   const numBg = played ? '#7B09E5' : 'rgba(255,255,255,0.22)';
   return (
-    <View style={[styles.container, { maxWidth }]}>
+    <View testID="name-pill" style={[styles.container, { maxWidth }]}>
       {!upcoming && (
         <View style={[styles.num, { backgroundColor: numBg }]}>
           {/* Gold ring + glow flags bonus while leaving the number readable. */}
