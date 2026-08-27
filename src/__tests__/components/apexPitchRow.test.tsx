@@ -3,6 +3,7 @@ import { render } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 import { ApexPitch } from '@/components/pitch/ApexPitch';
 import { ApexPitchMarks } from '@/components/pitch/ApexPitchMarks';
+import { GUTTER } from '@/constants/theme';
 import type { PitchPlayer } from '@/types/fpl';
 
 // jest's default window is far wider than any phone, and every pill cap would
@@ -54,16 +55,23 @@ describe('ApexPitch row layout', () => {
   });
 });
 
-describe('ApexPitch name pills', () => {
-  // Staggering is only worth doing if the pills it un-collides may then be
-  // wider: an inner slot's neighbour has moved to the other plane, so only the
-  // pill two along bounds it. The outer two still meet the pitch edge.
-  it('caps an inner pill of a five-wide row wider than an outer one', () => {
-    const caps = render(<ApexPitch rows={[row(5)]} />)
-      .getAllByTestId('name-pill')
-      .map((p) => StyleSheet.flatten(p.props.style).maxWidth as number);
-    expect(caps[2]).toBeGreaterThan(caps[0]);
-    expect(caps[0]).toEqual(caps[4]);
+describe('ApexPitch row geometry', () => {
+  // The one that breaks in silence. `space-around` fixes the first slot's
+  // centre at half a share whatever the slot width, so the only thing holding
+  // an outer pill off the pitch edge is the row's own padding — and the slots
+  // have to be sized for what that padding leaves, or a full row runs over.
+  it('fits a full row inside the pitch alongside its edge padding', () => {
+    const r = render(<ApexPitch rows={[row(5)]} />);
+    const pitchPad = StyleSheet.flatten((r.toJSON() as any).props.style)
+      .paddingHorizontal as number;
+    const rowPad = StyleSheet.flatten(r.getByTestId('pitch-row').props.style)
+      .paddingHorizontal as number;
+    const slots = r.getAllByTestId('pitch-slot')
+      .map((s) => StyleSheet.flatten(s.props.style).width as number);
+
+    expect(rowPad).toBeGreaterThan(0);
+    const used = slots.reduce((a, b) => a + b, 0) + rowPad * 2;
+    expect(used).toBeLessThanOrEqual(390 - GUTTER * 2 - pitchPad * 2);
   });
 });
 

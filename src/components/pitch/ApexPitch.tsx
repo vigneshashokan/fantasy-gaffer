@@ -34,10 +34,16 @@ const MAX_ROW = 5;
 // The pitch's own horizontal padding. A pill on an outer slot may hang into it
 // without meeting the container's `overflow: hidden`.
 const PITCH_PAD = 6;
-// Page gutter + that padding, plus 16pt of slack the outer slots' pills hang
-// into. Slots are sized off this, so it must never drop below the real chrome
-// or a full row runs past the pitch.
-const SIDE_CHROME = GUTTER * 2 + PITCH_PAD * 2 + 16;
+// How far the outer slots are held off the pitch edge. `space-around` fixes the
+// first slot's centre at half a share whatever the slot width, so shrinking the
+// slot does NOT move it inward — only padding the row does, and the outer pills
+// need that room to hang into or they meet `overflow: hidden` mid-name. Sized
+// off the longest pill the league produces (~115pt: a 12-character web_name
+// beside the score disc), which needs its centre 58pt clear of the card edge.
+const ROW_INSET = 24;
+// Page gutter, the pitch's padding and that inset. Slots are sized off this, so
+// it must account for every one of them or a full row runs past the pitch.
+const SIDE_CHROME = GUTTER * 2 + PITCH_PAD * 2 + ROW_INSET * 2;
 // Keep the floor low enough that a full 5-wide row still fits the narrowest
 // supported screen (~320pt → (320-44)/5 ≈ 55), so jerseys scale down with the
 // screen instead of overflowing it.
@@ -95,11 +101,11 @@ export function ApexPitch({
             Math.min(
               PILL_MAX,
               j === 0 || j === row.length - 1
-                ? share + 2 * PITCH_PAD
+                ? share + 2 * (ROW_INSET + PITCH_PAD)
                 : share * (stagger ? 2 : 1),
             );
           return (
-            <View key={i} style={styles.row}>
+            <View key={i} testID="pitch-row" style={styles.row}>
               {row.map((p, j) => (
                 <ApexPitchPlayerCard
                   key={p.id}
@@ -207,6 +213,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'flex-start',
+    paddingHorizontal: ROW_INSET,
   },
   playerContainer: {
     flexDirection: 'column',
